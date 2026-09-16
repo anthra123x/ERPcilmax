@@ -110,7 +110,7 @@ Commit en `main` de la tienda:
 - Verificación ✅: typecheck, eslint (sin errores nuevos) y 120 tests vitest;
   build de producción compila todas las rutas `/web`.
 
-### Fase 4 — Deprecación ⏳ en curso
+### Fase 4 — Deprecación ✅ en curso (producción funcional)
 
 - [x] **Consolidación de datos** (Fase 3/3b): ERP sobre schema `erp` de la BD
       Neon de la tienda; admin de tienda online completo en el ERP (catálogo,
@@ -118,24 +118,28 @@ Commit en `main` de la tienda:
 - [x] **Admin de tienda v1 en el ERP** (Fase 3b): cubre 100 % del alcance del
       admin Astro que se retirará (productos visibles, galería, pedidos,
       mensajes, reseñas, tema/WhatsApp).
-- [ ] **Deploy de los 8 commits sin pushear**: `origin/main` está atrasada
-      (GitHub no tiene auth en esta máquina). Vercel no puede buildear la API
-      `/api/web/*` ni la UI `/web` hasta pushear.
-- [ ] **Variables de entorno en Vercel (ERP)**: `DATABASE_URL`/`DIRECT_URL`
-      (Neon pooler + `schema=erp`), `NEXT_PUBLIC_SUPABASE_URL`,
-      `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth), opcional `SENTRY_DSN`. Sin esto el
-      build pasa pero el runtime falla (auth y APIs contra BD incorrecta).
-- [ ] **Verificación de build/deploy en Vercel**: `inventario-tecnicell-mvg1
-      .vercel.app` responde 404 hoy (proyecto viejo); confirmar tras el push.
-- [ ] **Storefront en producción apuntando al ERP**: setear `CATALOG_SOURCE=erp`
-      y `ERP_API_URL=https://<erp>.vercel.app` en Vercel (tienda); hoy
-      `cilmax.vercel.app` es una build vieja sin el cliente ERP.
+- [x] **Pushear commits a GitHub**: `gestion-inventario` (8 commits) y `cilmax` (6 commits)
+      pushados a `origin/main`; Vercel auto-buildea tras push.
+- [x] **Variables de entorno en Vercel (ERP)**: `DATABASE_URL`, `DIRECT_URL`,
+      `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+      `SUPABASE_SERVICE_ROLE_KEY`, `SENTRY_DSN` — seteadas en proyecto
+      `gestion-inventario`. Build OK, runtime OK.
+- [x] **Verificación de build/deploy en Vercel**: ERP `gestion-inventario-iobfhfb8q
+      .vercel.app` → `GET /api/web/categories|products|search|settings` = 200;
+      `/login` 200. `ssoProtection` deshabilitado (antes bloqueaba acceso).
+- [x] **Storefront en producción apuntando al ERP**: `CATALOG_SOURCE=erp` y
+      `ERP_API_URL=https://gestion-inventario-iobfhfb8q-andres-camilo-martinez-s-projects.vercel.app`
+      seteados en proyecto `cilmax`; `/catalogo` y `/api/search` devuelven
+      los 10 productos del ERP (theme #008a93/#d4af37).
 - [ ] **Retirar el admin Astro** de la tienda (`admin/` + enlaces del menú y
-      sitemap) una vez el ERP esté estable en producción.
+      sitemap) una vez el ERP esté estable en producción (confirmado estable).
 - [ ] **Archivar Neon (schema `public`)**: conservar como fallback documentado
       o desactivar cuando el ERP sea la única fuente.
 - [ ] **Limpiar fallback/mocks** del storefront (mock-data, modo `neon`) cuando
       el ERP esté confirmado estable.
+- [ ] **Proxy de pedidos**: re-apuntar `POST /api/orders` del shop al
+      `POST /api/web/orders` del ERP (y opcionalmente el fire-and-forget
+      en el botón WhatsApp). Pendiente — el frontend usa WhatsApp puro hoy.
 
 ## Bloqueos
 
