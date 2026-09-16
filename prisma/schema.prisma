@@ -39,30 +39,135 @@ model Client {
 }
 
 model Product {
-  id               String           @id @default(cuid())
-  name             String
-  description      String?
-  barcode          String?
-  imageUrl         String?
-  costPrice        Float            @default(0)
-  salePrice        Float            @default(0)
-  stock            Int              @default(0)
-  lowStockThreshold Int             @default(5)
-  categoryId       String?
-  category         ProductCategory? @relation(fields: [categoryId], references: [id])
-  supplierId       String?
-  supplier         Supplier?        @relation(fields: [supplierId], references: [id])
-  deletedAt        DateTime?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  stockMovements   StockMovement[]
-  saleItems        SaleItem[]
+  id                String           @id @default(cuid())
+  name              String
+  description       String?
+  barcode           String?
+  imageUrl          String?
+  costPrice         Float            @default(0)
+  salePrice         Float            @default(0)
+  stock             Int              @default(0)
+  lowStockThreshold Int              @default(5)
+  categoryId        String?
+  category          ProductCategory? @relation(fields: [categoryId], references: [id])
+  supplierId        String?
+  supplier          Supplier?        @relation(fields: [supplierId], references: [id])
+  deletedAt         DateTime?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  // Tienda online (storefront): campos de visibilidad web.
+  slug              String?          @unique
+  webVisible        Boolean          @default(false)
+  webFeatured       Boolean          @default(false)
+  webSortOrder      Int              @default(0)
+  webDescription    String?
+  stockMovements    StockMovement[]
+  saleItems         SaleItem[]
+  media             ProductMedia[]
+  webReviews        ProductReview[]
+  webOrderItems     WebOrderItem[]
 
   @@index([name])
   @@index([categoryId])
   @@index([supplierId])
   @@index([deletedAt])
+  @@index([webVisible])
   @@map("products")
+}
+
+model ProductMedia {
+  id        String   @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, position])
+  @@index([productId])
+  @@map("product_media")
+}
+
+model ProductReview {
+  id        String   @id @default(cuid())
+  productId String
+  name      String
+  email     String?
+  rating    Int
+  comment   String
+  approved  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+  @@index([approved])
+  @@index([createdAt])
+  @@map("product_reviews")
+}
+
+model WebOrder {
+  id              String         @id @default(cuid())
+  customerName    String
+  customerPhone   String
+  customerEmail   String?
+  notes           String?
+  total           Float          @default(0)
+  currency        String         @default("COP")
+  status          WebOrderStatus @default(PENDING)
+  convertedSaleId String?
+  convertedSale   Sale?          @relation(fields: [convertedSaleId], references: [id])
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  items           WebOrderItem[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([convertedSaleId])
+  @@map("web_orders")
+}
+
+model WebOrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  productId   String?
+  productName String
+  handle      String?
+  unitPrice   Float
+  quantity    Int
+  total       Float
+  order       WebOrder @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product? @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("web_order_items")
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([read])
+  @@index([createdAt])
+  @@map("contact_messages")
+}
+
+model StoreSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("store_settings")
 }
 
 model ProductCategory {
@@ -130,6 +235,7 @@ model Sale {
   invoice       Invoice?
   payments      Payment[]
   installments  CreditInstallment[]
+  webOrders     WebOrder[]
 
   @@index([invoiceNumber])
   @@index([clientId])
@@ -298,6 +404,12 @@ enum SaleStatus {
 enum NotificationType {
   SYSTEM
   LOW_STOCK
+}
+
+enum WebOrderStatus {
+  PENDING
+  CONVERTED
+  CANCELLED
 }
 
 enum CategoryType {
