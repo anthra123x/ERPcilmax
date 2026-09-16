@@ -207,7 +207,7 @@ export const CreateContactMessageSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
   phone: optionalText(z.string().max(30, 'El teléfono no es válido')).nullable(),
   email: optionalText(z.string().email('Email inválido')).nullable(),
-  message: z.string().min(1, 'El mensaje es requerido').max(2000, 'El mensaje es demasiado largo'),
+  message: z.string().min(1, 'El mensaje es requerido').max(4200, 'El mensaje es demasiado largo'),
 })
 
 export const CreateWebOrderItemSchema = z.object({
