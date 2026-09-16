@@ -80,24 +80,24 @@ async function main() {
 
   // --- Lectura desde Neon (legacy) -------------------------------------------
   const [catRows, prodRows, revRows, contactRows, themeRows] = await Promise.all([
-    neon.query<NeonCategory>(`select id, name, slug from categories where store_id = 'cilmax' order by name`),
+    neon.query<NeonCategory>(`select id, name, slug from public.categories where store_id = 'cilmax' order by name`),
     neon.query<NeonProduct>(
       `select id, handle, title, coalesce(description,'') as description, images, tags,
               coalesce(featured,false) as featured, coalesce(sort_order,0) as sort_order, category_id
-         from products where store_id = 'cilmax' order by sort_order asc, title asc`,
+         from public.products where store_id = 'cilmax' order by sort_order asc, title asc`,
     ),
     neon.query<NeonReview>(`select id, product_id, nombre, correo, calificacion, comentario, created_at
-                              from product_reviews where store_id = 'cilmax' order by created_at asc`),
+                              from public.product_reviews where store_id = 'cilmax' order by created_at asc`),
     neon.query<NeonContact>(`select nombre, correo, asunto, mensaje, created_at
-                               from contact_messages where store_id = 'cilmax' order by created_at asc`),
-    neon.query<NeonTheme>(`select primary_color, gold_color from store_settings where store_id = 'cilmax'`),
+                               from public.contact_messages where store_id = 'cilmax' order by created_at asc`),
+    neon.query<NeonTheme>(`select primary_color, gold_color from public.store_settings where store_id = 'cilmax'`),
   ])
 
   const prodIds = prodRows.rows.map((p) => p.id)
   const variantRows = prodIds.length
     ? await neon.query<NeonVariant>(
         `select product_id, price, currency, inventory_quantity
-           from product_variants where product_id = any($1::text[])`,
+           from public.product_variants where product_id = any($1::text[])`,
         [prodIds],
       )
     : { rows: [] as NeonVariant[] }
@@ -106,7 +106,7 @@ async function main() {
     ? await neon.query<NeonOrder>(
         `select o.id, o.subtotal_cop, o.notes, o.items, o.created_at,
                 c.name, c.phone, c.email
-           from orders o join customers c on c.id = o.customer_id
+           from public.orders o join public.customers c on c.id = o.customer_id
           where o.store_id = 'cilmax'
           order by o.created_at asc`,
       )
