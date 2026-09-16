@@ -110,9 +110,32 @@ Commit en `main` de la tienda:
 - Verificación ✅: typecheck, eslint (sin errores nuevos) y 120 tests vitest;
   build de producción compila todas las rutas `/web`.
 
-### Fase 4 — Deprecación ⏳ pendiente
+### Fase 4 — Deprecación ⏳ en curso
 
-- Retirar admin Astro, archivar Neon, limpiar fallback, evaluar consolidación.
+- [x] **Consolidación de datos** (Fase 3/3b): ERP sobre schema `erp` de la BD
+      Neon de la tienda; admin de tienda online completo en el ERP (catálogo,
+      pedidos→venta POS, mensajes, reseñas, ajustes).
+- [x] **Admin de tienda v1 en el ERP** (Fase 3b): cubre 100 % del alcance del
+      admin Astro que se retirará (productos visibles, galería, pedidos,
+      mensajes, reseñas, tema/WhatsApp).
+- [ ] **Deploy de los 8 commits sin pushear**: `origin/main` está atrasada
+      (GitHub no tiene auth en esta máquina). Vercel no puede buildear la API
+      `/api/web/*` ni la UI `/web` hasta pushear.
+- [ ] **Variables de entorno en Vercel (ERP)**: `DATABASE_URL`/`DIRECT_URL`
+      (Neon pooler + `schema=erp`), `NEXT_PUBLIC_SUPABASE_URL`,
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY` (auth), opcional `SENTRY_DSN`. Sin esto el
+      build pasa pero el runtime falla (auth y APIs contra BD incorrecta).
+- [ ] **Verificación de build/deploy en Vercel**: `inventario-tecnicell-mvg1
+      .vercel.app` responde 404 hoy (proyecto viejo); confirmar tras el push.
+- [ ] **Storefront en producción apuntando al ERP**: setear `CATALOG_SOURCE=erp`
+      y `ERP_API_URL=https://<erp>.vercel.app` en Vercel (tienda); hoy
+      `cilmax.vercel.app` es una build vieja sin el cliente ERP.
+- [ ] **Retirar el admin Astro** de la tienda (`admin/` + enlaces del menú y
+      sitemap) una vez el ERP esté estable en producción.
+- [ ] **Archivar Neon (schema `public`)**: conservar como fallback documentado
+      o desactivar cuando el ERP sea la única fuente.
+- [ ] **Limpiar fallback/mocks** del storefront (mock-data, modo `neon`) cuando
+      el ERP esté confirmado estable.
 
 ## Bloqueos
 
