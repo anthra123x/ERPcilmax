@@ -193,3 +193,32 @@ export const UpdateSettingsSchema = z.object({
   invoiceFooter: z.string().optional().nullable(),
   lowStockThreshold: z.coerce.number().int().min(0).optional(),
 })
+
+// Storefront (tienda online) schemas — contrato de la API pública /api/web/*
+export const CreateProductReviewSchema = z.object({
+  productId: z.string().min(1, 'El producto es requerido'),
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
+  email: optionalText(z.string().email('Email inválido')).nullable(),
+  rating: z.coerce.number().int().min(1, 'La calificación debe estar entre 1 y 5').max(5, 'La calificación debe estar entre 1 y 5'),
+  comment: z.string().min(1, 'El comentario es requerido').max(2000, 'El comentario es demasiado largo'),
+})
+
+export const CreateContactMessageSchema = z.object({
+  name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
+  phone: optionalText(z.string().max(30, 'El teléfono no es válido')).nullable(),
+  email: optionalText(z.string().email('Email inválido')).nullable(),
+  message: z.string().min(1, 'El mensaje es requerido').max(2000, 'El mensaje es demasiado largo'),
+})
+
+export const CreateWebOrderItemSchema = z.object({
+  productId: z.string().min(1, 'El producto es requerido'),
+  quantity: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1').max(99, 'La cantidad es demasiado grande'),
+})
+
+export const CreateWebOrderSchema = z.object({
+  customerName: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
+  customerPhone: z.string().min(6, 'El teléfono debe tener al menos 6 caracteres').max(30),
+  customerEmail: optionalText(z.string().email('Email inválido')).nullable(),
+  notes: optionalText(z.string().max(2000, 'La nota es demasiado larga')).nullable(),
+  items: z.array(CreateWebOrderItemSchema).min(1, 'El pedido está vacío').max(50, 'Demasiados productos en el pedido'),
+})
