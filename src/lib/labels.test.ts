@@ -9,6 +9,8 @@ import {
   getCreditStatus,
   getCreditStatusLabel,
   getCreditStatusColor,
+  getWebOrderStatusLabel,
+  getWebOrderStatusColor,
   round,
   parseDateInput,
 } from './labels'
@@ -81,6 +83,30 @@ describe('getPaymentMethodLabel', () => {
 
   it('returns the input for unknown values', () => {
     expect(getPaymentMethodLabel('CHEQUE')).toBe('CHEQUE')
+  })
+})
+
+describe('getWebOrderStatusLabel', () => {
+  it('returns correct label for known states', () => {
+    expect(getWebOrderStatusLabel('PENDING')).toBe('Pendiente')
+    expect(getWebOrderStatusLabel('CONVERTED')).toBe('Convertido')
+    expect(getWebOrderStatusLabel('CANCELLED')).toBe('Cancelado')
+  })
+
+  it('returns the input for unknown values', () => {
+    expect(getWebOrderStatusLabel('SHIPPED')).toBe('SHIPPED')
+  })
+})
+
+describe('getWebOrderStatusColor', () => {
+  it('returns tone classes for known states', () => {
+    expect(getWebOrderStatusColor('PENDING')).toContain('text-amber-700')
+    expect(getWebOrderStatusColor('CONVERTED')).toContain('text-green-700')
+    expect(getWebOrderStatusColor('CANCELLED')).toContain('text-red-700')
+  })
+
+  it('returns default for unknown values', () => {
+    expect(getWebOrderStatusColor('SHIPPED')).toContain('text-gray-700')
   })
 })
 

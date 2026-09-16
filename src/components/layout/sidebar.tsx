@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Store,
+  ShoppingBag,
   FileText,
   Settings,
   Keyboard,
@@ -19,6 +20,7 @@ import {
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { name: 'Ventas', href: '/sales', icon: ShoppingCart },
+  { name: 'Tienda online', href: '/web', icon: ShoppingBag },
   { name: 'Créditos', href: '/credits', icon: HandCoins },
   { name: 'Inventario', href: '/inventory', icon: Package },
   { name: 'Clientes', href: '/clients', icon: Users },
@@ -71,9 +73,7 @@ export function Sidebar() {
                 )}
               />
               <span className="flex-1">{item.name}</span>
-              {active && (
-                <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary animate-pulse" />
-              )}
+              {active && <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary animate-pulse" />}
             </Link>
           )
         })}
@@ -98,9 +98,7 @@ export function Sidebar() {
               )}
             />
             <span className="flex-1">Administración</span>
-            {pathname === '/admin' && (
-              <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary animate-pulse" />
-            )}
+            {pathname === '/admin' && <span className="h-1.5 w-1.5 rounded-full bg-sidebar-primary animate-pulse" />}
           </Link>
         </div>
       </nav>

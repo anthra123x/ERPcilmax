@@ -4,7 +4,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const protectedRoutes = ['/dashboard', '/inventory', '/repairs', '/admin', '/reports']
+  const protectedRoutes = ['/dashboard', '/inventory', '/repairs', '/admin', '/reports', '/web']
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
   const isAuthRoute = pathname === '/login'
 

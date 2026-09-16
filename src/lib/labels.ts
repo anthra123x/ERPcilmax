@@ -93,6 +93,24 @@ export function getCreditStatusColor(status: 'PAID' | 'OVERDUE' | 'PENDING'): st
   return colors[status] || 'text-gray-700 bg-gray-50 border-gray-200'
 }
 
+export function getWebOrderStatusLabel(status: string): string {
+  const labels: Record<string, string> = {
+    PENDING: 'Pendiente',
+    CONVERTED: 'Convertido',
+    CANCELLED: 'Cancelado',
+  }
+  return labels[status] || status
+}
+
+export function getWebOrderStatusColor(status: string): string {
+  const colors: Record<string, string> = {
+    PENDING: 'text-amber-700 bg-amber-50 border-amber-200',
+    CONVERTED: 'text-green-700 bg-green-50 border-green-200',
+    CANCELLED: 'text-red-700 bg-red-50 border-red-200',
+  }
+  return colors[status] || 'text-gray-700 bg-gray-50 border-gray-200'
+}
+
 export const round = (n: number): number => Math.round(n * 100) / 100
 
 export function parseDateInput(value: string | null | undefined, endOfDay = false): Date | null {

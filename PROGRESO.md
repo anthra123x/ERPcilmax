@@ -89,11 +89,26 @@ Commit en `main` de la tienda:
   deben apuntar a Neon con `schema=erp` (ya alineados; Supabase solo auth).
   En deploy, actualizar `DATABASE_URL`/`DIRECT_URL` y NO incluir Supabase DB.
 
-### Fase 3b — ERP: UI "Tienda online" ⏳ pendiente
+### Fase 3b — ERP: UI "Tienda online" ✅
 
-- Área de gestión en el panel (productos web: visibilidad, destacado, orden,
-  galería; pedidos web → conversión a venta POS; mensajes; reseñas; ajustes de
-  tema/WhatsApp). Server Actions tras `requireAuth` + tests.
+- Área `/web` en el panel: productos web (visibilidad `webVisible`, destacado
+  `webFeatured`, orden `webSortOrder`, galería), pedidos web → conversión a
+  venta POS, mensajes de contacto, reseñas y ajustes de tema/WhatsApp.
+- Nuevo módulo `src/modules/web/web.actions.ts` con Server Actions tras
+  `requireAuth` (getters admin, updateWebProduct, addWebMedia, removeWebMedia,
+  convertWebOrderToSale que reutiliza `createSale` pagando contado, cancel, leer/
+  borrar mensajes, aprobar/ocultar/borrar reseñas, updateWebSettings).
+- Schemas Zod en `src/lib/validations.ts`, helper `src/lib/slugify.ts` (con
+  tests), y labels `getWebOrderStatus{Label,Color}`.
+- 7 componentes cliente en `src/components/web/` + páginas `src/app/web/*`
+  (overview, products, products/[id], orders, orders/[id], messages, reviews,
+  settings) con `error.tsx`/`loading.tsx` por carpeta. `/web` protegido en
+  `proxy.ts` y enlazado en el sidebar ("Tienda online").
+- Flake de dev: `invalid type: unit value` (Prisma en Next webpack+WASM) mitigado
+  con `serverExternalPackages: ['@prisma/client', '@prisma/engines', 'prisma']`;
+  la verificación del runtime pasó 40/40 productos en estrés.
+- Verificación ✅: typecheck, eslint (sin errores nuevos) y 120 tests vitest;
+  build de producción compila todas las rutas `/web`.
 
 ### Fase 4 — Deprecación ⏳ pendiente
 
