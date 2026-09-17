@@ -2,7 +2,7 @@ import { getSaleById } from '@/modules/sales/sales.actions'
 import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/ui/page-header'
 import Link from 'next/link'
-import { ArrowLeft, Printer } from 'lucide-react'
+import { ArrowLeft, FileText, Printer } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -41,6 +41,14 @@ export default async function CreditDetailPage({ params }: CreditDetailPageProps
                 Imprimir Factura
               </Button>
             </Link>
+            {sale.paymentMethod === 'CREDITO' && (
+              <a href={`/api/sales/${sale.id}/credit-statement/pdf`}>
+                <Button variant="outline">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Estado de cuenta
+                </Button>
+              </a>
+            )}
           </div>
         }
       />

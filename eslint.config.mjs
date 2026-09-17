@@ -21,6 +21,14 @@ const eslintConfig = defineConfig([
       ],
     },
   },
+  {
+    // react-pdf primitives render to PDF, not the DOM, so DOM-oriented a11y
+    // rules such as the img alt-text check do not apply.
+    files: ["src/lib/pdf/**/*.tsx"],
+    rules: {
+      "jsx-a11y/alt-text": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",

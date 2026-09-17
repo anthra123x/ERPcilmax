@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { generateSaleInvoicePdf } from '@/lib/pdf'
+import { loadPdfSettings, renderInvoicePdf } from '@/lib/pdf'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -21,9 +21,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: 'Venta no encontrada' }, { status: 404 })
   }
 
-  const settings = await prisma.systemSettings.findFirst()
+  const settings = await loadPdfSettings()
 
-  const pdfBytes = generateSaleInvoicePdf(
+  const pdfBytes = await renderInvoicePdf(
     {
       id: sale.id,
       invoiceNumber: sale.invoiceNumber,
@@ -31,6 +31,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       discount: sale.discount,
       total: sale.total,
       paymentMethod: sale.paymentMethod,
+      status: sale.status,
       saleDate: sale.saleDate,
       dueDate: sale.dueDate,
       payments: sale.payments,
@@ -40,19 +41,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       user: sale.user,
       invoice: sale.invoice,
     },
-    settings
-      ? {
-          companyName: settings.companyName,
-          companyNit: settings.companyNit,
-          companyAddress: settings.companyAddress,
-          companyCity: settings.companyCity,
-          companyPhone: settings.companyPhone,
-          companyEmail: settings.companyEmail,
-          invoicePrefix: settings.invoicePrefix,
-          invoiceFooter: settings.invoiceFooter,
-          currency: settings.currency,
-        }
-      : undefined,
+    settings,
   )
 
   return new NextResponse(Buffer.from(pdfBytes), {

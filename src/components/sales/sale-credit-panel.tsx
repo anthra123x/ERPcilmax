@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Trash2 } from 'lucide-react'
+import { Receipt, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -168,6 +168,15 @@ export function SaleCreditPanel({ sale }: SaleCreditPanelProps) {
                           {p.notes && (
                             <span className="text-xs text-muted-foreground block text-right">{p.notes}</span>
                           )}
+                          <a
+                            href={`/api/sales/${sale.id}/receipt/${p.id}/pdf`}
+                            title="Descargar recibo"
+                            className="inline-flex"
+                          >
+                            <Button variant="ghost" size="sm">
+                              <Receipt className="h-4 w-4" />
+                            </Button>
+                          </a>
                           <Dialog open={confirmOpen === p.id} onOpenChange={(o) => setConfirmOpen(o ? p.id : null)}>
                             <DialogTrigger>
                               <Button
