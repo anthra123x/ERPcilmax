@@ -131,15 +131,45 @@ Commit en `main` de la tienda:
       `ERP_API_URL=https://gestion-inventario-iobfhfb8q-andres-camilo-martinez-s-projects.vercel.app`
       seteados en proyecto `cilmax`; `/catalogo` y `/api/search` devuelven
       los 10 productos del ERP (theme #008a93/#d4af37).
-- [ ] **Retirar el admin Astro** de la tienda (`admin/` + enlaces del menú y
-      sitemap) una vez el ERP esté estable en producción (confirmado estable).
+- [x] **Retirar el admin Astro** de la tienda: `git rm -r admin/` (30 archivos),
+      menos deps del `package.json` principal, sin enlaces en UI/sitemap.
+      Commit tienda `c8c2f85`.
+- [x] **Limpiar fallback/mocks** del storefront: `src/lib/medusa.ts` ahora es
+      ERP-only (sin fallback a Neon ni mocks); `GET /api/orders` admin sigue en
+      Neon legacy (uso interno).
+- [x] **Proxy de pedidos**: `POST /api/orders` del shop reescribe el body al
+      formato del ERP (`name→customerName`, `phone→customerPhone`, …) y reenvía a
+      `POST <ERP_API_URL>/api/web/orders`. Verificado en producción: crea la
+      orden con precio y total recalculados por el ERP.
 - [ ] **Archivar Neon (schema `public`)**: conservar como fallback documentado
       o desactivar cuando el ERP sea la única fuente.
-- [ ] **Limpiar fallback/mocks** del storefront (mock-data, modo `neon`) cuando
-      el ERP esté confirmado estable.
-- [ ] **Proxy de pedidos**: re-apuntar `POST /api/orders` del shop al
-      `POST /api/web/orders` del ERP (y opcionalmente el fire-and-forget
-      en el botón WhatsApp). Pendiente — el frontend usa WhatsApp puro hoy.
+
+#### Bugs de producción corregidos (conversión pedido → venta)
+
+Al probar el flujo real aparecieron 3 bugs que rompían **toda** venta y todo abono
+(el panel de la tienda no podía convertir pedidos). Corregidos y verificados
+end-to-end en producción:
+
+- [x] `convertWebOrderToSale` enviaba `initialPayment`/`initialPaymentMethod`
+      junto con `paymentMethod: 'CASH'`; `CreateSaleSchema.superRefine` los
+      rechaza (el anticipo solo aplica a ventas a crédito). Commit `3e1f910`.
+- [x] `createSale` exigía una fila en `system_settings` y lanzaba si faltaba;
+      la tabla estaba vacía → ninguna venta funcionaba. Ahora se auto-crea con
+      los defaults del schema (`3e1f910`).
+- [x] `createSale`/`registerPayment` usaban `categoryId = ''` cuando no existía
+      una categoría INCOME "Venta" → violaba `transactions_categoryId_fkey`.
+      Ahora `resolveSalesIncomeCategory` la crea si falta; además se corrió
+      `db:seed` (la BD no tenía **ninguna** categoría). Commit `1e3c4e8`.
+- [x] Timeout de transacción global a 15s (`src/lib/prisma.ts`): el default de
+      5s se agotaba contra el pooler de Neon y provocaba rollbacks.
+- [x] **Verificación en producción**: pedido de prueba creado vía el proxy del
+      shop → convertido en el panel → `status=CONVERTED`, `Sale` COMPLETED/CASH
+      por 480 000 COP, stock 5→4, `system_settings` 0→1, 1 `Transaction`.
+- Tests de regresión: `web.actions.test.ts` (4) y `sales.helpers.test.ts` (2);
+      126 tests vitest en total, typecheck limpio.
+
+> Nota: el ERP en Vercel está pinneado en `ERP_API_URL` de la tienda a un deploy
+> concreto; conviene apuntarlo al alias estable (`gestion-inventario-liart.vercel.app`).
 
 ## Bloqueos
 
