@@ -168,8 +168,9 @@ end-to-end en producción:
 - Tests de regresión: `web.actions.test.ts` (4) y `sales.helpers.test.ts` (2);
       126 tests vitest en total, typecheck limpio.
 
-> Nota: el ERP en Vercel está pinneado en `ERP_API_URL` de la tienda a un deploy
-> concreto; conviene apuntarlo al alias estable (`gestion-inventario-liart.vercel.app`).
+> `ERP_API_URL` de la tienda apuntaba a un deploy pinneado; se re-apuntó al alias
+> estable `https://gestion-inventario-liart.vercel.app` y la tienda fue
+> redesplegada y verificada (catálogo y proxy de pedidos funcionando).
 
 ## Bloqueos
 
