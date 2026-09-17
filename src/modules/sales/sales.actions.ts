@@ -6,6 +6,7 @@ import { CreateSaleSchema } from '@/lib/validations'
 import { requireAuth } from '@/modules/auth/auth.actions'
 import { parseError } from '@/lib/errors'
 import { parseDateInput } from '@/lib/labels'
+import { resolveSalesIncomeCategory } from './sales.helpers'
 
 export async function createSale(data: {
   clientId?: string | null
@@ -160,12 +161,7 @@ export async function createSale(data: {
       }
 
       // Categoría de ingreso para transacciones de venta
-      const incomeCategory =
-        (
-          await tx.category.findFirst({
-            where: { type: 'INCOME', name: { contains: 'Venta', mode: 'insensitive' } },
-          })
-        )?.id || ''
+      const incomeCategory = await resolveSalesIncomeCategory(tx)
 
       // Ingreso contable: contado → total de la venta; crédito → solo abono inicial
       if (paymentMethod === 'CREDITO') {

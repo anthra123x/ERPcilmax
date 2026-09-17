@@ -6,6 +6,7 @@ import { RegisterPaymentSchema } from '@/lib/validations'
 import { requireAuth } from '@/modules/auth/auth.actions'
 import { parseError } from '@/lib/errors'
 import { parseDateInput, getCreditStatus } from '@/lib/labels'
+import { resolveSalesIncomeCategory } from './sales.helpers'
 
 export async function registerPayment(input: {
   saleId: string
@@ -68,12 +69,7 @@ export async function registerPayment(input: {
         },
       })
 
-      const incomeCategory =
-        (
-          await tx.category.findFirst({
-            where: { type: 'INCOME', name: { contains: 'Venta', mode: 'insensitive' } },
-          })
-        )?.id || ''
+      const incomeCategory = await resolveSalesIncomeCategory(tx)
 
       await tx.transaction.create({
         data: {
