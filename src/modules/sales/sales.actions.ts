@@ -68,8 +68,10 @@ export async function createSale(data: {
       }
 
       // Get next invoice number
-      const settings = await tx.systemSettings.findFirst()
-      if (!settings) throw new Error('Configuración del sistema no encontrada')
+      let settings = await tx.systemSettings.findFirst()
+      if (!settings) {
+        settings = await tx.systemSettings.create({ data: {} })
+      }
 
       const invoiceNumber = `${settings.invoicePrefix}${settings.nextInvoiceNumber}`
 

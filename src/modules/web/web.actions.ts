@@ -304,8 +304,6 @@ export async function convertWebOrderToSale(id: string) {
       items,
       discount: 0,
       paymentMethod: 'CASH',
-      initialPayment: order.total,
-      initialPaymentMethod: 'CASH',
     })
 
     if (!result.success) return { error: result.error }
