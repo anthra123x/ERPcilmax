@@ -125,6 +125,108 @@ export async function updatePassword(newPassword: string) {
   }
 }
 
+export async function updateProfileName(name: string) {
+  await requireAuth()
+
+  const trimmedName = name?.trim()
+  if (!trimmedName) {
+    return { error: 'El nombre es obligatorio' }
+  }
+
+  try {
+    const { cookies } = await import('next/headers')
+    const { createServerClient } = await import('@supabase/ssr')
+
+    const cookieStore = await cookies()
+
+    const client = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          },
+        },
+      },
+    )
+
+    const {
+      data: { user },
+    } = await client.auth.getUser()
+
+    if (!user?.email) {
+      return { error: 'Sesión no válida' }
+    }
+
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { name: trimmedName },
+    })
+
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { supabaseAdmin } = await import('@/lib/supabase-server')
+      await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...(user.user_metadata || {}), name: trimmedName },
+      })
+    }
+
+    revalidatePath('/profile')
+    return { success: 'Perfil actualizado' }
+  } catch (_error) {
+    return { error: 'Error al actualizar el perfil' }
+  }
+}
+
+export async function requestPasswordReset(email: string) {
+  const trimmedEmail = email?.trim()
+  if (!trimmedEmail) {
+    return { error: 'Ingresa tu correo electrónico' }
+  }
+
+  try {
+    const { cookies, headers } = await import('next/headers')
+    const { createServerClient } = await import('@supabase/ssr')
+
+    const cookieStore = await cookies()
+    const headerStore = await headers()
+    const protocol = headerStore.get('x-forwarded-proto') || 'http'
+    const host = headerStore.get('host') || 'localhost:3000'
+    const origin = `${protocol}://${host}`
+
+    const client = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      {
+        cookies: {
+          getAll() {
+            return cookieStore.getAll()
+          },
+          setAll(cookiesToSet) {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
+          },
+        },
+      },
+    )
+
+    const { error } = await client.auth.resetPasswordForEmail(trimmedEmail, {
+      redirectTo: `${origin}/auth/update-password`,
+    })
+
+    if (error) {
+      console.error('requestPasswordReset error:', error.message)
+      return { error: 'No se pudo enviar el correo de recuperación. Inténtalo de nuevo.' }
+    }
+
+    return { success: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' }
+  } catch (_error) {
+    return { error: 'Error inesperado al solicitar el restablecimiento' }
+  }
+}
+
 export async function getUsers() {
   await requireAuth()
   return await prisma.user.findMany({

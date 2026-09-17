@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { User, Mail, Calendar, Loader2 } from 'lucide-react'
-import { getCurrentUser, updatePassword } from '@/modules/auth/auth.actions'
+import { getCurrentUser, updatePassword, updateProfileName } from '@/modules/auth/auth.actions'
 import { ChangePasswordSchema } from '@/lib/validations'
 import { toast } from 'sonner'
 
@@ -39,11 +39,18 @@ export default function ProfilePage() {
 
   async function handleSave() {
     setSaving(true)
-    // TODO: Implementar actualización de perfil cuando el backend lo soporte
-    await new Promise((r) => setTimeout(r, 500))
-    if (user) setUser({ ...user, name })
-    setIsEditing(false)
+
+    const result = await updateProfileName(name)
+
     setSaving(false)
+
+    if (result?.error) {
+      toast.error(result.error)
+      return
+    }
+
+    if (user) setUser({ ...user, name: name.trim() })
+    setIsEditing(false)
     toast.success('Perfil actualizado')
   }
 

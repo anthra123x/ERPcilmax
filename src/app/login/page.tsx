@@ -6,12 +6,16 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClientSupabase } from '@/lib/supabase'
-import { ensureUserExists } from '@/modules/auth/auth.actions'
-import { LogIn, AlertCircle, Loader2 } from 'lucide-react'
+import { ensureUserExists, requestPasswordReset } from '@/modules/auth/auth.actions'
+import { LogIn, AlertCircle, Loader2, ArrowLeft, KeyRound, MailCheck } from 'lucide-react'
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [recover, setRecover] = useState(false)
+  const [recoveryEmail, setRecoveryEmail] = useState('')
+  const [recoveryLoading, setRecoveryLoading] = useState(false)
+  const [recoveryMessage, setRecoveryMessage] = useState('')
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -51,6 +55,24 @@ export default function LoginPage() {
     }
   }
 
+  async function handleRecover(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setRecoveryLoading(true)
+    setRecoveryMessage('')
+    setError('')
+
+    const result = await requestPasswordReset(recoveryEmail)
+
+    setRecoveryLoading(false)
+
+    if (result?.error) {
+      setError(result.error)
+      return
+    }
+
+    setRecoveryMessage(result?.success || 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.')
+  }
+
   return (
     <div className="relative flex min-h-dvh w-full flex-col items-center overflow-hidden bg-background">
       <div className="absolute inset-0 bg-mesh opacity-70 pointer-events-none" />
@@ -81,63 +103,141 @@ export default function LoginPage() {
             <p className="text-sm text-gray-600">Inicia sesión para acceder a tu panel</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-semibold text-foreground">
-                Email
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                autoComplete="email"
-                placeholder="tu@email.com"
-                required
-                disabled={isLoading}
-                className="h-12"
-              />
+          {recover ? (
+            <div className="mt-8">
+              <form onSubmit={handleRecover} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="recoveryEmail" className="text-sm font-semibold text-foreground">
+                    Email
+                  </Label>
+                  <Input
+                    id="recoveryEmail"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="tu@email.com"
+                    required
+                    disabled={recoveryLoading}
+                    value={recoveryEmail}
+                    onChange={(e) => setRecoveryEmail(e.target.value)}
+                    className="h-12"
+                  />
+                </div>
+                {error && (
+                  <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
+                    <AlertCircle className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                {recoveryMessage && (
+                  <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2.5 text-sm text-primary animate-fade-in">
+                    <MailCheck className="h-4 w-4 shrink-0" />
+                    <span>{recoveryMessage}</span>
+                  </div>
+                )}
+                <Button
+                  type="submit"
+                  size="lg"
+                  className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
+                  disabled={recoveryLoading}
+                  aria-busy={recoveryLoading}
+                >
+                  {recoveryLoading ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Enviando enlace...
+                    </span>
+                  ) : (
+                    <span className="flex items-center gap-2">
+                      <KeyRound className="h-5 w-5" />
+                      Enviar enlace de recuperación
+                    </span>
+                  )}
+                </Button>
+              </form>
+              <button
+                type="button"
+                onClick={() => {
+                  setRecover(false)
+                  setError('')
+                  setRecoveryMessage('')
+                }}
+                className="mt-6 flex w-full items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Volver a iniciar sesión
+              </button>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-semibold text-foreground">
-                Contraseña
-              </Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                placeholder="Ingresa tu contraseña"
-                required
-                disabled={isLoading}
-                className="h-12"
-              />
-            </div>
-            {error && (
-              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
-                <AlertCircle className="h-4 w-4 shrink-0" />
-                <span>{error}</span>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-semibold text-foreground">
+                  Email
+                </Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="tu@email.com"
+                  required
+                  disabled={isLoading}
+                  className="h-12"
+                />
               </div>
-            )}
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
-              disabled={isLoading}
-              aria-busy={isLoading}
-            >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                  Iniciando sesión...
-                </span>
-              ) : (
-                <span className="flex items-center gap-2">
-                  <LogIn className="h-5 w-5" />
-                  Iniciar sesión
-                </span>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password" className="text-sm font-semibold text-foreground">
+                    Contraseña
+                  </Label>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setRecover(true)
+                      setError('')
+                    }}
+                    className="text-xs text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ¿Olvidaste tu contraseña?
+                  </button>
+                </div>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  autoComplete="current-password"
+                  placeholder="Ingresa tu contraseña"
+                  required
+                  disabled={isLoading}
+                  className="h-12"
+                />
+              </div>
+              {error && (
+                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
               )}
-            </Button>
-          </form>
+              <Button
+                type="submit"
+                size="lg"
+                className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
+                disabled={isLoading}
+                aria-busy={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    Iniciando sesión...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    <LogIn className="h-5 w-5" />
+                    Iniciar sesión
+                  </span>
+                )}
+              </Button>
+            </form>
+          )}
         </div>
       </main>
 

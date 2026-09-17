@@ -172,6 +172,22 @@ end-to-end en producción:
 > estable `https://gestion-inventario-liart.vercel.app` y la tienda fue
 > redesplegada y verificada (catálogo y proxy de pedidos funcionando).
 
+### Acceso y autenticación (trimestre: `erp.users` estaba vacío tras el traspaso)
+
+- [x] **Registrar cuentas reales en `erp.users`**: la tabla quedó vacía en la
+      migración (el login de la Fase 3b busca al usuario por email en `erp.users`);
+      sin fila, toda ruta protegida redirigía a `/login` (percepción de
+      "dashboard/tienda online no cargan"). Creadas las filas de
+      `admin@cilmax.com` (Admin Cilmax) y `andrescamilomartinez330@gmail.com`
+      (andres); el login también las auto-crea con `ensureUserExists`.
+- [x] **Perfil: actualizar nombre de verdad** — antes solo cambiaba el estado local
+      (fake). Nuevo `updateProfileName` persiste en `erp.users` y sincroniza el
+      `user_metadata` de Supabase.
+- [x] **Recuperación de contraseña en `/login`**: nuevo vínculo "¿Olvidaste tu
+      contraseña?" → `requestPasswordReset` (Supabase `resetPasswordForEmail`) y
+      nueva página `/auth/update-password` que intercambia el código de
+      recuperación y define la nueva contraseña.
+
 ## Bloqueos
 
 - Host directo de Neon no alcanzable desde esta máquina (`P1001`) → usar siempre
