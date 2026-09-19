@@ -15,6 +15,7 @@ import {
   DollarSign,
   ShoppingCart,
   HandCoins,
+  Bot,
 } from 'lucide-react'
 
 const navigation = [
@@ -26,6 +27,7 @@ const navigation = [
   { name: 'Clientes', href: '/clients', icon: Users },
   { name: 'Finanzas', href: '/finances', icon: DollarSign },
   { name: 'Reportes', href: '/reports', icon: FileText },
+  { name: 'Asistente IA', href: '/assistant', icon: Bot },
 ]
 
 export function Sidebar() {

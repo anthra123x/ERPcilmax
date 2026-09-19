@@ -22,7 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Charts | Ninguno | - | Gráficos server-side; `recharts` instalado pero sin uso |
 | PDF | @react-pdf/renderer | 4.9.0 | Facturas POS, estado de cuenta y recibos (`/print` + `/api/sales/*/pdf`) |
 | Excel | xlsx (SheetJS) | 0.18.5 | Exportación de reportes |
-| Testing | Vitest | 4.1.7 | 148 tests en 14 files |
+| Testing | Vitest | 4.1.7 | 193 tests en 19 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
 | Monitoreo | @sentry/nextjs | 10.53.1 | Instalado; DSN en `.env` (dashboard sin activar) |
@@ -34,7 +34,7 @@ npm run dev         # Dev server (http://localhost:3000) + React Scan for rerend
 npm run build       # Prisma generate + Next build (usa Webpack + WASM SWC)
 npm run lint        # ESLint (incluye detección de imports muertos)
 npm run typecheck   # TypeScript check sin emitir
-npm run test        # Vitest (148 tests)
+npm run test        # Vitest (193 tests)
 npm run db:push     # Sync schema a DB (dev)
 npm run db:studio   # Prisma Studio
 npm run db:migrate  # Crear migración
@@ -67,15 +67,16 @@ src/
 │   │   ├── messages/       # Mensajes de contacto
 │   │   └── settings/       # Configuración de la tienda
 │   ├── inventory/          # CRUD productos, movimientos de stock
+│   ├── assistant/          # Asistente IA conversacional (/assistant)
 │   ├── login/              # Login con Supabase
 │   ├── orders/             # Gestión de pedidos online
 │   ├── print/              # Impresión de facturas (ruta unificada)
 │   ├── profile/            # Perfil de usuario (datos reales de sesión)
 │   ├── register/           # Redirige a /login (solo admin crea usuarios)
-│   ├── repairs/            # CRUD reparaciones con partes
-│   ├── reports/            # Reportes (ventas, inventario, reparaciones, clientes)
+│   ├── reports/            # Reportes (ventas, inventario, clientes)
 │   └── sales/              # POS ventas con carrito y descuentos
 ├── components/
+│   ├── assistant/          # UI del asistente IA (assistant-chat.tsx)
 │   ├── forms/              # Formularios complejos (sale-form, product-form)
 │   ├── layout/             # Sidebar, Header, DashboardLayout
 │   └── ui/                 # shadcn/ui + Base UI components (24 components)
@@ -92,15 +93,16 @@ src/
 │   ├── prisma.ts           # Prisma Client singleton
 │   └── utils.ts            # cn() utility (clsx + tailwind-merge)
 ├── modules/
-│   ├── auth/               # getCurrentUser, requireAdmin, requireAuth, CRUD usuarios
+│   ├── auth/               # getCurrentUser, requireAuth, CRUD usuarios
 │   ├── cleanup/            # Backup/export y cleanup datos
 │   ├── clients/            # CRUD clientes
-│   ├── dashboard/          # Stats dashboard (ventas hoy, repairs ready, pedidos)
+│   ├── dashboard/          # Stats dashboard (ventas hoy, pedidos)
 │   ├── web/                # Catálogo online CRUD + pedidos web (web.actions, web.service, web.helpers)
 │   ├── inventory/          # Productos CRUD + movimientos stock (incl. RESERVATION/RELEASE)
 │   ├── sales/              # Ventas POS + createSale (acepta `stockReserved`)
-│   ├── reports/            # Reportes (ventas, inventario, reparaciones, clientes)
+│   ├── reports/            # Reportes (ventas, inventario, clientes, canal web/POS)
 │   ├── settings/           # Configuración del sistema
+│   ├── ai/                 # Asistente IA (ai.actions, ai.service, ai.providers, ai.rotation, ai.tools, ai.mock)
 │   └── ...                 # audit, finance, notifications, search, suppliers
 ├── proxy.ts                # Middleware Supabase Auth (detectado por Next.js 16 build)
 ├── middleware.ts            # NO EXISTE — proxy.ts hace el rol
@@ -165,6 +167,30 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 - El pedido nace `PENDING` (sin reserva); el admin lo confirma en `/web/orders` y ahí se descuenta el stock
 - Storefront NUNCA escribe stock, productos ni datos de la tienda
 
+## Asistente IA (`/assistant`)
+
+- Asistente virtual con **contexto del negocio**: al inicio de cada turno se calcula un snapshot en vivo
+  (ventas hoy/mes, crédito pendiente, inventario, pedidos web, clientes) que viaja en el system prompt.
+- **Multi-agente**: la variable `AI_PROVIDER_KEYS` es un JSON array; cada entrada es un agente
+  (provider + key + modelo opcional + baseUrl opcional para OpenAI-compatible). Soportados:
+  `openai`, `anthropic`, `google`. Modelos default: `gpt-4o-mini`, `claude-3-5-haiku-20241022`, `gemini-1.5-flash`.
+- **Rotación automática**: si un agente devuelve `insufficient_quota` (429) o rate limit, entra en cooldown
+  en memoria (`src/modules/ai/ai.rotation.ts`) y el sistema prueba el siguiente. Si todos fallan, cae al **mock**.
+- **Modo mock** (sin `AI_PROVIDER_KEYS`): responde con datos reales de las herramientas (unidad de negocio),
+  con disclaimer. Sirve para desarrollo y demo.
+- **Herramientas read-only** (`src/modules/ai/ai.tools.ts`): sales_summary, inventory_status, web_orders_status,
+  recent_sales, client_summary, pending_credit, contact_messages, finance_summary, business_snapshot.
+  NUNCA escriben en la BD. El agente responde con JSON `{"text":...}` o `{"tool":...,"args":...}`.
+- **Auth**: toda action del módulo IA llama `requireAuth()`. El chat vive en `/assistant` (cliente).
+- Ejemplo de `AI_PROVIDER_KEYS`:
+  ```json
+  [
+    {"provider":"openai","key":"sk-...","model":"gpt-4o-mini"},
+    {"provider":"anthropic","key":"sk-ant-...","model":"claude-3-5-haiku-20241022"},
+    {"provider":"google","key":"AIza...","model":"gemini-1.5-flash"}
+  ]
+  ```
+
 ## Tooling disponible
 
 | Herramienta | Para qué | Cómo usarlo |
@@ -172,7 +198,7 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 | ESLint + unused-imports | Detecta imports/vars sin uso | `npm run lint` |
 | Prettier | Formateo consistente | `npx prettier --write src/` |
 | React Scan | Detecta rerenders innecesarios | Se activa SOLO en dev automáticamente |
-| Vitest | Tests unitarios (77 tests) | `npm test` |
+| Vitest | Tests unitarios (193 tests) | `npm test` |
 | TypeScript strict | Type safety | `npm run typecheck` |
 | Zod 4 | Validación runtime | Schemas en `@/lib/validations.ts` |
 
