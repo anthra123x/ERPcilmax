@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Eye } from 'lucide-react'
+import { Eye, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -7,7 +7,9 @@ import { Badge } from '@/components/ui/badge'
 import { PageHeader } from '@/components/ui/page-header'
 import { EmptyState } from '@/components/ui/empty-state'
 import { formatCurrency } from '@/lib/format'
-import { getAdminWebOrders } from '@/modules/web/web.actions'
+import { cancelExpiredWebOrders, getAdminWebOrders } from '@/modules/web/web.actions'
+import { getWebSettings } from '@/modules/web/web.service'
+import { buildWhatsAppHref, buildWhatsAppOrderMessage } from '@/modules/web/web.helpers'
 import { getWebOrderStatusLabel, getWebOrderStatusColor } from '@/lib/labels'
 import { WebOrderActions } from '@/components/web/web-order-actions'
 import { WebOrderSearch } from '@/components/web/web-order-search'
@@ -35,7 +37,11 @@ export default async function WebOrdersPage({
   const buscar = sp.buscar || ''
   const pageSize = 20
 
-  const { orders, total, totalPages } = await getAdminWebOrders(estado, page, pageSize, buscar)
+  await cancelExpiredWebOrders()
+  const [settings, { orders, total, totalPages }] = await Promise.all([
+    getWebSettings(),
+    getAdminWebOrders(estado, page, pageSize, buscar),
+  ])
 
   const estadoHref = (e: string) => `/web/orders?${new URLSearchParams({ estado: e }).toString()}`
   const pageHref = (p: number) =>
@@ -113,6 +119,28 @@ export default async function WebOrdersPage({
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-2">
+                          {(o.status === 'PENDING' || o.status === 'CONFIRMED') && o.customerPhone && (
+                            <a
+                              href={buildWhatsAppHref(
+                                o.customerPhone,
+                                buildWhatsAppOrderMessage({
+                                  storeName: settings.storeName,
+                                  customerName: o.customerName,
+                                  reference: o.reference,
+                                  status: o.status,
+                                  items: o.items,
+                                  total: o.total,
+                                }),
+                              )}
+                              target="_blank"
+                              rel="noreferrer"
+                              title="Enviar mensaje por WhatsApp"
+                            >
+                              <Button variant="outline" size="icon-sm" className="text-green-600">
+                                <MessageCircle className="h-4 w-4" />
+                              </Button>
+                            </a>
+                          )}
                           <WebOrderActions orderId={o.id} status={o.status} />
                           <Link href={`/web/orders/${o.id}`}>
                             <Button variant="outline" size="icon-sm" title="Ver detalle">

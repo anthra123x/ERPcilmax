@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ArrowLeft, ExternalLink, Phone } from 'lucide-react'
+import { ArrowLeft, ExternalLink, MessageCircle } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,6 +7,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency } from '@/lib/format'
 import { getAdminWebOrderById } from '@/modules/web/web.actions'
+import { getWebSettings } from '@/modules/web/web.service'
+import { buildWhatsAppHref, buildWhatsAppOrderMessage } from '@/modules/web/web.helpers'
 import { getWebOrderStatusLabel, getWebOrderStatusColor } from '@/lib/labels'
 import { WebOrderActions } from '@/components/web/web-order-actions'
 
@@ -25,12 +27,23 @@ function fmtDate(d: Date | null) {
 
 export default async function WebOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const order = await getAdminWebOrderById(id)
+  const [order, settings] = await Promise.all([getAdminWebOrderById(id), getWebSettings()])
   if (!order) notFound()
 
-  const waLink = order.customerPhone
-    ? `https://wa.me/${order.customerPhone.replace(/[^0-9]/g, '')}${order.notes ? `?text=${encodeURIComponent(`Hola ${order.customerName}, soy ${'Cilmax'}. ${order.notes}`)}` : ''}`
-    : null
+  const waMessage =
+    order.status === 'PENDING' || order.status === 'CONFIRMED'
+      ? buildWhatsAppHref(
+          order.customerPhone,
+          buildWhatsAppOrderMessage({
+            storeName: settings.storeName,
+            customerName: order.customerName,
+            reference: order.reference,
+            status: order.status,
+            items: order.items,
+            total: order.total,
+          }),
+        )
+      : null
 
   return (
     <div className="page-container py-6 space-y-6">
@@ -98,10 +111,10 @@ export default async function WebOrderDetailPage({ params }: { params: Promise<{
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                 <WebOrderActions orderId={order.id} status={order.status} />
-                {waLink && (
-                  <a href={waLink} target="_blank" rel="noreferrer">
-                    <Button variant="outline" size="sm">
-                      <Phone className="h-4 w-4" /> Abrir WhatsApp
+                {waMessage && (
+                  <a href={waMessage} target="_blank" rel="noreferrer">
+                    <Button variant="outline" size="sm" className="text-green-600">
+                      <MessageCircle className="h-4 w-4" /> Enviar por WhatsApp
                     </Button>
                   </a>
                 )}

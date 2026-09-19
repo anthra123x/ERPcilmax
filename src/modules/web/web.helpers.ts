@@ -1,4 +1,5 @@
 import { toSlug } from '@/lib/slugify'
+import { formatCurrency } from '@/lib/format'
 
 /**
  * Helpers puros del módulo Tienda online (sin I/O), reutilizados por el panel y
@@ -83,4 +84,36 @@ export interface AdminWebProductRow {
   reviewCount: number
   readiness: WebReadiness
   stockStatus: WebStockStatus
+}
+
+export interface WhatsAppOrderMessageInput {
+  storeName: string
+  customerName: string
+  reference: string | null
+  status: 'PENDING' | 'CONFIRMED'
+  items: Array<{ productName: string; quantity: number }>
+  total: number
+}
+
+/**
+ * Arma el mensaje de WhatsApp que el admin puede enviarle al cliente desde el
+ * panel de pedidos web. Incluye referencia ORD, productos y total.
+ */
+export function buildWhatsAppOrderMessage(input: WhatsAppOrderMessageInput): string {
+  const lines = [
+    `Hola ${input.customerName}, te escribimos de ${input.storeName}.`,
+    `Tu pedido ${input.reference ?? 'recién recibido'}:`,
+    ...input.items.map((item) => `• ${item.productName} ×${item.quantity}`),
+    `Total: ${formatCurrency(input.total)}`,
+    input.status === 'PENDING'
+      ? 'Recibimos tu pedido y estamos confirmando disponibilidad. Te avisamos en breve.'
+      : 'Tu pedido está confirmado y te tenemos los productos apartados. Coordinamos el pago y la entrega por aquí.',
+  ]
+  return lines.join('\n')
+}
+
+/** Enlace wa.me con el mensaje pre-armado (vacío si el teléfono no tiene dígitos). */
+export function buildWhatsAppHref(phone: string, message: string): string {
+  const digits = phone.replace(/[^0-9]/g, '')
+  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(message)}` : ''
 }

@@ -11,7 +11,7 @@ import { Textarea } from '@/components/ui/textarea'
 import type { WebSettings } from '@/modules/web/web.types'
 
 interface WebSettingsFormProps {
-  settings: WebSettings
+  settings: WebSettings & { webPendingExpiryHours?: number }
   onSave: (formData: FormData) => Promise<{ success?: string; error?: string }>
 }
 
@@ -23,6 +23,7 @@ export function WebSettingsForm({ settings, onSave }: WebSettingsFormProps) {
     whatsapp: settings.whatsapp || '',
     email: settings.email || '',
     shippingInfo: settings.shippingInfo || '',
+    webPendingExpiryHours: String(settings.webPendingExpiryHours ?? 24),
     primaryColor: settings.theme.primaryColor,
     goldColor: settings.theme.goldColor,
   })
@@ -41,6 +42,7 @@ export function WebSettingsForm({ settings, onSave }: WebSettingsFormProps) {
     fd.set('whatsapp', form.whatsapp)
     fd.set('email', form.email)
     fd.set('shippingInfo', form.shippingInfo)
+    fd.set('webPendingExpiryHours', form.webPendingExpiryHours)
     fd.set('primaryColor', form.primaryColor)
     fd.set('goldColor', form.goldColor)
 
@@ -92,6 +94,22 @@ export function WebSettingsForm({ settings, onSave }: WebSettingsFormProps) {
               value={form.shippingInfo}
               onChange={(e) => set('shippingInfo', e.target.value)}
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="webPendingExpiryHours">Cancelar pedidos sin confirmar después de (horas)</Label>
+            <Input
+              id="webPendingExpiryHours"
+              type="number"
+              min={1}
+              max={720}
+              value={form.webPendingExpiryHours}
+              onChange={(e) => set('webPendingExpiryHours', e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Los pedidos PENDING más antiguos que este límite se cancelan automáticamente para no bloquear la
+              bandeja de confirmación.
+            </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

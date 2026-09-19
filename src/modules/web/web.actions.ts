@@ -785,7 +785,12 @@ export async function deleteWebReview(id: string) {
 
 export async function getAdminWebSettings() {
   await requireAuth()
-  return await getWebSettings()
+
+  const [webSettings, systemSettings] = await Promise.all([getWebSettings(), prisma.systemSettings.findFirst()])
+  return {
+    ...webSettings,
+    webPendingExpiryHours: systemSettings?.webPendingExpiryHours ?? 24,
+  }
 }
 
 export async function updateWebSettings(formData: FormData) {
@@ -796,6 +801,7 @@ export async function updateWebSettings(formData: FormData) {
     whatsapp: getString(formData, 'whatsapp') || '',
     email: getString(formData, 'email') || '',
     shippingInfo: getString(formData, 'shippingInfo') || '',
+    webPendingExpiryHours: getNumber(formData, 'webPendingExpiryHours') ?? 24,
     primaryColor: getString(formData, 'primaryColor') || '#008a93',
     goldColor: getString(formData, 'goldColor') || '#d4af37',
   })
@@ -829,6 +835,16 @@ export async function updateWebSettings(formData: FormData) {
         update: { value: { primaryColor: d.primaryColor, goldColor: d.goldColor } },
       }),
     ])
+
+    const existing = await prisma.systemSettings.findFirst()
+    if (existing) {
+      await prisma.systemSettings.update({
+        where: { id: existing.id },
+        data: { webPendingExpiryHours: d.webPendingExpiryHours },
+      })
+    } else {
+      await prisma.systemSettings.create({ data: { webPendingExpiryHours: d.webPendingExpiryHours } })
+    }
   } catch (error) {
     return { error: parseError(error, 'No se pudieron guardar los ajustes').message }
   }
@@ -836,4 +852,32 @@ export async function updateWebSettings(formData: FormData) {
   revalidatePath('/web/settings')
   revalidatePath('/web')
   return { success: 'Ajustes de la tienda guardados' }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Expiración automática de pedidos pendientes
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Cancela pedidos PENDING que superaron `webPendingExpiryHours` horas sin ser
+ * confirmados. No toca CONFIRMED (que ya tiene stock reservado) y no ejecuta
+ * ninguna operación de stock: la reserva solo ocurre al confirmar.
+ */
+export async function cancelExpiredWebOrders() {
+  await requireAuth()
+
+  const settings = await prisma.systemSettings.findFirst()
+  const hours = settings?.webPendingExpiryHours ?? 24
+  const cutoff = new Date(Date.now() - hours * 3600_000)
+
+  const res = await prisma.webOrder.updateMany({
+    where: { status: 'PENDING', createdAt: { lt: cutoff } },
+    data: { status: 'CANCELLED' },
+  })
+
+  if (res.count > 0) {
+    revalidatePath('/web/orders')
+    revalidatePath('/web')
+  }
+  return { count: res.count }
 }

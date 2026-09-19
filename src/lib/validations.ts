@@ -265,6 +265,7 @@ export const UpdateWebSettingsSchema = z.object({
   whatsapp: z.string().trim().max(30, 'Número de WhatsApp inválido').optional().default(''),
   email: z.string().trim().email('Email inválido').optional().or(z.literal('')).default(''),
   shippingInfo: z.string().trim().max(2000, 'La información de envío es demasiado larga').optional().default(''),
+  webPendingExpiryHours: z.coerce.number().int().min(1, 'Mínimo 1 hora').max(720, 'Máximo 720 horas').default(24),
   primaryColor: z
     .string()
     .trim()

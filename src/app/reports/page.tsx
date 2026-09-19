@@ -105,7 +105,7 @@ export default function ReportsPage() {
     setLoading(true)
     try {
       let result
-      if (selectedReport === 'sales') {
+      if (selectedReport === 'sales' || selectedReport === 'channel') {
         result = await exportSalesToExcel()
       } else if (selectedReport === 'inventory') {
         result = await exportInventoryToExcel()
@@ -133,6 +133,7 @@ export default function ReportsPage() {
   const reportTitle = useMemo(() => {
     if (selectedReport === 'sales') return 'Reporte de Ventas'
     if (selectedReport === 'inventory') return 'Reporte de Inventario'
+    if (selectedReport === 'channel') return 'Ventas por Canal'
     return 'Reporte de Clientes'
   }, [selectedReport])
 
@@ -158,6 +159,9 @@ export default function ReportsPage() {
         />
       )
     }
+    if (selectedReport === 'channel') {
+      return <ChannelDetails data={(reportData as { sales: unknown[] }).sales || []} />
+    }
     return (
       <ClientsDetails
         data={(reportData as { clients: unknown[] }).clients || []}
@@ -166,7 +170,6 @@ export default function ReportsPage() {
         detailSearch={detailSearch}
       />
     )
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportData, selectedReport, sortKey, sortDir, detailSearch])
 
   return (
@@ -198,11 +201,12 @@ export default function ReportsPage() {
                   <SelectItem value="sales">Ventas</SelectItem>
                   <SelectItem value="inventory">Inventario</SelectItem>
                   <SelectItem value="clients">Clientes</SelectItem>
+                  <SelectItem value="channel">Ventas por canal</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
-            {(selectedReport === 'sales' || selectedReport === 'clients') && (
+            {(selectedReport === 'sales' || selectedReport === 'clients' || selectedReport === 'channel') && (
               <>
                 <div>
                   <Label htmlFor="startDate">Fecha Inicio</Label>
@@ -311,6 +315,49 @@ export default function ReportsPage() {
 }
 
 function ReportSummary({ reportType, data }: { reportType: string; data: unknown }) {
+  if (reportType === 'channel') {
+    const summary = (
+      data as {
+        summary: {
+          totalSales: number
+          webSales: number
+          posSales: number
+          webRevenue: number
+          posRevenue: number
+          webPercentage: number
+        }
+      }
+    ).summary
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 md:grid-cols-4">
+          <MetricCard title="Total Ventas" value={summary.totalSales} />
+          <MetricCard title="Ventas Web" value={summary.webSales} className="text-primary" />
+          <MetricCard title="Ventas POS" value={summary.posSales} className="text-orange-600" />
+          <MetricCard title="% Web" value={`${summary.webPercentage}%`} className="text-green-600" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <MetricCard title="Ingresos por Web" value={formatCurrency(summary.webRevenue)} className="text-primary" />
+          <MetricCard title="Ingresos por POS" value={formatCurrency(summary.posRevenue)} className="text-orange-600" />
+        </div>
+        <div>
+          <div className="flex h-4 w-full overflow-hidden rounded-full bg-muted">
+            <div
+              className="bg-primary transition-all"
+              style={{ width: `${summary.webPercentage}%` }}
+              title={`Web ${summary.webPercentage}%`}
+            />
+            <div
+              className="bg-orange-400 transition-all"
+              style={{ width: `${100 - summary.webPercentage}%` }}
+              title={`POS ${100 - summary.webPercentage}%`}
+            />
+          </div>
+          <p className="mt-1 text-xs text-muted-foreground">Distribución de ventas por canal</p>
+        </div>
+      </div>
+    )
+  }
   if (reportType === 'sales') {
     const summary = (
       data as { summary: { totalSales: number; totalRevenue: number; discountSum: number; averageSale: number } }
@@ -355,6 +402,54 @@ function ReportSummary({ reportType, data }: { reportType: string; data: unknown
       <MetricCard title="Gasto Total" value={formatCurrency(summary.totalSpent)} className="text-green-600" />
       <MetricCard title="Gasto Promedio" value={formatCurrency(summary.averageSpent)} className="text-purple-600" />
       <MetricCard title="Nuevos Clientes" value={summary.newClients} className="text-primary" />
+    </div>
+  )
+}
+
+function ChannelDetails({ data }: { data: unknown[] }) {
+  if (data.length === 0)
+    return <EmptyState message="No hay ventas registradas en este período" />
+
+  return (
+    <div className="border rounded-lg overflow-hidden">
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b bg-muted/50">
+              <Th>Factura</Th>
+              <Th>Fecha</Th>
+              <Th>Cliente</Th>
+              <Th>Canal</Th>
+              <Th className="text-right">Total</Th>
+              <Th>Estado</Th>
+            </tr>
+          </thead>
+          <tbody>
+            {(data as Array<Record<string, unknown>>).map((sale) => (
+              <tr key={sale.id as string} className="border-b last:border-0 hover:bg-muted/30 transition-colors">
+                <td className="px-3 py-2.5 font-mono text-xs">{sale.invoiceNumber as string}</td>
+                <td className="px-3 py-2.5 text-muted-foreground text-xs">
+                  {new Date(sale.saleDate as string).toLocaleDateString('es-CO')}
+                </td>
+                <td className="px-3 py-2.5 font-medium">
+                  {(sale.client as Record<string, string> | null)?.name || 'Mostrador'}
+                </td>
+                <td className="px-3 py-2.5">
+                  <Badge variant={sale.channel === 'WEB' ? 'default' : 'outline'} className="text-xs">
+                    {sale.channel === 'WEB' ? 'Web' : 'POS'}
+                  </Badge>
+                </td>
+                <td className="px-3 py-2.5 text-right font-semibold">{formatCurrency(sale.total as number)}</td>
+                <td className="px-3 py-2.5">
+                  <Badge variant={sale.status === 'COMPLETED' ? 'default' : 'destructive'} className="text-xs">
+                    {sale.status === 'COMPLETED' ? 'Completada' : 'Anulada'}
+                  </Badge>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

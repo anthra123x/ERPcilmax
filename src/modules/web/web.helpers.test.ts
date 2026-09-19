@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { computeStockStatus, computeWebReadiness, buildUniqueSlug } from './web.helpers'
+import {
+  computeStockStatus,
+  computeWebReadiness,
+  buildUniqueSlug,
+  buildWhatsAppOrderMessage,
+  buildWhatsAppHref,
+} from './web.helpers'
+import { formatCurrency } from '@/lib/format'
+import type { WhatsAppOrderMessageInput } from './web.helpers'
 
 describe('computeStockStatus', () => {
   it('returns OUT when stock is 0 or negative', () => {
@@ -69,5 +77,51 @@ describe('buildUniqueSlug', () => {
   it('returns a fallback when the name produces an empty slug', async () => {
     const slug = await buildUniqueSlug('###', async () => false)
     expect(slug).toMatch(/^producto-/)
+  })
+})
+
+describe('buildWhatsAppOrderMessage', () => {
+  const base: WhatsAppOrderMessageInput = {
+    storeName: 'Cilmax',
+    customerName: 'Ana',
+    reference: 'ORD-1042',
+    status: 'PENDING',
+    items: [
+      { productName: 'Olla', quantity: 2 },
+      { productName: 'Juego de cubiertos', quantity: 1 },
+    ],
+    total: 579700,
+  }
+
+  it('includes reference, items and total', () => {
+    const message = buildWhatsAppOrderMessage(base)
+    expect(message).toContain('ORD-1042')
+    expect(message).toContain('Olla ×2')
+    expect(message).toContain('Juego de cubiertos ×1')
+    expect(message).toContain(formatCurrency(579700))
+    expect(message).toContain('Cilmax')
+  })
+
+  it('adapts the note for a pending order', () => {
+    const message = buildWhatsAppOrderMessage({ ...base, status: 'PENDING' })
+    expect(message).toContain('confirmando disponibilidad')
+  })
+
+  it('adapts the note for a confirmed order', () => {
+    const message = buildWhatsAppOrderMessage({ ...base, status: 'CONFIRMED' })
+    expect(message).toContain('confirmado')
+    expect(message).toContain('apartados')
+  })
+})
+
+describe('buildWhatsAppHref', () => {
+  it('builds a wa.me link with the encoded message', () => {
+    const href = buildWhatsAppHref('+57 300 123 45 67', 'Hola')
+    expect(href).toBe('https://wa.me/573001234567?text=Hola')
+  })
+
+  it('returns an empty string when the phone has no digits', () => {
+    expect(buildWhatsAppHref('', 'Hola')).toBe('')
+    expect(buildWhatsAppHref('abc', 'Hola')).toBe('')
   })
 })

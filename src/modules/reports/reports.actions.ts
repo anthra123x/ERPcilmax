@@ -90,6 +90,54 @@ export async function getSalesReport(filters?: {
   }
 }
 
+export async function getChannelReport(filters?: { startDate?: Date; endDate?: Date }) {
+  await requireAuth()
+  const dateFilter =
+    filters?.startDate && filters?.endDate
+      ? {
+          saleDate: {
+            gte: filters.startDate,
+            lte: filters.endDate,
+          },
+        }
+      : undefined
+
+  const sales = await prisma.sale.findMany({
+    where: dateFilter,
+    select: {
+      id: true,
+      invoiceNumber: true,
+      total: true,
+      status: true,
+      saleDate: true,
+      paymentMethod: true,
+      client: { select: { id: true, name: true } },
+      webOrders: { select: { id: true } },
+    },
+    orderBy: { saleDate: 'desc' },
+  })
+
+  const revenue = (rows: typeof sales) =>
+    rows.filter((s) => s.status === 'COMPLETED').reduce((sum, s) => sum + s.total, 0)
+
+  const webSales = sales.filter((s) => s.webOrders.length > 0)
+  const posSales = sales.filter((s) => s.webOrders.length === 0)
+  const webRevenue = revenue(webSales)
+  const posRevenue = revenue(posSales)
+
+  return {
+    sales: sales.map((s) => ({ ...s, channel: s.webOrders.length > 0 ? 'WEB' : 'POS' })),
+    summary: {
+      totalSales: sales.length,
+      webSales: webSales.length,
+      posSales: posSales.length,
+      webRevenue,
+      posRevenue,
+      webPercentage: sales.length > 0 ? Math.round((webSales.length / sales.length) * 100) : 0,
+    },
+  }
+}
+
 export async function getInventoryReport(filters?: { categoryId?: string; lowStockOnly?: boolean }) {
   await requireAuth()
 
@@ -225,6 +273,11 @@ export async function generateReportData(reportType: string, filters: ReportFilt
       })
     case 'clients':
       return await getClientsReport({
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+      })
+    case 'channel':
+      return await getChannelReport({
         startDate: filters.startDate,
         endDate: filters.endDate,
       })
