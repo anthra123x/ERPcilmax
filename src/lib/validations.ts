@@ -250,6 +250,16 @@ export const AddWebMediaSchema = z.object({
   alt: z.string().trim().max(200, 'El texto alternativo es demasiado largo').optional().default(''),
 })
 
+export const BulkUpdateWebProductsSchema = z
+  .object({
+    ids: z.array(z.string().min(1).max(64)).min(1, 'Selecciona al menos un producto').max(500, 'Demasiados productos'),
+    webVisible: z.boolean().optional(),
+    webFeatured: z.boolean().optional(),
+  })
+  .refine((d) => d.webVisible !== undefined || d.webFeatured !== undefined, {
+    message: 'Debes indicar al menos una propiedad a cambiar',
+  })
+
 export const UpdateWebSettingsSchema = z.object({
   storeName: z.string().trim().min(1, 'El nombre de la tienda es requerido').max(120),
   whatsapp: z.string().trim().max(30, 'Número de WhatsApp inválido').optional().default(''),

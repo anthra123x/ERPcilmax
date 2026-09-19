@@ -97,6 +97,24 @@ export interface WebSettings {
   theme: StoreThemeSettings
 }
 
+/** Estado del producto para la tarjeta "Tienda online" de la ficha de inventario. */
+export interface ProductWebStatus {
+  webVisible: boolean
+  webFeatured: boolean
+  slug: string | null
+  webSortOrder: number
+  stock: number
+  lowStockThreshold: number
+  mediaCount: number
+  readiness: {
+    hasSlug: boolean
+    hasMedia: boolean
+    hasDescription: boolean
+    ready: boolean
+  }
+  stockStatus: 'OK' | 'LOW' | 'OUT'
+}
+
 export const DEFAULT_WEB_SETTINGS: WebSettings = {
   storeName: 'Cilmax',
   whatsapp: null,

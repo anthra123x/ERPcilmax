@@ -5,9 +5,17 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/modules/auth/auth.actions'
 import { parseError } from '@/lib/errors'
 import { getBoolean, getNumber, getString } from '@/lib/form-data'
-import { AddWebMediaSchema, UpdateWebProductSchema, UpdateWebSettingsSchema } from '@/lib/validations'
+import {
+  AddWebMediaSchema,
+  BulkUpdateWebProductsSchema,
+  UpdateWebProductSchema,
+  UpdateWebSettingsSchema,
+} from '@/lib/validations'
 import { createSale } from '@/modules/sales/sales.actions'
 import { getWebSettings } from './web.service'
+import { buildUniqueSlug, computeStockStatus, computeWebReadiness } from './web.helpers'
+import type { ProductWebStatus } from './web.types'
+import type { Prisma } from '@prisma/client'
 
 // ─────────────────────────────────────────────────────────────
 // Resumen del panel "Tienda online"
@@ -62,18 +70,45 @@ export async function getWebOverview() {
 // Productos web (visibilidad, destacado, orden, slug, descripción)
 // ─────────────────────────────────────────────────────────────
 
-export async function getAdminWebProducts() {
+export interface AdminWebProductFilters {
+  search?: string
+  categoryId?: string
+  status?: 'ALL' | 'VISIBLE' | 'HIDDEN' | 'FEATURED'
+  stock?: 'ALL' | 'OK' | 'LOW' | 'OUT'
+}
+
+export async function getAdminWebProducts(filters: AdminWebProductFilters = {}) {
   await requireAuth()
 
+  const search = filters.search?.trim() || undefined
+  const categoryId = filters.categoryId?.trim() || undefined
+
+  const where: Prisma.ProductWhereInput = {
+    deletedAt: null,
+    ...(search && {
+      OR: [
+        { name: { contains: search, mode: 'insensitive' } },
+        { slug: { contains: search, mode: 'insensitive' } },
+        { barcode: { contains: search, mode: 'insensitive' } },
+      ],
+    }),
+    ...(categoryId && { categoryId }),
+    ...(filters.status === 'VISIBLE' && { webVisible: true }),
+    ...(filters.status === 'HIDDEN' && { webVisible: false }),
+    ...(filters.status === 'FEATURED' && { webFeatured: true }),
+  }
+
   const products = await prisma.product.findMany({
-    where: { deletedAt: null },
+    where,
     orderBy: [{ webSortOrder: 'asc' }, { name: 'asc' }],
     select: {
       id: true,
       name: true,
       barcode: true,
+      description: true,
       salePrice: true,
       stock: true,
+      lowStockThreshold: true,
       slug: true,
       webVisible: true,
       webFeatured: true,
@@ -86,7 +121,201 @@ export async function getAdminWebProducts() {
     },
   })
 
-  return products
+  const rows = products.filter((p) => {
+    if (!filters.stock || filters.stock === 'ALL') return true
+    return computeStockStatus(p.stock, p.lowStockThreshold) === filters.stock
+  })
+
+  return rows.map((p) => {
+    const stockStatus = computeStockStatus(p.stock, p.lowStockThreshold)
+    return {
+      id: p.id,
+      name: p.name,
+      barcode: p.barcode,
+      salePrice: p.salePrice,
+      stock: p.stock,
+      lowStockThreshold: p.lowStockThreshold,
+      slug: p.slug,
+      webVisible: p.webVisible,
+      webFeatured: p.webFeatured,
+      webSortOrder: p.webSortOrder,
+      webDescription: p.webDescription,
+      imageUrl: p.imageUrl,
+      category: p.category,
+      media: p.media,
+      reviewCount: p._count.webReviews,
+      stockStatus,
+      readiness: computeWebReadiness({
+        slug: p.slug,
+        description: p.description,
+        mediaCount: p.media.length,
+        hasImageUrl: Boolean(p.imageUrl),
+      }),
+    }
+  })
+}
+
+export async function getWebCategoryOptions() {
+  await requireAuth()
+
+  return await prisma.productCategory.findMany({
+    where: { deletedAt: null, products: { some: { deletedAt: null } } },
+    orderBy: { name: 'asc' },
+    select: { id: true, name: true },
+  })
+}
+
+/** Estado del producto para la tarjeta "Tienda online" de la ficha de inventario. */
+export async function getProductWebStatus(id: string): Promise<ProductWebStatus | null> {
+  await requireAuth()
+
+  const product = await prisma.product.findUnique({
+    where: { id },
+    select: {
+      webVisible: true,
+      webFeatured: true,
+      slug: true,
+      webSortOrder: true,
+      description: true,
+      imageUrl: true,
+      stock: true,
+      lowStockThreshold: true,
+      _count: { select: { media: true } },
+    },
+  })
+  if (!product) return null
+
+  const readiness = computeWebReadiness({
+    slug: product.slug,
+    description: product.description,
+    mediaCount: product._count.media,
+    hasImageUrl: Boolean(product.imageUrl),
+  })
+
+  return {
+    webVisible: product.webVisible,
+    webFeatured: product.webFeatured,
+    slug: product.slug,
+    webSortOrder: product.webSortOrder,
+    stock: product.stock,
+    lowStockThreshold: product.lowStockThreshold,
+    mediaCount: product._count.media,
+    readiness,
+    stockStatus: computeStockStatus(product.stock, product.lowStockThreshold),
+  }
+}
+
+export async function setWebProductVisible(id: string, visible: boolean) {
+  await requireAuth()
+
+  try {
+    let slug: string | null = null
+    if (visible) {
+      const product = await prisma.product.findUnique({ where: { id }, select: { name: true, slug: true } })
+      if (!product) return { error: 'Producto no encontrado' }
+
+      if (!product.slug) {
+        slug = await buildUniqueSlug(product.name, async (candidate) => {
+          const existing = await prisma.product.findUnique({ where: { slug: candidate }, select: { id: true } })
+          return existing !== null
+        })
+      }
+    }
+
+    await prisma.product.update({
+      where: { id },
+      data: visible
+        ? { webVisible: true, ...(slug ? { slug } : {}) }
+        : { webVisible: false },
+    })
+  } catch (error) {
+    return { error: parseError(error, 'No se pudo actualizar la publicación').message }
+  }
+
+  revalidatePath('/web/products')
+  revalidatePath(`/web/products/${id}`)
+  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/web')
+  return { success: visible ? 'Producto publicado en la tienda' : 'Producto oculto de la tienda' }
+}
+
+export async function setWebProductFeatured(id: string, featured: boolean) {
+  await requireAuth()
+
+  try {
+    await prisma.product.update({ where: { id }, data: { webFeatured: featured } })
+  } catch (error) {
+    return { error: parseError(error, 'No se pudo actualizar el destacado').message }
+  }
+
+  revalidatePath('/web/products')
+  revalidatePath(`/web/products/${id}`)
+  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/web')
+  return { success: featured ? 'Producto marcado como destacado' : 'Producto quitado de destacados' }
+}
+
+export async function bulkUpdateWebProducts(ids: string[], patch: { webVisible?: boolean; webFeatured?: boolean }) {
+  await requireAuth()
+
+  const parsed = BulkUpdateWebProductsSchema.safeParse({ ids, ...patch })
+  if (!parsed.success) {
+    return { error: parsed.error.issues.map((e) => e.message).join(', ') }
+  }
+
+  const data: { webVisible?: boolean; webFeatured?: boolean } = {}
+  if (parsed.data.webVisible !== undefined) data.webVisible = parsed.data.webVisible
+  if (parsed.data.webFeatured !== undefined) data.webFeatured = parsed.data.webFeatured
+
+  let count = 0
+  try {
+    count = (await prisma.product.updateMany({ where: { id: { in: ids }, deletedAt: null }, data })).count
+    if (count === 0) return { error: 'Ningún producto fue actualizado' }
+  } catch (error) {
+    return { error: parseError(error, 'No se pudieron actualizar los productos').message }
+  }
+
+  revalidatePath('/web/products')
+  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/web')
+  return { success: `${count} ${count === 1 ? 'producto actualizado' : 'productos actualizados'}` }
+}
+
+/**
+ * Reordena el catálogo: reubica el producto una posición arriba/abajo y
+ * renumera todo el listado de productos vivos para evitar empates de orden.
+ */
+export async function moveWebProduct(id: string, direction: 'up' | 'down') {
+  await requireAuth()
+
+  const products = await prisma.product.findMany({
+    where: { deletedAt: null },
+    orderBy: [{ webSortOrder: 'asc' }, { name: 'asc' }],
+    select: { id: true },
+  })
+  const index = products.findIndex((p) => p.id === id)
+  if (index === -1) return { error: 'Producto no encontrado' }
+
+  const target = direction === 'up' ? index - 1 : index + 1
+  if (target < 0 || target >= products.length) {
+    return { error: 'El producto ya está en el extremo del catálogo' }
+  }
+
+  const reordered = [...products]
+  ;[reordered[index], reordered[target]] = [reordered[target], reordered[index]]
+
+  try {
+    await prisma.$transaction(
+      reordered.map((p, i) => prisma.product.update({ where: { id: p.id }, data: { webSortOrder: i } })),
+    )
+  } catch (error) {
+    return { error: parseError(error, 'No se pudo actualizar el orden').message }
+  }
+
+  revalidatePath('/web/products')
+  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/web')
+  return { success: 'Orden del catálogo actualizado' }
 }
 
 export async function getAdminWebProductById(id: string) {

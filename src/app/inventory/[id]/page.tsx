@@ -2,6 +2,8 @@ import { ProductForm } from '@/components/forms/product-form'
 import { updateProduct, getProductById } from '@/modules/inventory/inventory.actions'
 import { getCategories } from '@/modules/inventory/categories.actions'
 import { getSuppliers } from '@/modules/suppliers/suppliers.actions'
+import { getProductWebStatus } from '@/modules/web/web.actions'
+import { InventoryWebPublish } from '@/components/web/inventory-web-publish'
 import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/ui/page-header'
 import Link from 'next/link'
@@ -24,7 +26,11 @@ export default async function ProductPage({ params }: ProductPageProps) {
     notFound()
   }
 
-  const [categories, suppliersResult] = await Promise.all([getCategories(), getSuppliers()])
+  const [categories, suppliersResult, webStatus] = await Promise.all([
+    getCategories(),
+    getSuppliers(),
+    getProductWebStatus(id),
+  ])
 
   async function handleSubmit(formData: FormData) {
     'use server'
@@ -58,6 +64,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
         categories={categories}
         suppliers={suppliersResult.suppliers}
       />
+
+      {webStatus && <InventoryWebPublish productId={product.id} status={webStatus} />}
     </div>
   )
 }
