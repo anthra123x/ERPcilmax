@@ -10,21 +10,22 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 | Capa | Tecnología | Versión | Notas |
 |------|-----------|---------|-------|
-| Framework | Next.js (App Router) | 16.2.3 | Turbopack build |
+| Framework | Next.js (App Router) | 16.2.10 | Build con Webpack + WASM SWC |
 | Language | TypeScript | 5.x | `strict: true` |
-| Database | PostgreSQL (Supabase) | - | PgBouncer pooler |
+| Database | PostgreSQL (Neon) | - | Conexión directa `DIRECT_URL`; pooler PgBouncer para runtime |
 | ORM | Prisma | 5.22 | Singleton en `@/lib/prisma` |
 | CSS | Tailwind CSS | 4.x | `@tailwindcss/postcss`, `@theme inline` |
 | UI Components | shadcn/ui + Base UI v1 | - | `base-nova` style, lucide icons |
-| Auth | Supabase Auth (SSR) | - | `@supabase/ssr` + middleware |
+| Auth | Supabase Auth (SSR) | - | `@supabase/ssr` + `proxy.ts` |
 | Validation | Zod | 4.3.6 | Schemas en `@/lib/validations.ts` |
 | Forms | react-hook-form | 7.72 | + `@hookform/resolvers` |
-| Charts | Ninguno | - | `recharts` eliminado (no se usaba) |
-| PDF | Ninguno | - | `jspdf`/`pdf-lib`/`react-pdf` eliminados (no se usaban) |
+| Charts | Ninguno | - | Gráficos server-side; `recharts` instalado pero sin uso |
+| PDF | @react-pdf/renderer | 4.9.0 | Facturas POS, estado de cuenta y recibos (`/print` + `/api/sales/*/pdf`) |
 | Excel | xlsx (SheetJS) | 0.18.5 | Exportación de reportes |
-| Testing | Vitest | 4.1.7 | 114 tests en 6 files |
+| Testing | Vitest | 4.1.7 | 148 tests en 14 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
+| Monitoreo | @sentry/nextjs | 10.53.1 | Instalado; DSN en `.env` (dashboard sin activar) |
 
 ## Comandos esenciales
 
@@ -33,7 +34,7 @@ npm run dev         # Dev server (http://localhost:3000) + React Scan for rerend
 npm run build       # Prisma generate + Next build (usa Webpack + WASM SWC)
 npm run lint        # ESLint (incluye detección de imports muertos)
 npm run typecheck   # TypeScript check sin emitir
-npm run test        # Vitest (77 tests)
+npm run test        # Vitest (148 tests)
 npm run db:push     # Sync schema a DB (dev)
 npm run db:studio   # Prisma Studio
 npm run db:migrate  # Crear migración
@@ -47,13 +48,24 @@ npx prettier --write src/  # Formatear todo el código
 src/
 ├── app/                    # Next.js App Router
 │   ├── admin/              # Panel de administración (usuarios, settings, cleanup)
-│   ├── api/                # API routes públicas (storefront)
-│   │   ├── ecommerce/products/  # GET catálogo online
-│   │   ├── orders/              # POST crear pedido (storefront)
-│   │   └── products/            # GET productos (legacy)
+│   ├── api/                # API routes públicas (storefront, SIN auth)
+│   │   ├── web/products/         # GET catálogo online (limit, offset, category, q)
+│   │   ├── web/products/[handle]/ # GET por slug
+│   │   ├── web/categories/       # GET categorías
+│   │   ├── web/search/           # GET búsqueda
+│   │   ├── web/reviews/          # GET posts que la API hace… (publicar reseñas)
+│   │   ├── web/contact/          # POST mensaje de contacto
+│   │   ├── web/settings/         # GET configuración tienda
+│   │   ├── web/orders/           # POST crear pedido (storefront) — devuelve `order.reference` (ORD-XXXX)
+│   │   └── sales/[id]/.../pdf    # PDF factura, estado de cuenta, recibo
 │   ├── dashboard/          # Dashboard principal con stats
-│   ├── ecommerce/          # Admin catálogo online
-│   │   └── products/[id]/  # Editor de producto ecommerce
+│   ├── web/                # Panel de administración de la tienda online
+│   │   ├── page.tsx        # Resumen (productos visibles, por confirmar, en reserva, mensajes, reseñas)
+│   │   ├── products/       # CRUD productos web (filtros, bulk, orden ↑↓, readiness)
+│   │   ├── orders/         # Pedidos web: PENDING→CONFIRMED→CONVERTED/CANCELLED + referencia ORD
+│   │   ├── reviews/        # Moderación de reseñas
+│   │   ├── messages/       # Mensajes de contacto
+│   │   └── settings/       # Configuración de la tienda
 │   ├── inventory/          # CRUD productos, movimientos de stock
 │   ├── login/              # Login con Supabase
 │   ├── orders/             # Gestión de pedidos online
@@ -81,16 +93,15 @@ src/
 │   └── utils.ts            # cn() utility (clsx + tailwind-merge)
 ├── modules/
 │   ├── auth/               # getCurrentUser, requireAdmin, requireAuth, CRUD usuarios
-│   ├── cleanup/            # Backup/restore/cleanup datos
+│   ├── cleanup/            # Backup/export y cleanup datos
 │   ├── clients/            # CRUD clientes
 │   ├── dashboard/          # Stats dashboard (ventas hoy, repairs ready, pedidos)
-│   ├── ecommerce/          # Catálogo online CRUD + imágenes
-│   ├── export/             # Exportación Excel
-│   ├── inventory/          # Productos CRUD + movimientos stock
-│   ├── orders/             # Pedidos CRUD + transiciones estado
-│   ├── repairs/            # Reparaciones CRUD + partes
+│   ├── web/                # Catálogo online CRUD + pedidos web (web.actions, web.service, web.helpers)
+│   ├── inventory/          # Productos CRUD + movimientos stock (incl. RESERVATION/RELEASE)
+│   ├── sales/              # Ventas POS + createSale (acepta `stockReserved`)
 │   ├── reports/            # Reportes (ventas, inventario, reparaciones, clientes)
-│   └── settings/           # Configuración del sistema
+│   ├── settings/           # Configuración del sistema
+│   └── ...                 # audit, finance, notifications, search, suppliers
 ├── proxy.ts                # Middleware Supabase Auth (detectado por Next.js 16 build)
 ├── middleware.ts            # NO EXISTE — proxy.ts hace el rol
 └── next.config.ts           # CORS headers + bodySizeLimit 10mb
@@ -124,6 +135,7 @@ src/
 7. **Transiciones de orden**: Solo `ALLOWED_TRANSITIONS`. Stock se restaura si estado previo era ≥ CONFIRMED.
 8. **API endpoints son públicos** — Sin auth en `/api/*` (el storefront los consume).
 9. **Middleware**: `proxy.ts` usa Supabase SSR con `getAll()`/`setAll()` + `applyCookies()`.
+10. **Pedidos web**: nace `PENDING` → `CONFIRMED` (descuenta stock con movimiento `RESERVATION`) → `CONVERTED`/`CANCELLED`. Cancelar un `CONFIRMED` restaura stock (`RELEASE`). Convertir no descuenta dos veces (`createSale` con `stockReserved: true`). Referencia legible `ORD-XXXX` desde `SystemSettings.nextWebOrderNumber`.
 
 ## Documentación compartida
 
@@ -147,11 +159,11 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 ## Storefront integration
 
-- Misma DB PostgreSQL en Supabase (compartida)
-- Storefront lee productos via `GET /api/ecommerce/products` (API pública)
-- Storefront escribe pedidos via `POST /api/orders` (API pública, con validación de precios)
-- Storefront NUNCA escribe stock, productos ni datos de ecommerce
-- `EcommerceProduct` y `ProductMedia` mapean a `product_ecommerce` y `product_media` en DB
+- Misma DB PostgreSQL en Neon (compartida)
+- Storefront lee productos via `GET /api/web/products` (API pública)
+- Storefront escribe pedidos via `POST /api/web/orders` (API pública, con validación de precios); el response incluye `order.reference` (ORD-XXXX)
+- El pedido nace `PENDING` (sin reserva); el admin lo confirma en `/web/orders` y ahí se descuenta el stock
+- Storefront NUNCA escribe stock, productos ni datos de la tienda
 
 ## Tooling disponible
 
@@ -164,17 +176,17 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 | TypeScript strict | Type safety | `npm run typecheck` |
 | Zod 4 | Validación runtime | Schemas en `@/lib/validations.ts` |
 
-## Dependencias eliminadas (no se usaban)
+## Dependencias eliminadas o inactivas
 
 | Paquete | Razón |
 |---------|-------|
 | `@supabase/auth-helpers-nextjs` | Deprecado, reemplazado por `@supabase/ssr` |
 | `jspdf` / `jspdf-autotable` | No se usaban (0 imports) |
 | `pdf-lib` | No se usaba (0 imports) |
-| `react-pdf` | No se usaba (0 imports) |
-| `recharts` | No se usaba (0 imports) — gráficos se renderizan server-side |
 | `uuid` / `@types/uuid` | No se usaban (0 imports) |
+| `recharts` | Instalado pero sin uso (gráficos server-side) |
 | `shadcn` | Movido a devDependencies (es CLI, no runtime) |
+| `gsap` | Instalado; usar solo si se agregan animaciones |
 
 ## Decisiones de arquitectura (NO cambiar sin autorización)
 
@@ -183,7 +195,7 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 - **Sin TanStack Table**: Las tablas actuales (shadcn Table simple) cubren bien CRUDs. Reports no justifica la complejidad.
 - **Sin Framer Motion**: ERP con tablas/formularios no necesita animaciones complejas. View Transitions API de React 19 cubre lo necesario.
 - **Sin Magic UI / Aceternity**: Efectos CSS sin valor real para un ERP. Añaden peso y dependencias.
-- **Sin Sentry (aún)**: Sería valioso para producción, requiere setup de cuenta. Pendiente para próximo sprint.
+- **Sentry**: `@sentry/nextjs` instalado con DSN en `.env`; dashboard/monitoreo activo aún sin configurar. Pendiente de revisión.
 - **Middleware**: `proxy.ts` es detectado automáticamente por Next.js 16 build como middleware. No necesita `middleware.ts`.
 
 ## Skills del agente (cargar cuando aplique)
@@ -208,6 +220,6 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 - [ ] Migrar Float→Decimal en 23 campos financieros
 - [ ] Reducir uso de `any` types gradualmente
-- [ ] Agregar Sentry para monitoreo en producción
+- [ ] Activar dashboard de Sentry (instalado, DSN presente)
 - [ ] Agregar `loading.tsx` para rutas que aún no tienen
 - [ ] Implementar perfil de administrador con cambio de contraseña real (Supabase Auth)
