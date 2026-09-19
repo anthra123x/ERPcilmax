@@ -17,6 +17,12 @@ export async function createSale(data: {
   initialPaymentMethod?: 'CASH' | 'CARD' | 'TRANSFER'
   dueDate?: string | null
   installments?: Array<{ amount: number; dueDate: string }>
+  /**
+   * Cuando un pedido web confirmado ya reservó stock (descontó Product.stock y
+   * registró movimientos RESERVATION), la conversión a venta NO debe
+   * descontar de nuevo ni crear movimientos SALE.
+   */
+  stockReserved?: boolean
 }) {
   const user = await requireAuth()
 
@@ -143,21 +149,24 @@ export async function createSale(data: {
       })
 
       // Update stock and create stock movements
-      for (const item of items) {
-        const product = productMap.get(item.productId)!
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: product.stock - item.quantity },
-        })
+      // Si el stock ya fue reservado (pedido web CONFIRMED), solo se valida arriba.
+      if (!data.stockReserved) {
+        for (const item of items) {
+          const product = productMap.get(item.productId)!
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: product.stock - item.quantity },
+          })
 
-        await tx.stockMovement.create({
-          data: {
-            productId: item.productId,
-            type: 'SALE',
-            quantity: item.quantity,
-            reference: invoiceNumber,
-          },
-        })
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: 'SALE',
+              quantity: item.quantity,
+              reference: invoiceNumber,
+            },
+          })
+        }
       }
 
       // Categoría de ingreso para transacciones de venta

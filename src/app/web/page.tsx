@@ -34,7 +34,7 @@ export default async function WebOverviewPage() {
         }
       />
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <p className="text-xs text-muted-foreground">Productos visibles</p>
@@ -47,9 +47,16 @@ export default async function WebOverviewPage() {
         </Card>
         <Card>
           <CardContent className="pt-6">
-            <p className="text-xs text-muted-foreground">Pedidos pendientes</p>
+            <p className="text-xs text-muted-foreground">Por confirmar</p>
             <p className="text-2xl font-bold text-amber-600">{overview.pendingOrders}</p>
-            <p className="text-xs text-muted-foreground">por convertir a venta</p>
+            <p className="text-xs text-muted-foreground">para reservar stock</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-xs text-muted-foreground">En reserva</p>
+            <p className="text-2xl font-bold text-blue-600">{overview.confirmedOrders}</p>
+            <p className="text-xs text-muted-foreground">stock apartado</p>
           </CardContent>
         </Card>
         <Card>

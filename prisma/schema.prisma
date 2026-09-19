@@ -116,6 +116,8 @@ model WebOrder {
   total           Float          @default(0)
   currency        String         @default("COP")
   status          WebOrderStatus @default(PENDING)
+  reference       String?        @unique
+  confirmedAt     DateTime?
   convertedSaleId String?
   convertedSale   Sale?          @relation(fields: [convertedSaleId], references: [id])
   createdAt       DateTime       @default(now())
@@ -124,6 +126,7 @@ model WebOrder {
 
   @@index([status])
   @@index([createdAt])
+  @@index([reference])
   @@index([convertedSaleId])
   @@map("web_orders")
 }
@@ -344,6 +347,7 @@ model SystemSettings {
   invoiceFooter     String?
   lowStockThreshold Int      @default(5)
   nextInvoiceNumber Int      @default(1)
+  nextWebOrderNumber Int     @default(1000)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
@@ -389,6 +393,8 @@ enum StockMovementType {
   IN
   OUT
   ADJUST
+  RESERVATION
+  RELEASE
 }
 
 enum PaymentMethod {
@@ -410,6 +416,7 @@ enum NotificationType {
 
 enum WebOrderStatus {
   PENDING
+  CONFIRMED
   CONVERTED
   CANCELLED
 }

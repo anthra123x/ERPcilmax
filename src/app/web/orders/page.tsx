@@ -10,6 +10,7 @@ import { formatCurrency } from '@/lib/format'
 import { getAdminWebOrders } from '@/modules/web/web.actions'
 import { getWebOrderStatusLabel, getWebOrderStatusColor } from '@/lib/labels'
 import { WebOrderActions } from '@/components/web/web-order-actions'
+import { WebOrderSearch } from '@/components/web/web-order-search'
 
 export const dynamic = 'force-dynamic'
 
@@ -26,37 +27,43 @@ function fmtDate(d: Date) {
 export default async function WebOrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ estado?: string; page?: string }>
+  searchParams: Promise<{ estado?: string; page?: string; buscar?: string }>
 }) {
   const sp = await searchParams
-  const estado = (sp.estado as 'ALL' | 'PENDING' | 'CONVERTED' | 'CANCELLED') || 'ALL'
+  const estado = (sp.estado as string) || 'ALL'
   const page = Number(sp.page) || 1
+  const buscar = sp.buscar || ''
   const pageSize = 20
 
-  const { orders, total, totalPages } = await getAdminWebOrders(estado, page, pageSize)
+  const { orders, total, totalPages } = await getAdminWebOrders(estado, page, pageSize, buscar)
 
   const estadoHref = (e: string) => `/web/orders?${new URLSearchParams({ estado: e }).toString()}`
-  const pageHref = (p: number) => `/web/orders?${new URLSearchParams({ estado, page: String(p) }).toString()}`
+  const pageHref = (p: number) =>
+    `/web/orders?${new URLSearchParams({ estado, page: String(p), ...(buscar ? { buscar } : {}) }).toString()}`
 
   return (
     <div className="page-container py-6 space-y-6">
-      <PageHeader title="Pedidos web" description="Pedidos recibidos de la tienda. Conviértelos en venta POS." />
+      <PageHeader title="Pedidos web" description="Pedidos recibidos de la tienda. Confirma y reserva stock, o conviértelos en venta POS." />
 
       <Card>
         <CardContent className="p-4 space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            {[
-              { key: 'ALL', label: 'Todos' },
-              { key: 'PENDING', label: 'Pendientes' },
-              { key: 'CONVERTED', label: 'Convertidos' },
-              { key: 'CANCELLED', label: 'Cancelados' },
-            ].map((f) => (
-              <Link key={f.key} href={estadoHref(f.key)}>
-                <Badge variant={estado === f.key ? 'default' : 'outline'} className="cursor-pointer">
-                  {f.label}
-                </Badge>
-              </Link>
-            ))}
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {[
+                { key: 'ALL', label: 'Todos' },
+                { key: 'PENDING', label: 'Pendientes' },
+                { key: 'CONFIRMED', label: 'Confirmados' },
+                { key: 'CONVERTED', label: 'Convertidos' },
+                { key: 'CANCELLED', label: 'Cancelados' },
+              ].map((f) => (
+                <Link key={f.key} href={estadoHref(f.key)}>
+                  <Badge variant={estado === f.key ? 'default' : 'outline'} className="cursor-pointer">
+                    {f.label}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
+            <WebOrderSearch search={buscar} />
           </div>
 
           {orders.length === 0 ? (
@@ -66,6 +73,7 @@ export default async function WebOrdersPage({
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>Referencia</TableHead>
                     <TableHead>Cliente</TableHead>
                     <TableHead>Productos</TableHead>
                     <TableHead>Total</TableHead>
@@ -77,6 +85,9 @@ export default async function WebOrdersPage({
                 <TableBody>
                   {orders.map((o) => (
                     <TableRow key={o.id}>
+                      <TableCell>
+                        <span className="font-mono text-xs font-semibold text-primary">{o.reference || '—'}</span>
+                      </TableCell>
                       <TableCell>
                         <p className="font-medium">{o.customerName}</p>
                         <p className="text-xs text-muted-foreground">{o.customerPhone}</p>

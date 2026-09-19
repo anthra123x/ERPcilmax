@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-import { AlertTriangle, Ban, CheckCircle2, Loader2 } from 'lucide-react'
+import { AlertTriangle, Ban, CheckCircle2, Loader2, PackageCheck } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -13,23 +13,36 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { convertWebOrderToSale, cancelWebOrder } from '@/modules/web/web.actions'
+import { cancelWebOrder, confirmWebOrder, convertWebOrderToSale } from '@/modules/web/web.actions'
+
+type WebOrderActionsStatus = 'PENDING' | 'CONFIRMED' | 'CONVERTED' | 'CANCELLED'
 
 interface WebOrderActionsProps {
   orderId: string
-  status: 'PENDING' | 'CONVERTED' | 'CANCELLED'
+  status: WebOrderActionsStatus
 }
 
 export function WebOrderActions({ orderId, status }: WebOrderActionsProps) {
   const router = useRouter()
-  const [converting, setConverting] = useState(false)
+  const [acting, setActing] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
-  const [cancelling, setCancelling] = useState(false)
 
-  if (status !== 'PENDING') return null
+  if (status !== 'PENDING' && status !== 'CONFIRMED') return null
+
+  async function handleConfirm() {
+    setActing(true)
+    const result = await confirmWebOrder(orderId)
+    if (result?.error) {
+      toast.error(result.error)
+    } else if (result?.success) {
+      toast.success(result.success)
+      router.refresh()
+    }
+    setActing(false)
+  }
 
   async function handleConvert() {
-    setConverting(true)
+    setActing(true)
     const result = await convertWebOrderToSale(orderId)
     if (result?.error) {
       toast.error(result.error)
@@ -38,28 +51,39 @@ export function WebOrderActions({ orderId, status }: WebOrderActionsProps) {
       router.push(`/sales/${result.saleId}`)
       router.refresh()
     }
-    setConverting(false)
+    setActing(false)
   }
 
   async function handleCancel() {
-    setCancelling(true)
+    setActing(true)
     const result = await cancelWebOrder(orderId)
-    if (result?.error) toast.error(result.error)
-    else if (result?.success) {
+    if (result?.error) {
+      toast.error(result.error)
+    } else if (result?.success) {
       toast.success(result.success)
       router.refresh()
     }
-    setCancelling(false)
+    setActing(false)
     setCancelOpen(false)
   }
 
   return (
-    <div className="flex items-center justify-end gap-2">
-      <Button size="sm" onClick={handleConvert} disabled={converting}>
-        {converting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-        {converting ? 'Convirtiendo…' : 'Convertir a venta'}
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {status === 'PENDING' && (
+        <Button size="sm" variant="outline" onClick={handleConfirm} disabled={acting}>
+          {acting ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <PackageCheck className="h-4 w-4" />
+          )}
+          {acting ? 'Confirmando…' : 'Confirmar y reservar'}
+        </Button>
+      )}
+      <Button size="sm" onClick={handleConvert} disabled={acting}>
+        {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+        {acting ? 'Convirtiendo…' : 'Convertir a venta'}
       </Button>
-      <Button variant="outline" size="sm" onClick={() => setCancelOpen(true)} disabled={converting}>
+      <Button variant="outline" size="sm" onClick={() => setCancelOpen(true)} disabled={acting}>
         <Ban className="h-4 w-4" />
         Cancelar
       </Button>
@@ -72,15 +96,17 @@ export function WebOrderActions({ orderId, status }: WebOrderActionsProps) {
             </div>
             <DialogTitle className="text-center">¿Cancelar pedido web?</DialogTitle>
             <DialogDescription className="text-center">
-              El pedido quedará con estado CANCELLED y no podrá convertirse a venta.
+              {status === 'CONFIRMED'
+                ? 'El stock reservado de este pedido se devolverá al inventario.'
+                : 'El pedido quedará con estado CANCELLED y no podrá convertirse a venta.'}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCancelOpen(false)} disabled={cancelling}>
+            <Button variant="outline" onClick={() => setCancelOpen(false)} disabled={acting}>
               Volver
             </Button>
-            <Button variant="destructive" onClick={handleCancel} disabled={cancelling}>
-              {cancelling ? 'Cancelando…' : 'Cancelar pedido'}
+            <Button variant="destructive" onClick={handleCancel} disabled={acting}>
+              {acting ? 'Cancelando…' : 'Cancelar pedido'}
             </Button>
           </DialogFooter>
         </DialogContent>

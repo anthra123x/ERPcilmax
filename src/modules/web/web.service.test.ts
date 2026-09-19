@@ -12,6 +12,7 @@ const prismaMocks = vi.hoisted(() => ({
 const prismaMockData = {
   transaction: {
     webOrder: { create: vi.fn() },
+    systemSettings: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
   },
 }
 
@@ -228,6 +229,10 @@ describe('createWebOrder', () => {
     ])
     const createdOrder = { id: 'w1', total: 189900, items: [] }
     prismaMockData.transaction.webOrder.create.mockResolvedValue(createdOrder)
+    prismaMockData.transaction.systemSettings.findFirst.mockResolvedValue({
+      id: 's1',
+      nextWebOrderNumber: 1000,
+    })
 
     const result = await createWebOrder({
       customerName: 'Ana',
@@ -240,6 +245,7 @@ describe('createWebOrder', () => {
     expect(prismaMockData.transaction.webOrder.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         total: 189900,
+        reference: 'ORD-1000',
         items: {
           create: [
             { productId: 'p1', productName: 'Olla', handle: 'olla', unitPrice: 189900, quantity: 1, total: 189900 },
@@ -247,6 +253,10 @@ describe('createWebOrder', () => {
         },
       }),
       include: { items: true },
+    })
+    expect(prismaMockData.transaction.systemSettings.update).toHaveBeenCalledWith({
+      where: { id: 's1' },
+      data: { nextWebOrderNumber: 1001 },
     })
   })
 

@@ -22,7 +22,11 @@ export async function addStockMovement(
       if (!product) throw new Error('Producto no encontrado')
 
       const stockChange =
-        type === 'OUT' || type === 'SALE' ? -quantity : type === 'PURCHASE' || type === 'IN' ? quantity : quantity // ADJUST sets absolute
+        type === 'OUT' || type === 'SALE' || type === 'RESERVATION'
+          ? -quantity
+          : type === 'PURCHASE' || type === 'IN' || type === 'RELEASE'
+            ? quantity
+            : quantity // ADJUST sets absolute
 
       const newStock = type === 'ADJUST' ? quantity : product.stock + stockChange
       if (newStock < 0) throw new Error('Stock insuficiente')

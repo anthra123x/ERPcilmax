@@ -233,7 +233,13 @@ export async function createWebOrder(input: WebOrderInput) {
   const total = items.reduce((sum, item) => sum + item.total, 0)
 
   return await prisma.$transaction(async (tx) => {
-    return await tx.webOrder.create({
+    let settings = await tx.systemSettings.findFirst()
+    if (!settings) {
+      settings = await tx.systemSettings.create({ data: {} })
+    }
+    const reference = `ORD-${settings.nextWebOrderNumber}`
+
+    const order = await tx.webOrder.create({
       data: {
         customerName: input.customerName,
         customerPhone: input.customerPhone,
@@ -241,10 +247,18 @@ export async function createWebOrder(input: WebOrderInput) {
         notes: input.notes ?? null,
         total,
         currency: 'COP',
+        reference,
         items: { create: items },
       },
       include: { items: true },
     })
+
+    await tx.systemSettings.update({
+      where: { id: settings.id },
+      data: { nextWebOrderNumber: settings.nextWebOrderNumber + 1 },
+    })
+
+    return order
   })
 }
 

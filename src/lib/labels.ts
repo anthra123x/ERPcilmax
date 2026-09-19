@@ -96,6 +96,7 @@ export function getCreditStatusColor(status: 'PAID' | 'OVERDUE' | 'PENDING'): st
 export function getWebOrderStatusLabel(status: string): string {
   const labels: Record<string, string> = {
     PENDING: 'Pendiente',
+    CONFIRMED: 'Confirmado',
     CONVERTED: 'Convertido',
     CANCELLED: 'Cancelado',
   }
@@ -105,6 +106,7 @@ export function getWebOrderStatusLabel(status: string): string {
 export function getWebOrderStatusColor(status: string): string {
   const colors: Record<string, string> = {
     PENDING: 'text-amber-700 bg-amber-50 border-amber-200',
+    CONFIRMED: 'text-blue-700 bg-blue-50 border-blue-200',
     CONVERTED: 'text-green-700 bg-green-50 border-green-200',
     CANCELLED: 'text-red-700 bg-red-50 border-red-200',
   }

@@ -24,14 +24,16 @@ import type { Prisma } from '@prisma/client'
 export async function getWebOverview() {
   await requireAuth()
 
-  const [visibleProducts, totalProducts, pendingOrders, unreadMessages, pendingReviews, settings] = await Promise.all([
-    prisma.product.count({ where: { webVisible: true, deletedAt: null } }),
-    prisma.product.count({ where: { deletedAt: null } }),
-    prisma.webOrder.count({ where: { status: 'PENDING' } }),
-    prisma.contactMessage.count({ where: { read: false } }),
-    prisma.productReview.count({ where: { approved: false } }),
-    getWebSettings(),
-  ])
+  const [visibleProducts, totalProducts, pendingOrders, confirmedOrders, unreadMessages, pendingReviews, settings] =
+    await Promise.all([
+      prisma.product.count({ where: { webVisible: true, deletedAt: null } }),
+      prisma.product.count({ where: { deletedAt: null } }),
+      prisma.webOrder.count({ where: { status: 'PENDING' } }),
+      prisma.webOrder.count({ where: { status: 'CONFIRMED' } }),
+      prisma.contactMessage.count({ where: { read: false } }),
+      prisma.productReview.count({ where: { approved: false } }),
+      getWebSettings(),
+    ])
 
   const [recentOrders, recentMessages] = await Promise.all([
     prisma.webOrder.findMany({
@@ -58,6 +60,7 @@ export async function getWebOverview() {
     visibleProducts,
     totalProducts,
     pendingOrders,
+    confirmedOrders,
     unreadMessages,
     pendingReviews,
     settings,
@@ -438,10 +441,24 @@ export async function removeWebMedia(id: string) {
 // Pedidos web → venta POS
 // ─────────────────────────────────────────────────────────────
 
-export async function getAdminWebOrders(status: string = 'ALL', page = 1, take = 20) {
+export async function getAdminWebOrders(status: string = 'ALL', page = 1, take = 20, search = '') {
   await requireAuth()
 
-  const where = status === 'ALL' ? {} : { status: status as 'PENDING' | 'CONVERTED' | 'CANCELLED' }
+  const allowed = ['PENDING', 'CONFIRMED', 'CONVERTED', 'CANCELLED']
+  const statusWhere: Prisma.WebOrderWhereInput = allowed.includes(status)
+    ? { status: status as 'PENDING' | 'CONFIRMED' | 'CONVERTED' | 'CANCELLED' }
+    : {}
+  const searchTerm = search.trim()
+  const searchWhere: Prisma.WebOrderWhereInput = searchTerm
+    ? {
+        OR: [
+          { reference: { contains: searchTerm } },
+          { customerName: { contains: searchTerm, mode: 'insensitive' } },
+          { customerPhone: { contains: searchTerm } },
+        ],
+      }
+    : {}
+  const where: Prisma.WebOrderWhereInput = { ...statusWhere, ...searchWhere }
 
   const [orders, total] = await Promise.all([
     prisma.webOrder.findMany({
@@ -498,7 +515,9 @@ export async function convertWebOrderToSale(id: string) {
     include: { items: true },
   })
   if (!order) return { error: 'Pedido no encontrado' }
-  if (order.status !== 'PENDING') return { error: 'El pedido ya no está pendiente' }
+  if (order.status === 'CONVERTED' || order.status === 'CANCELLED') {
+    return { error: 'El pedido ya no está pendiente' }
+  }
 
   const items = order.items.map((item) => {
     if (!item.productId) {
@@ -528,11 +547,14 @@ export async function convertWebOrderToSale(id: string) {
       }
     }
 
+    // Si el pedido estaba CONFIRMED, el stock ya fue descontado y no debe
+    // volver a descontarse al crear la venta (solo se valida disponibilidad).
     const result = await createSale({
       clientId,
       items,
       discount: 0,
       paymentMethod: 'CASH',
+      stockReserved: order.status === 'CONFIRMED',
     })
 
     if (!result.success) return { error: result.error }
@@ -556,21 +578,120 @@ export async function convertWebOrderToSale(id: string) {
   }
 }
 
+/**
+ * CONFIRMA un pedido web: descuenta el stock (reserva real, misma regla que los
+ * pedidos de venta) y registra movimientos RESERVATION por item. Solo procede
+ * desde PENDING. El stock se restaura al cancelar y no se descuenta de nuevo al
+ * convertir a venta (createSale con stockReserved).
+ */
+export async function confirmWebOrder(id: string) {
+  await requireAuth()
+
+  const order = await prisma.webOrder.findUnique({
+    where: { id },
+    include: { items: true },
+  })
+  if (!order) return { error: 'Pedido no encontrado' }
+  if (order.status !== 'PENDING') return { error: 'El pedido ya no está pendiente' }
+
+  const ref = order.reference ?? order.id
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      for (const item of order.items) {
+        if (!item.productId) {
+          throw new Error(`"${item.productName}" ya no tiene referencia de producto en inventario`)
+        }
+
+        const reserved = await tx.product.updateMany({
+          where: { id: item.productId, deletedAt: null, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        })
+        if (reserved.count === 0) {
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { name: true, stock: true },
+          })
+          throw new Error(
+            product
+              ? `Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`
+              : `El producto "${item.productName}" ya no está disponible en inventario`,
+          )
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            productId: item.productId,
+            type: 'RESERVATION',
+            quantity: item.quantity,
+            reference: ref,
+          },
+        })
+      }
+
+      await tx.webOrder.update({
+        where: { id },
+        data: { status: 'CONFIRMED', confirmedAt: new Date() },
+      })
+    })
+  } catch (error) {
+    return { error: parseError(error, 'No se pudo confirmar el pedido').message }
+  }
+
+  revalidatePath('/web/orders')
+  revalidatePath(`/web/orders/${id}`)
+  revalidatePath('/inventory')
+  revalidatePath('/web')
+  return { success: `Pedido ${ref} confirmado. Stock reservado.` }
+}
+
 export async function cancelWebOrder(id: string) {
   await requireAuth()
 
+  const order = await prisma.webOrder.findUnique({
+    where: { id },
+    include: { items: true },
+  })
+  if (!order) return { error: 'Pedido no encontrado' }
+  if (order.status !== 'PENDING' && order.status !== 'CONFIRMED') {
+    return { error: 'El pedido ya no puede cancelarse' }
+  }
+
+  const ref = order.reference ?? order.id
+
   try {
-    const result = await prisma.webOrder.updateMany({
-      where: { id, status: 'PENDING' },
-      data: { status: 'CANCELLED' },
+    await prisma.$transaction(async (tx) => {
+      // Si estaba CONFIRMED, se restaura el stock reservado.
+      if (order.status === 'CONFIRMED') {
+        for (const item of order.items) {
+          if (!item.productId) continue
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          })
+          await tx.stockMovement.create({
+            data: {
+              productId: item.productId,
+              type: 'RELEASE',
+              quantity: item.quantity,
+              reference: ref,
+            },
+          })
+        }
+      }
+
+      await tx.webOrder.update({
+        where: { id },
+        data: { status: 'CANCELLED' },
+      })
     })
-    if (result.count === 0) return { error: 'El pedido ya no está pendiente' }
   } catch (error) {
     return { error: parseError(error, 'No se pudo cancelar el pedido').message }
   }
 
   revalidatePath('/web/orders')
-  revalidatePath('/web/orders/' + id)
+  revalidatePath(`/web/orders/${id}`)
+  revalidatePath('/inventory')
   revalidatePath('/web')
   return { success: 'Pedido cancelado' }
 }

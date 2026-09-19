@@ -47,9 +47,10 @@ export default async function WebOrderDetailPage({ params }: { params: Promise<{
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <CardTitle>Pedido de {order.customerName}</CardTitle>
+                  <CardTitle>Pedido {order.customerName}</CardTitle>
                   <CardDescription>
-                    Recibido {fmtDate(order.createdAt)} · Teléfono {order.customerPhone}
+                    <span className="font-mono text-primary">{order.reference || 'Sin referencia'}</span> · Recibido{' '}
+                    {fmtDate(order.createdAt)} · Teléfono {order.customerPhone}
                   </CardDescription>
                 </div>
                 <Badge className={getWebOrderStatusColor(order.status)} variant="outline">
@@ -131,6 +132,36 @@ export default async function WebOrderDetailPage({ params }: { params: Promise<{
               </CardContent>
             </Card>
           ) : null}
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Trazabilidad</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-muted-foreground">Recibido</span>
+                <span>{fmtDate(order.createdAt)}</span>
+              </div>
+              {order.confirmedAt && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Confirmado (stock reservado)</span>
+                  <span>{fmtDate(order.confirmedAt)}</span>
+                </div>
+              )}
+              {order.status === 'CANCELLED' && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Cancelado</span>
+                  <span>{fmtDate(order.updatedAt)}</span>
+                </div>
+              )}
+              {order.convertedSale && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Convertido a venta</span>
+                  <span>{fmtDate(order.convertedSale.saleDate)}</span>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
           {order.convertedSale && (
             <Card>
