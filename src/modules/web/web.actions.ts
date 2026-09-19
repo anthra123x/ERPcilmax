@@ -237,7 +237,7 @@ export async function setWebProductVisible(id: string, visible: boolean) {
 
   revalidatePath('/web/products')
   revalidatePath(`/web/products/${id}`)
-  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/api/web/products')
   revalidatePath('/web')
   return { success: visible ? 'Producto publicado en la tienda' : 'Producto oculto de la tienda' }
 }
@@ -253,7 +253,7 @@ export async function setWebProductFeatured(id: string, featured: boolean) {
 
   revalidatePath('/web/products')
   revalidatePath(`/web/products/${id}`)
-  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/api/web/products')
   revalidatePath('/web')
   return { success: featured ? 'Producto marcado como destacado' : 'Producto quitado de destacados' }
 }
@@ -279,7 +279,7 @@ export async function bulkUpdateWebProducts(ids: string[], patch: { webVisible?:
   }
 
   revalidatePath('/web/products')
-  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/api/web/products')
   revalidatePath('/web')
   return { success: `${count} ${count === 1 ? 'producto actualizado' : 'productos actualizados'}` }
 }
@@ -316,7 +316,7 @@ export async function moveWebProduct(id: string, direction: 'up' | 'down') {
   }
 
   revalidatePath('/web/products')
-  revalidatePath('/api/ecommerce/products')
+  revalidatePath('/api/web/products')
   revalidatePath('/web')
   return { success: 'Orden del catálogo actualizado' }
 }
