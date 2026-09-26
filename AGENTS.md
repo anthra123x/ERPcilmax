@@ -25,7 +25,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Testing | Vitest | 4.1.7 | 217 tests en 19 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
-| Monitoreo | @sentry/nextjs | 10.53.1 | Instalado pero INACTIVO: `SENTRY_DSN` no está en `.env` (solo vacío en `.env.example`), no se envían eventos |
+| Monitoreo | @sentry/nextjs | 10.53.1 | Instalado pero INACTIVO: `SENTRY_DSN` está vacío en `.env.local` y en `.env.example` → no se envían eventos |
 
 ## Comandos esenciales
 
@@ -221,7 +221,7 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 - **Sin TanStack Table**: Las tablas actuales (shadcn Table simple) cubren bien CRUDs. Reports no justifica la complejidad.
 - **Sin Framer Motion**: ERP con tablas/formularios no necesita animaciones complejas. View Transitions API de React 19 cubre lo necesario.
 - **Sin Magic UI / Aceternity**: Efectos CSS sin valor real para un ERP. Añaden peso y dependencias.
-- **Sentry**: `@sentry/nextjs` instalado con instrumentación runtime (`src/instrumentation.ts` + `src/instrumentation-client.ts`, patrón v10; por eso no hay `sentry.*.config.ts`). **Está INACTIVO**: `SENTRY_DSN` no existe en `.env` —solo aparece vacío en `.env.example`—, así que no se envía ningún evento. La instrumentación sí está cableada en `global-error.tsx`, `lib/errors.ts`, `lib/safe-actions.ts` y `lib/api-utils.ts`.
+- **Sentry**: `@sentry/nextjs` instalado con instrumentación runtime (`src/instrumentation.ts` + `src/instrumentation-client.ts`, patrón v10; por eso no hay `sentry.*.config.ts`). La instrumentación sí está cableada en `global-error.tsx`, `lib/errors.ts`, `lib/safe-actions.ts` y `lib/api-utils.ts`, y `withSentryConfig(nextConfig)` SÍ está aplicado en `next.config.ts` — no quitarlo. Aun así está **INACTIVO en runtime** porque el `SENTRY_DSN` está vacío.
 - **Middleware**: `proxy.ts` es detectado automáticamente por Next.js 16 build como middleware. No necesita `middleware.ts`.
 
 ## Skills del agente (cargar cuando aplique)
@@ -246,6 +246,6 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 - [ ] Migrar Float→Decimal en 23 campos financieros
 - [ ] Reducir uso de `any` types gradualmente
-- [ ] Activar Sentry: agregar `SENTRY_DSN` real a `.env` y restaurar `withSentryConfig` en `next.config.ts` (hoy el export es `nextConfig` pelado y el import de la línea 2 quedó muerto; ESLint no lo detecta porque `next.config.ts` no entra en los `files` que matchean). Sin eso no hay source maps ni release tagging.
+- [ ] Activar Sentry: poner un `SENTRY_DSN` real en `.env.local` (la clave ya existe ahí pero vacía). `withSentryConfig` ya está aplicado en `next.config.ts` — no tocar. Sin DSN no llegan eventos ni source maps.
 - [ ] Agregar `loading.tsx` para rutas que aún no tienen
 - [ ] Implementar perfil de administrador con cambio de contraseña real (Supabase Auth)
