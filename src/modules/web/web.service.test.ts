@@ -6,13 +6,21 @@ const prismaMocks = vi.hoisted(() => ({
   productCategory: { findMany: vi.fn() },
   contactMessage: { create: vi.fn() },
   storeSetting: { findMany: vi.fn() },
+  systemSettings: { findFirst: vi.fn() },
+  webOrder: { updateMany: vi.fn() },
   $transaction: vi.fn((fn: (tx: unknown) => unknown) => fn(prismaMockData.transaction)),
 }))
 
 const prismaMockData = {
   transaction: {
     webOrder: { create: vi.fn() },
-    systemSettings: { findFirst: vi.fn(), create: vi.fn(), update: vi.fn() },
+    systemSettings: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      findUniqueOrThrow: vi.fn(),
+    },
+    $queryRaw: vi.fn(),
   },
 }
 
@@ -23,11 +31,14 @@ vi.mock('@/lib/prisma', () => ({
     productCategory: prismaMocks.productCategory,
     contactMessage: prismaMocks.contactMessage,
     storeSetting: prismaMocks.storeSetting,
+    systemSettings: prismaMocks.systemSettings,
+    webOrder: prismaMocks.webOrder,
     $transaction: prismaMocks.$transaction,
   },
 }))
 
 import {
+  cancelExpiredWebOrders,
   getCatalogProductByHandle,
   getCatalogCategories,
   getCatalogProducts,
@@ -202,9 +213,11 @@ describe('getProductReviews / createProductReview', () => {
     expect(prismaMocks.productReview.create).toHaveBeenCalledOnce()
   })
 
-  it('throws when the product does not exist', async () => {
+  it('throws a typed NotFoundError when the product does not exist', async () => {
     prismaMocks.product.findFirst.mockResolvedValue(null)
-    await expect(createProductReview({ productId: 'fake', name: 'Ana', rating: 5, comment: 'x' })).rejects.toThrow('Producto inválido')
+    await expect(createProductReview({ productId: 'fake', name: 'Ana', rating: 5, comment: 'x' })).rejects.toThrow(
+      'Producto no encontrado',
+    )
   })
 })
 
@@ -225,11 +238,15 @@ describe('createWebOrder', () => {
 
   it('re-prices items from the DB and persists inside a transaction', async () => {
     prismaMocks.product.findMany.mockResolvedValue([
-      { id: 'p1', name: 'Olla', slug: 'olla', salePrice: 189900, webVisible: true },
+      { id: 'p1', name: 'Olla', slug: 'olla', salePrice: 189900, webVisible: true, stock: 5 },
     ])
     const createdOrder = { id: 'w1', total: 189900, items: [] }
     prismaMockData.transaction.webOrder.create.mockResolvedValue(createdOrder)
     prismaMockData.transaction.systemSettings.findFirst.mockResolvedValue({
+      id: 's1',
+      nextWebOrderNumber: 1000,
+    })
+    prismaMockData.transaction.systemSettings.findUniqueOrThrow.mockResolvedValue({
       id: 's1',
       nextWebOrderNumber: 1000,
     })
@@ -242,6 +259,7 @@ describe('createWebOrder', () => {
 
     expect(result).toEqual(createdOrder)
     expect(prismaMocks.product.findMany).toHaveBeenCalledTimes(1)
+    expect(prismaMockData.transaction.$queryRaw).toHaveBeenCalledTimes(1)
     expect(prismaMockData.transaction.webOrder.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
         total: 189900,
@@ -260,12 +278,85 @@ describe('createWebOrder', () => {
     })
   })
 
+  it('rejects orders with duplicated product ids', async () => {
+    prismaMocks.product.findMany.mockResolvedValue([
+      { id: 'p1', name: 'Olla', slug: 'olla', salePrice: 189900, webVisible: true, stock: 5 },
+    ])
+
+    await expect(
+      createWebOrder({
+        customerName: 'Ana',
+        customerPhone: '3001234567',
+        items: [
+          { productId: 'p1', quantity: 1 },
+          { productId: 'p1', quantity: 2 },
+        ],
+      }),
+    ).rejects.toThrow('Hay productos duplicados en el pedido')
+    expect(prismaMocks.product.findMany).not.toHaveBeenCalled()
+  })
+
+  it('rejects orders requesting more stock than available', async () => {
+    prismaMocks.product.findMany.mockResolvedValue([
+      { id: 'p1', name: 'Olla', slug: 'olla', salePrice: 189900, webVisible: true, stock: 2 },
+    ])
+
+    await expect(
+      createWebOrder({ customerName: 'Ana', customerPhone: '3001234567', items: [{ productId: 'p1', quantity: 3 }] }),
+    ).rejects.toThrow('Stock insuficiente para "Olla"')
+    expect(prismaMockData.transaction.webOrder.create).not.toHaveBeenCalled()
+  })
+
   it('rejects orders referencing unavailable products', async () => {
     prismaMocks.product.findMany.mockResolvedValue([])
     await expect(
       createWebOrder({ customerName: 'Ana', customerPhone: '3001234567', items: [{ productId: 'ghost', quantity: 1 }] }),
     ).rejects.toThrow('ya no está disponible')
     expect(prismaMockData.transaction.webOrder.create).not.toHaveBeenCalled()
+  })
+})
+
+describe('cancelExpiredWebOrders', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('cancels PENDING orders older than the default 24h cutoff', async () => {
+    prismaMocks.systemSettings.findFirst.mockResolvedValue(null)
+    prismaMocks.webOrder.updateMany.mockResolvedValue({ count: 3 })
+
+    const result = await cancelExpiredWebOrders()
+
+    expect(result).toEqual({ count: 3 })
+    const call = prismaMocks.webOrder.updateMany.mock.calls[0][0]
+    expect(call.where.status).toBe('PENDING')
+    expect(call.data.status).toBe('CANCELLED')
+    expect(call.where.createdAt.lt).toBeInstanceOf(Date)
+    expect(prismaMocks.systemSettings.findFirst).toHaveBeenCalledTimes(1)
+  })
+
+  it('respects the configured expiry window from system settings', async () => {
+    prismaMocks.systemSettings.findFirst.mockResolvedValue({ id: 's1', webPendingExpiryHours: 2 })
+    prismaMocks.webOrder.updateMany.mockResolvedValue({ count: 1 })
+
+    const before = Date.now()
+    await cancelExpiredWebOrders()
+    const after = Date.now()
+
+    const cutoff = (prismaMocks.webOrder.updateMany.mock.calls[0][0] as { where: { createdAt: { lt: Date } } }).where.createdAt
+      .lt
+    expect(cutoff.getTime()).toBeGreaterThanOrEqual(before - 2 * 3600_000)
+    expect(cutoff.getTime()).toBeLessThanOrEqual(after - 2 * 3600_000)
+  })
+
+  it('does not touch CONFIRMED orders (only PENDING are expired)', async () => {
+    prismaMocks.systemSettings.findFirst.mockResolvedValue(null)
+    prismaMocks.webOrder.updateMany.mockResolvedValue({ count: 0 })
+
+    await cancelExpiredWebOrders()
+
+    expect(prismaMocks.webOrder.updateMany).toHaveBeenCalledTimes(1)
+    expect(prismaMocks.webOrder.updateMany.mock.calls[0][0]).toEqual(
+      expect.objectContaining({ where: expect.objectContaining({ status: 'PENDING' }) }),
+    )
   })
 })
 

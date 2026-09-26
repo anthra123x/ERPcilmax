@@ -501,6 +501,8 @@ model Transaction {
   @@index([saleId])
   @@index([expenseId])
   @@index([paymentId])
+  @@index([type, date])
+  @@index([type, categoryId])
   @@map("transactions")
 }
 

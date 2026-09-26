@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { NotFoundError, ValidationError } from '@/lib/errors'
 import type { WebCategory, WebContactInput, WebOrderInput, WebProduct, WebProductReview, WebRating, WebReviewInput, WebSettings, WebVariant } from './web.types'
 import { DEFAULT_WEB_SETTINGS } from './web.types'
 
@@ -165,7 +166,7 @@ export async function createProductReview(input: WebReviewInput): Promise<WebPro
     where: { id: input.productId, deletedAt: null },
     select: { id: true, webVisible: true },
   })
-  if (!product) throw new Error('Producto inválido')
+  if (!product) throw new NotFoundError('Producto')
 
   const review = await prisma.productReview.create({
     data: {
@@ -209,16 +210,31 @@ export async function createContactMessage(input: WebContactInput) {
 export async function createWebOrder(input: WebOrderInput) {
   // Los precios/clientes NO se confían: se re-leen desde la BD.
   const productIds = input.items.map((item) => item.productId)
+
+  // `findMany` con `id: { in }` devuelve una fila por producto; con IDs
+  // duplicados en items la comparación de longitudes daría un falso negativo.
+  const uniqueProductIds = Array.from(new Set(productIds))
+  if (uniqueProductIds.length !== productIds.length) {
+    throw new ValidationError('Hay productos duplicados en el pedido')
+  }
+
   const products = await prisma.product.findMany({
-    where: { id: { in: productIds }, deletedAt: null, webVisible: true, stock: { gte: 0 } },
-    select: { id: true, name: true, slug: true, salePrice: true, webVisible: true },
+    where: { id: { in: uniqueProductIds }, deletedAt: null, webVisible: true },
+    select: { id: true, name: true, slug: true, salePrice: true, webVisible: true, stock: true },
   })
   const byId = new Map(products.map((p) => [p.id, p]))
-  if (products.length !== productIds.length) throw new Error('Uno de los productos ya no está disponible')
+  if (uniqueProductIds.length !== products.length) {
+    throw new ValidationError('Uno de los productos ya no está disponible')
+  }
 
   const items = input.items.map((item) => {
     const product = byId.get(item.productId)!
-    if (!product.webVisible || !product.slug) throw new Error('Uno de los productos ya no está disponible')
+    if (!product.webVisible || !product.slug) throw new ValidationError('Uno de los productos ya no está disponible')
+    // El stock se descuenta al CONFIRMAR, pero un pedido no puede pedir más
+    // unidades de las disponibles hoy (evita sobre-reservar en la práctica).
+    if (product.stock < item.quantity) {
+      throw new ValidationError(`Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`)
+    }
     const total = Math.round(product.salePrice) * item.quantity
     return {
       productId: product.id,
@@ -233,10 +249,16 @@ export async function createWebOrder(input: WebOrderInput) {
   const total = items.reduce((sum, item) => sum + item.total, 0)
 
   return await prisma.$transaction(async (tx) => {
+    // Row lock: serializa la numeración ORD-XXXX entre pedidos concurrentes.
     let settings = await tx.systemSettings.findFirst()
     if (!settings) {
       settings = await tx.systemSettings.create({ data: {} })
     }
+
+    await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM system_settings WHERE id = ${settings.id} FOR UPDATE`
+
+    // Re-lee el contador fresco tras adquirir el lock.
+    settings = await tx.systemSettings.findUniqueOrThrow({ where: { id: settings.id } })
     const reference = `ORD-${settings.nextWebOrderNumber}`
 
     const order = await tx.webOrder.create({
@@ -292,6 +314,32 @@ export async function getWebSettings(): Promise<WebSettings> {
   }
 
   return settings
+}
+
+// ─────────────────────────────────────────────────────────────
+// Expiración automática de pedidos pendientes
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Cancela pedidos PENDING que superaron `webPendingExpiryHours` horas sin ser
+ * confirmados. No toca CONFIRMED (que ya tiene stock reservado) y no ejecuta
+ * ninguna operación de stock: la reserva solo ocurre al confirmar.
+ *
+ * Función no-server (sin auth) para poder invocarla desde el cron de Vercel y
+ * como fallback perezoso en `getWebOverview` (updateMany barato con índice en
+ * `createdAt`).
+ */
+export async function cancelExpiredWebOrders(): Promise<{ count: number }> {
+  const settings = await prisma.systemSettings.findFirst()
+  const hours = settings?.webPendingExpiryHours ?? 24
+  const cutoff = new Date(Date.now() - hours * 3600_000)
+
+  const res = await prisma.webOrder.updateMany({
+    where: { status: 'PENDING', createdAt: { lt: cutoff } },
+    data: { status: 'CANCELLED' },
+  })
+
+  return { count: res.count }
 }
 
 // ─────────────────────────────────────────────────────────────

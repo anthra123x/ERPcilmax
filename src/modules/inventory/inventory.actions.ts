@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { CreateProductSchema, UpdateProductSchema } from '@/lib/validations'
 import { requireAuth } from '@/modules/auth/auth.actions'
-import { parseError } from '@/lib/errors'
+import { safeServerAction, type ServerActionResult } from '@/lib/safe-actions'
 
 function toNullableId(value: FormDataEntryValue | null): string | null {
   const raw = typeof value === 'string' ? value : ''
@@ -79,7 +79,7 @@ export async function getProductById(id: string) {
   })
 }
 
-export async function createProduct(formData: FormData) {
+export async function createProduct(formData: FormData): Promise<ServerActionResult<{ success: string; id: string }>> {
   await requireAuth()
 
   const validatedFields = CreateProductSchema.safeParse({
@@ -100,12 +100,17 @@ export async function createProduct(formData: FormData) {
     }
   }
 
-  try {
-    const imageUrl = toNullableImage(formData.get('imageUrl'))
-    if (imageUrl && imageUrl.length > MAX_IMAGE_LENGTH) {
-      return { error: 'La imagen es demasiado pesada. Usa una imagen más pequeña (se comprime a 400px).' }
-    }
+  // Regla de negocio #2: no se puede vender por debajo del costo.
+  if (validatedFields.data.salePrice < validatedFields.data.costPrice) {
+    return { error: 'El precio de venta no puede ser menor al costo' }
+  }
 
+  const imageUrl = toNullableImage(formData.get('imageUrl'))
+  if (imageUrl && imageUrl.length > MAX_IMAGE_LENGTH) {
+    return { error: 'La imagen es demasiado pesada. Usa una imagen más pequeña (se comprime a 400px).' }
+  }
+
+  return safeServerAction(async () => {
     const product = await prisma.product.create({
       data: {
         ...validatedFields.data,
@@ -118,12 +123,13 @@ export async function createProduct(formData: FormData) {
       success: 'Producto creado exitosamente',
       id: product.id,
     }
-  } catch (error) {
-    return { error: parseError(error).message }
-  }
+  }, 'No se pudo crear el producto')
 }
 
-export async function updateProduct(id: string, formData: FormData) {
+export async function updateProduct(
+  id: string,
+  formData: FormData,
+): Promise<ServerActionResult<{ success: string; id: string }>> {
   await requireAuth()
 
   const validatedFields = UpdateProductSchema.safeParse({
@@ -146,16 +152,29 @@ export async function updateProduct(id: string, formData: FormData) {
     }
   }
 
-  try {
-    const imageUrl = toNullableImage(formData.get('imageUrl'))
-    if (imageUrl && imageUrl.length > MAX_IMAGE_LENGTH) {
-      return { error: 'La imagen es demasiado pesada. Usa una imagen más pequeña (se comprime a 400px).' }
-    }
+  // El stock SOLO cambia vía addStockMovement/adjustStock (trazabilidad).
+  // Si la UI envía stock en el formulario, se ignora: no se persiste aquí.
+  const { stock: _stock, ...productData } = validatedFields.data
 
+  // Regla de negocio #2 (solo cuando ambos valores vienen en el formulario).
+  if (
+    productData.salePrice !== undefined &&
+    productData.costPrice !== undefined &&
+    productData.salePrice < productData.costPrice
+  ) {
+    return { error: 'El precio de venta no puede ser menor al costo' }
+  }
+
+  const imageUrl = toNullableImage(formData.get('imageUrl'))
+  if (imageUrl && imageUrl.length > MAX_IMAGE_LENGTH) {
+    return { error: 'La imagen es demasiado pesada. Usa una imagen más pequeña (se comprime a 400px).' }
+  }
+
+  return safeServerAction(async () => {
     const product = await prisma.product.update({
       where: { id },
       data: {
-        ...validatedFields.data,
+        ...productData,
         imageUrl,
       },
     })
@@ -166,9 +185,7 @@ export async function updateProduct(id: string, formData: FormData) {
       success: 'Producto actualizado exitosamente',
       id: product.id,
     }
-  } catch (error) {
-    return { error: parseError(error).message }
-  }
+  }, 'No se pudo actualizar el producto')
 }
 
 export async function deleteProduct(id: string) {

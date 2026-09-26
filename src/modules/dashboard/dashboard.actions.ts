@@ -102,15 +102,21 @@ async function getPendingCreditTotal() {
 }
 
 async function getLowStockProducts() {
-  const products = await prisma.product.findMany({
-    where: { deletedAt: null },
-    orderBy: { stock: 'asc' },
-  })
+  // Prisma no soporta comparar columna vs columna en `where`, así que usamos
+  // raw query para filtrar `stock <= lowStockThreshold` directamente en SQL.
+  // Esto evita traer TODOS los productos a Node para filtrar en JS.
+  const products = await prisma.$queryRaw<
+    Array<{ id: string; name: string; stock: number; lowStockThreshold: number }>
+  >`
+    SELECT id, name, stock, "lowStockThreshold"
+    FROM products
+    WHERE "deletedAt" IS NULL
+      AND stock <= "lowStockThreshold"
+    ORDER BY stock ASC
+    LIMIT 10
+  `
 
   return products
-    .filter((p) => p.stock <= p.lowStockThreshold)
-    .slice(0, 10)
-    .map((p) => ({ id: p.id, name: p.name, stock: p.stock, lowStockThreshold: p.lowStockThreshold }))
 }
 
 async function getRecentSales() {

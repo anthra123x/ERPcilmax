@@ -1,10 +1,11 @@
 'use server'
 
-import { supabase } from '@/lib/supabase-server'
+import { supabase, createSupabaseServerAction } from '@/lib/supabase-server'
 import { prisma } from '@/lib/prisma'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { parseError } from '@/lib/errors'
+import { randomBytes } from 'node:crypto'
 
 export async function ensureUserExists(email: string, name: string) {
   try {
@@ -31,25 +32,7 @@ export async function logout() {
 
 export async function getCurrentUser() {
   try {
-    const { cookies } = await import('next/headers')
-    const { createServerClient } = await import('@supabase/ssr')
-
-    const cookieStore = await cookies()
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          },
-        },
-      },
-    )
+    const supabase = await createSupabaseServerAction()
 
     const {
       data: { user },
@@ -93,26 +76,7 @@ export async function updatePassword(newPassword: string) {
   await requireAuth()
 
   try {
-    const { cookies } = await import('next/headers')
-    const { createServerClient } = await import('@supabase/ssr')
-
-    const cookieStore = await cookies()
-
-    const supabase = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          },
-        },
-      },
-    )
-
+    const supabase = await createSupabaseServerAction()
     const { error } = await supabase.auth.updateUser({ password: newPassword })
 
     if (error) {
@@ -134,25 +98,7 @@ export async function updateProfileName(name: string) {
   }
 
   try {
-    const { cookies } = await import('next/headers')
-    const { createServerClient } = await import('@supabase/ssr')
-
-    const cookieStore = await cookies()
-
-    const client = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          },
-        },
-      },
-    )
+    const client = await createSupabaseServerAction()
 
     const {
       data: { user },
@@ -188,29 +134,13 @@ export async function requestPasswordReset(email: string) {
   }
 
   try {
-    const { cookies, headers } = await import('next/headers')
-    const { createServerClient } = await import('@supabase/ssr')
-
-    const cookieStore = await cookies()
+    const { headers } = await import('next/headers')
     const headerStore = await headers()
     const protocol = headerStore.get('x-forwarded-proto') || 'http'
     const host = headerStore.get('host') || 'localhost:3000'
     const origin = `${protocol}://${host}`
 
-    const client = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      {
-        cookies: {
-          getAll() {
-            return cookieStore.getAll()
-          },
-          setAll(cookiesToSet) {
-            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options))
-          },
-        },
-      },
-    )
+    const client = await createSupabaseServerAction()
 
     const { error } = await client.auth.resetPasswordForEmail(trimmedEmail, {
       redirectTo: `${origin}/auth/update-password`,
@@ -243,7 +173,13 @@ export async function getUsers() {
 }
 
 export async function deleteUser(userId: string) {
-  await requireAuth()
+  const currentUser = await requireAuth()
+
+  // Prevenir que un admin se elimine a sí mismo (quedaría sin acceso al sistema).
+  if (userId === currentUser.id) {
+    return { error: 'No puedes eliminar tu propio usuario' }
+  }
+
   try {
     await prisma.user.delete({
       where: { id: userId },
@@ -288,7 +224,7 @@ export async function createUserByAdmin(formData: FormData) {
       throw error
     }
 
-    const finalPassword = password || Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8)
+    const finalPassword = password || randomBytes(16).toString('base64url')
     const { error: authError } = await supabase.auth.admin.createUser({
       email,
       password: finalPassword,

@@ -1,6 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createProductReview, getProductReviews } from '@/modules/web/web.service'
-import { enforceRateLimit, json } from '@/lib/api-utils'
+import { enforceRateLimit, handleApiError, json, readJsonBody } from '@/lib/api-utils'
 import { CreateProductReviewSchema } from '@/lib/validations'
 import { getZodErrorMessage } from '@/lib/zod-error'
 
@@ -15,8 +15,7 @@ export async function GET(request: NextRequest) {
     const reviews = await getProductReviews(productId)
     return json({ reviews })
   } catch (error) {
-    console.error('GET /api/web/reviews', error)
-    return json({ error: 'Error interno del servidor.' }, { status: 500 })
+    return handleApiError(error, 'GET /api/web/reviews')
   }
 }
 
@@ -24,9 +23,11 @@ export async function POST(request: NextRequest) {
   const limited = enforceRateLimit(request, true)
   if (limited) return limited
 
-  const body = await request.json().catch(() => null)
+  const read = await readJsonBody(request)
+  if (!read.ok) return read.response
 
   // Honeypot anti-spam: un bot rellena el campo oculto "website".
+  const body = read.body
   if (body && typeof body === 'object' && (body as { website?: unknown }).website) {
     return json({ ok: true })
   }
@@ -40,10 +41,6 @@ export async function POST(request: NextRequest) {
     const review = await createProductReview(parsed.data)
     return json({ ok: true, review })
   } catch (error) {
-    if (error instanceof Error && error.message === 'Producto inválido') {
-      return json({ error: 'Producto inválido.' }, { status: 400 })
-    }
-    console.error('POST /api/web/reviews', error)
-    return json({ error: 'No se pudo enviar la reseña. Intenta de nuevo.' }, { status: 500 })
+    return handleApiError(error, 'POST /api/web/reviews')
   }
 }

@@ -1,12 +1,12 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
 import { RegisterPaymentSchema } from '@/lib/validations'
 import { requireAuth } from '@/modules/auth/auth.actions'
 import { parseError } from '@/lib/errors'
 import { parseDateInput, getCreditStatus } from '@/lib/labels'
 import { resolveSalesIncomeCategory } from './sales.helpers'
+import { revalidateSalePaths } from '@/lib/revalidation'
 
 export async function registerPayment(input: {
   saleId: string
@@ -86,10 +86,7 @@ export async function registerPayment(input: {
       return payment
     })
 
-    revalidatePath('/sales')
-    revalidatePath('/credits')
-    revalidatePath('/finances')
-    revalidatePath('/dashboard')
+    revalidateSalePaths()
     return { success: 'Abono registrado exitosamente', payment: result }
   } catch (error) {
     return { error: parseError(error).message }
@@ -115,10 +112,7 @@ export async function deletePayment(paymentId: string) {
       })
     })
 
-    revalidatePath('/sales')
-    revalidatePath('/credits')
-    revalidatePath('/finances')
-    revalidatePath('/dashboard')
+    revalidateSalePaths()
     return { success: 'Abono eliminado exitosamente' }
   } catch (error) {
     return { error: parseError(error).message }
@@ -149,6 +143,52 @@ export async function getCreditSales(
     }),
   }
 
+  // Cuando hay filtro de estado crediticio necesitamos computar el status de
+  // TODAS las ventas a crédito que cumplen el where base, filtrar, y luego
+  // paginar sobre el resultado filtrado (no al revés).
+  if (estado && estado !== 'ALL') {
+    // 1. Traer solo los campos necesarios para computar el status.
+    const allCredit = await prisma.sale.findMany({
+      where: baseWhere,
+      orderBy: { saleDate: 'desc' },
+      select: {
+        id: true,
+        total: true,
+        dueDate: true,
+        paymentMethod: true,
+        status: true,
+        payments: { select: { amount: true } },
+      },
+    })
+
+    // 2. Filtrar por estado crediticio computado.
+    const filtered = allCredit.filter((s) => getCreditStatus(s) === estado)
+    const filteredIds = filtered.slice((page - 1) * take, page * take).map((s) => s.id)
+
+    // 3. Traer los datos completos solo de la página actual.
+    const sales = filteredIds.length > 0
+      ? await prisma.sale.findMany({
+          where: { id: { in: filteredIds } },
+          orderBy: { saleDate: 'desc' },
+          include: {
+            client: { select: { id: true, name: true, phone: true } },
+            payments: { select: { amount: true } },
+          },
+        })
+      : []
+
+    const rows = sales.map((s) => ({ ...s, creditStatus: getCreditStatus(s) }))
+
+    return {
+      credits: rows,
+      total: filtered.length,
+      page,
+      totalPages: Math.ceil(filtered.length / take) || 1,
+      totalFiltered: filtered.length,
+    }
+  }
+
+  // Sin filtro de estado: paginación estándar.
   const [sales, total] = await Promise.all([
     prisma.sale.findMany({
       where: baseWhere,
@@ -163,21 +203,17 @@ export async function getCreditSales(
     prisma.sale.count({ where: baseWhere }),
   ])
 
-  let rows = sales.map((s) => {
-    const status = getCreditStatus(s)
-    return { ...s, creditStatus: status }
-  })
-
-  if (estado && estado !== 'ALL') {
-    rows = rows.filter((r) => r.creditStatus === estado)
-  }
+  const rows = sales.map((s) => ({
+    ...s,
+    creditStatus: getCreditStatus(s),
+  }))
 
   return {
     credits: rows,
     total,
     page,
-    totalPages: Math.ceil(rows.length / take) || 1,
-    totalFiltered: rows.length,
+    totalPages: Math.ceil(total / take) || 1,
+    totalFiltered: total,
   }
 }
 

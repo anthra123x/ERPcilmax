@@ -1,14 +1,19 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { revalidatePath } from 'next/cache'
 import { CreateSaleSchema } from '@/lib/validations'
 import { requireAuth } from '@/modules/auth/auth.actions'
-import { parseError } from '@/lib/errors'
+import { NotFoundError, ValidationError } from '@/lib/errors'
+import { safeServerAction, type ServerActionResult } from '@/lib/safe-actions'
 import { parseDateInput } from '@/lib/labels'
-import { resolveSalesIncomeCategory } from './sales.helpers'
+import { resolveSaleUnitPrice, resolveSalesIncomeCategory } from './sales.helpers'
+import { revalidateSalePaths } from '@/lib/revalidation'
+import type { Prisma } from '@prisma/client'
 
-export async function createSale(data: {
+export type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>
+
+export async function createSale(
+  data: {
   clientId?: string | null
   items: Array<{ productId: string; quantity: number; unitPrice?: number }>
   discount?: number
@@ -23,7 +28,7 @@ export async function createSale(data: {
    * descontar de nuevo ni crear movimientos SALE.
    */
   stockReserved?: boolean
-}) {
+}): Promise<ServerActionResult<{ success: string; sale: SaleWithItems }>> {
   const user = await requireAuth()
 
   const validatedFields = CreateSaleSchema.safeParse({
@@ -43,7 +48,7 @@ export async function createSale(data: {
     }
   }
 
-  try {
+  return safeServerAction(async () => {
     const result = await prisma.$transaction(async (tx) => {
       const {
         items,
@@ -66,19 +71,25 @@ export async function createSale(data: {
 
       for (const item of items) {
         const product = productMap.get(item.productId)
-        if (!product) throw new Error(`Producto ${item.productId} no encontrado`)
+        if (!product) throw new NotFoundError('Producto')
         if (product.stock < item.quantity) {
-          throw new Error(
+          throw new ValidationError(
             `Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`,
           )
         }
       }
 
-      // Get next invoice number
+      // Get next invoice number. El row lock serializa la numeración entre
+      // transacciones concurrentes (evita facturas duplicadas por lost update).
       let settings = await tx.systemSettings.findFirst()
       if (!settings) {
         settings = await tx.systemSettings.create({ data: {} })
       }
+
+      await tx.$queryRaw<Array<{ id: string }>>`SELECT id FROM system_settings WHERE id = ${settings.id} FOR UPDATE`
+
+      // Re-lee el contador fresco tras adquirir el lock.
+      settings = await tx.systemSettings.findUniqueOrThrow({ where: { id: settings.id } })
 
       const invoiceNumber = `${settings.invoicePrefix}${settings.nextInvoiceNumber}`
 
@@ -86,8 +97,9 @@ export async function createSale(data: {
       let subtotal = 0
       const saleItemsData = items.map((item) => {
         const product = productMap.get(item.productId)!
-        const unitPrice =
-          item.unitPrice !== undefined && item.unitPrice >= 0 ? item.unitPrice : product.salePrice
+        const priceResolution = resolveSaleUnitPrice(item.unitPrice, product)
+        if (!priceResolution.ok) throw new ValidationError(priceResolution.error)
+        const unitPrice = priceResolution.unitPrice
         const total = unitPrice * item.quantity
         subtotal += total
         return {
@@ -98,17 +110,22 @@ export async function createSale(data: {
         }
       })
 
+      // Un descuento mayor al subtotal dejaría un total negativo.
+      if ((discount || 0) > subtotal) {
+        throw new ValidationError('El descuento no puede superar el subtotal de la venta')
+      }
+
       const total = subtotal - (discount || 0)
 
       // Validaciones para ventas a crédito
       if (paymentMethod === 'CREDITO') {
         if (initialPayment > total) {
-          throw new Error('El abono inicial no puede superar el total de la venta')
+          throw new ValidationError('El abono inicial no puede superar el total de la venta')
         }
         const rest = total - initialPayment
         const installmentsSum = installments.reduce((s, i) => s + i.amount, 0)
         if (installmentsSum > rest + 0.005) {
-          throw new Error(
+          throw new ValidationError(
             `Las cuotas (${installmentsSum.toFixed(2)}) superan el saldo restante de la venta (${rest.toFixed(2)})`,
           )
         }
@@ -153,10 +170,23 @@ export async function createSale(data: {
       if (!data.stockReserved) {
         for (const item of items) {
           const product = productMap.get(item.productId)!
-          await tx.product.update({
-            where: { id: item.productId },
-            data: { stock: product.stock - item.quantity },
+
+          // Decremento atómico con guarda de stock: si otra transacción
+          // consumió stock entre la validación y este update, count === 0 y
+          // la venta falla (rollback) en vez de quedar con stock negativo.
+          const reserved = await tx.product.updateMany({
+            where: { id: item.productId, deletedAt: null, stock: { gte: item.quantity } },
+            data: { stock: { decrement: item.quantity } },
           })
+          if (reserved.count === 0) {
+            const current = await tx.product.findUnique({
+              where: { id: item.productId },
+              select: { stock: true },
+            })
+            throw new ValidationError(
+              `Stock insuficiente para "${product.name}": disponible ${current?.stock ?? product.stock}, solicitado ${item.quantity}`,
+            )
+          }
 
           await tx.stockMovement.create({
             data: {
@@ -198,7 +228,7 @@ export async function createSale(data: {
 
         for (const inst of installments) {
           const due = parseDateInput(inst.dueDate)
-          if (!due) throw new Error(`Fecha de vencimiento inválida para la cuota de ${inst.amount}`)
+          if (!due) throw new ValidationError(`Fecha de vencimiento inválida para la cuota de ${inst.amount}`)
           await tx.creditInstallment.create({
             data: {
               saleId: sale.id,
@@ -219,7 +249,7 @@ export async function createSale(data: {
         })
       }
 
-      // Increment invoice number
+      // Increment invoice number (usando el valor fresco leído tras el lock)
       await tx.systemSettings.update({
         where: { id: settings.id },
         data: { nextInvoiceNumber: settings.nextInvoiceNumber + 1 },
@@ -228,28 +258,22 @@ export async function createSale(data: {
       return sale
     })
 
-    revalidatePath('/sales')
-    revalidatePath('/credits')
-    revalidatePath('/inventory')
-    revalidatePath('/finances')
-    revalidatePath('/dashboard')
+    revalidateSalePaths()
     return { success: 'Venta registrada exitosamente', sale: result }
-  } catch (error) {
-    return { error: parseError(error).message }
-  }
+  }, 'No se pudo registrar la venta')
 }
 
 export async function deleteSale(saleId: string) {
   await requireAuth()
 
-  try {
+  return safeServerAction(async () => {
     await prisma.$transaction(async (tx) => {
       const sale = await tx.sale.findUnique({
         where: { id: saleId },
         include: { items: true },
       })
 
-      if (!sale) throw new Error('Venta no encontrada')
+      if (!sale) throw new NotFoundError('Venta')
 
       // Restore stock
       for (const item of sale.items) {
@@ -283,15 +307,9 @@ export async function deleteSale(saleId: string) {
       })
     })
 
-    revalidatePath('/sales')
-    revalidatePath('/credits')
-    revalidatePath('/inventory')
-    revalidatePath('/finances')
-    revalidatePath('/dashboard')
+    revalidateSalePaths()
     return { success: 'Venta eliminada exitosamente' }
-  } catch (error) {
-    return { error: parseError(error).message }
-  }
+  }, 'No se pudo eliminar la venta')
 }
 
 export async function getSales(search?: string, page = 1, take = 20) {

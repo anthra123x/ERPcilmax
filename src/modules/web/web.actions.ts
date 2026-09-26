@@ -12,7 +12,7 @@ import {
   UpdateWebSettingsSchema,
 } from '@/lib/validations'
 import { createSale } from '@/modules/sales/sales.actions'
-import { getWebSettings } from './web.service'
+import { cancelExpiredWebOrders as cancelExpiredWebOrdersService, getWebSettings } from './web.service'
 import { buildUniqueSlug, computeStockStatus, computeWebReadiness } from './web.helpers'
 import type { ProductWebStatus } from './web.types'
 import type { Prisma } from '@prisma/client'
@@ -23,6 +23,10 @@ import type { Prisma } from '@prisma/client'
 
 export async function getWebOverview() {
   await requireAuth()
+
+  // Fallback sin cron (útil en dev/local): expira pedidos PENDING vencidos una
+  // vez por request. updateMany barato con índice en createdAt.
+  await cancelExpiredWebOrdersService()
 
   const [visibleProducts, totalProducts, pendingOrders, confirmedOrders, unreadMessages, pendingReviews, settings] =
     await Promise.all([
@@ -294,7 +298,7 @@ export async function moveWebProduct(id: string, direction: 'up' | 'down') {
   const products = await prisma.product.findMany({
     where: { deletedAt: null },
     orderBy: [{ webSortOrder: 'asc' }, { name: 'asc' }],
-    select: { id: true },
+    select: { id: true, webSortOrder: true },
   })
   const index = products.findIndex((p) => p.id === id)
   if (index === -1) return { error: 'Producto no encontrado' }
@@ -304,13 +308,16 @@ export async function moveWebProduct(id: string, direction: 'up' | 'down') {
     return { error: 'El producto ya está en el extremo del catálogo' }
   }
 
-  const reordered = [...products]
-  ;[reordered[index], reordered[target]] = [reordered[target], reordered[index]]
+  const current = products[index]
+  const neighbor = products[target]
 
   try {
-    await prisma.$transaction(
-      reordered.map((p, i) => prisma.product.update({ where: { id: p.id }, data: { webSortOrder: i } })),
-    )
+    // Solo intercambiamos el webSortOrder de los 2 productos afectados (O(1)
+    // en lugar de renumerar todo el catálogo).
+    await prisma.$transaction([
+      prisma.product.update({ where: { id: current.id }, data: { webSortOrder: neighbor.webSortOrder } }),
+      prisma.product.update({ where: { id: neighbor.id }, data: { webSortOrder: current.webSortOrder } }),
+    ])
   } catch (error) {
     return { error: parseError(error, 'No se pudo actualizar el orden').message }
   }
@@ -862,22 +869,18 @@ export async function updateWebSettings(formData: FormData) {
  * Cancela pedidos PENDING que superaron `webPendingExpiryHours` horas sin ser
  * confirmados. No toca CONFIRMED (que ya tiene stock reservado) y no ejecuta
  * ninguna operación de stock: la reserva solo ocurre al confirmar.
+ *
+ * La lógica vive en `web.service.ts` (sin 'use server') para que el cron de
+ * Vercel la invoque sin sesión; esta action la expone en el panel admin.
  */
 export async function cancelExpiredWebOrders() {
   await requireAuth()
 
-  const settings = await prisma.systemSettings.findFirst()
-  const hours = settings?.webPendingExpiryHours ?? 24
-  const cutoff = new Date(Date.now() - hours * 3600_000)
-
-  const res = await prisma.webOrder.updateMany({
-    where: { status: 'PENDING', createdAt: { lt: cutoff } },
-    data: { status: 'CANCELLED' },
-  })
+  const res = await cancelExpiredWebOrdersService()
 
   if (res.count > 0) {
     revalidatePath('/web/orders')
     revalidatePath('/web')
   }
-  return { count: res.count }
+  return res
 }
