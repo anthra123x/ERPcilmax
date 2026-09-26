@@ -22,10 +22,10 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Charts | Ninguno | - | Gráficos server-side; `recharts` instalado pero sin uso |
 | PDF | @react-pdf/renderer | 4.9.0 | Facturas POS, estado de cuenta y recibos (`/print` + `/api/sales/*/pdf`) |
 | Excel | xlsx (SheetJS) | 0.18.5 | Exportación de reportes |
-| Testing | Vitest | 4.1.7 | 193 tests en 19 files |
+| Testing | Vitest | 4.1.7 | 217 tests en 19 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
-| Monitoreo | @sentry/nextjs | 10.53.1 | Instalado; DSN en `.env` (dashboard sin activar) |
+| Monitoreo | @sentry/nextjs | 10.53.1 | Instalado pero INACTIVO: `SENTRY_DSN` no está en `.env` (solo vacío en `.env.example`), no se envían eventos |
 
 ## Comandos esenciales
 
@@ -34,7 +34,7 @@ npm run dev         # Dev server (http://localhost:3000) + React Scan for rerend
 npm run build       # Prisma generate + Next build (usa Webpack + WASM SWC)
 npm run lint        # ESLint (incluye detección de imports muertos)
 npm run typecheck   # TypeScript check sin emitir
-npm run test        # Vitest (193 tests)
+npm run test        # Vitest (217 tests)
 npm run db:push     # Sync schema a DB (dev)
 npm run db:studio   # Prisma Studio
 npm run db:migrate  # Crear migración
@@ -198,7 +198,7 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 | ESLint + unused-imports | Detecta imports/vars sin uso | `npm run lint` |
 | Prettier | Formateo consistente | `npx prettier --write src/` |
 | React Scan | Detecta rerenders innecesarios | Se activa SOLO en dev automáticamente |
-| Vitest | Tests unitarios (193 tests) | `npm test` |
+| Vitest | Tests unitarios (217 tests) | `npm test` |
 | TypeScript strict | Type safety | `npm run typecheck` |
 | Zod 4 | Validación runtime | Schemas en `@/lib/validations.ts` |
 
@@ -221,7 +221,7 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 - **Sin TanStack Table**: Las tablas actuales (shadcn Table simple) cubren bien CRUDs. Reports no justifica la complejidad.
 - **Sin Framer Motion**: ERP con tablas/formularios no necesita animaciones complejas. View Transitions API de React 19 cubre lo necesario.
 - **Sin Magic UI / Aceternity**: Efectos CSS sin valor real para un ERP. Añaden peso y dependencias.
-- **Sentry**: `@sentry/nextjs` instalado con DSN en `.env`; dashboard/monitoreo activo aún sin configurar. Pendiente de revisión.
+- **Sentry**: `@sentry/nextjs` instalado con instrumentación runtime (`src/instrumentation.ts` + `src/instrumentation-client.ts`, patrón v10; por eso no hay `sentry.*.config.ts`). **Está INACTIVO**: `SENTRY_DSN` no existe en `.env` —solo aparece vacío en `.env.example`—, así que no se envía ningún evento. La instrumentación sí está cableada en `global-error.tsx`, `lib/errors.ts`, `lib/safe-actions.ts` y `lib/api-utils.ts`.
 - **Middleware**: `proxy.ts` es detectado automáticamente por Next.js 16 build como middleware. No necesita `middleware.ts`.
 
 ## Skills del agente (cargar cuando aplique)
@@ -246,6 +246,6 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 - [ ] Migrar Float→Decimal en 23 campos financieros
 - [ ] Reducir uso de `any` types gradualmente
-- [ ] Activar dashboard de Sentry (instalado, DSN presente)
+- [ ] Activar Sentry: agregar `SENTRY_DSN` real a `.env` y restaurar `withSentryConfig` en `next.config.ts` (hoy el export es `nextConfig` pelado y el import de la línea 2 quedó muerto; ESLint no lo detecta porque `next.config.ts` no entra en los `files` que matchean). Sin eso no hay source maps ni release tagging.
 - [ ] Agregar `loading.tsx` para rutas que aún no tienen
 - [ ] Implementar perfil de administrador con cambio de contraseña real (Supabase Auth)
