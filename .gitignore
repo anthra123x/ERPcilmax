@@ -48,3 +48,6 @@ supabase/
 next-env.d.ts
 .env*.local
 .env*
+
+# backups de base de datos (contienen datos reales)
+/backups/
