@@ -12,7 +12,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 |------|-----------|---------|-------|
 | Framework | Next.js (App Router) | 16.2.10 | Build con Webpack + WASM SWC |
 | Language | TypeScript | 5.x | `strict: true` |
-| Database | PostgreSQL (Neon) | - | Conexión directa `DIRECT_URL`; pooler PgBouncer para runtime |
+| Database | PostgreSQL (Neon) | - | `DATABASE_URL` = endpoint pooled, `DIRECT_URL` = endpoint directo. Ver `NEON.md` |
 | ORM | Prisma | 5.22 | Singleton en `@/lib/prisma` |
 | CSS | Tailwind CSS | 4.x | `@tailwindcss/postcss`, `@theme inline` |
 | UI Components | shadcn/ui + Base UI v1 | - | `base-nova` style, lucide icons |
@@ -110,6 +110,18 @@ src/
 ```
 
 ## Convenciones de código críticas
+
+### Frontera de capas (monolito modular)
+
+Cada módulo vive en `src/modules/<modulo>/` y tiene hasta tres responsabilidades
+separadas. La regla es mecánica, no una recomendación: ESLint prohíbe importar
+`@/lib/prisma` dentro de un `*.actions.ts`.
+
+| Archivo | Responsabilidad | Puede tocar Prisma |
+|---|---|---|
+| `*.actions.ts` | Frontera HTTP: `requireAuth()`, validación Zod, delegar, `revalidatePath` | **NO** |
+| `*.service.ts` | Lógica de negocio, transacciones, queries, DTOs de salida | Sí |
+| `index.ts` | API pública del módulo (barrel) | — |
 
 - **Server Actions**: `src/modules/<modulo>/<modulo>.actions.ts`, con `'use server'`
 - **API Routes**: `src/app/api/<ruta>/route.ts`, públicas, SIN auth (para storefront)
@@ -238,13 +250,27 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 ## Entorno local (Fedora 44 + glibc 2.43)
 
-- **Node.js**: Usar v22.x via nvm (`.nvmrc` configurado)
+- **Node.js**: `node` en el PATH es **Bun 1.4.2** (`~/.local/bin/node`), no Node. Bun no puede cargar
+  `next.config.ts` (Next lo evalúa como CommonJS) y `npm run dev` muere con
+  `Failed to load next.config.ts`. Los scripts de `package.json` pasan por
+  `scripts/with-node.sh`, que busca un Node real (nvm → volta → asdf →
+  `~/.config/opencode/runtime/node/bin` → `/usr/local/bin`) y lo antepone al PATH.
+  Node real disponible hoy: **v24.21.0**. **nvm NO está instalado**, así que el
+  `.nvmrc` (22) no se está aplicando: si necesitas Node 22, instálalo.
 - **SWC**: El binario nativo de SWC es incompatible con glibc 2.43 (SIGBUS). Se usa WASM + Webpack.
 - `npm run dev` y `npm run build` ya incluyen `NEXT_TEST_WASM=1 next --webpack`
 
 ## Deuda técnica conocida
 
-- [ ] Migrar Float→Decimal en 23 campos financieros
+- [ ] **Migrar a la convención de capas**: 18 `*.actions.ts` aún importan `@/lib/prisma`.
+      La lista exacta está en `eslint.config.mjs` (bloque "Deuda técnica"); bórrala de ahí
+      al migrar el módulo. Empezó por `web/web-overview` → `web-overview.service.ts`.
+- [ ] **Importar los datos del schema `erp` a `public`** (o eliminar `erp`). Prisma opera
+      sobre `public` y está vacío; los datos reales están en `erp`. Ver `NEON.md`.
+- [ ] Migrar Float→Decimal en 20 campos financieros. Prisma **no** acepta
+      `Float @db.Decimal` (verificado: "Native type Decimal is not compatible"), así que
+      es un cambio de contrato a `Decimal` en toda la app, no solo de schema. Ahora sí hay
+      historial de migraciones para hacerlo con expand/contract.
 - [ ] Reducir uso de `any` types gradualmente
 - [ ] Activar Sentry: poner un `SENTRY_DSN` real en `.env.local` (la clave ya existe ahí pero vacía). `withSentryConfig` ya está aplicado en `next.config.ts` — no tocar. Sin DSN no llegan eventos ni source maps.
 - [ ] Agregar `loading.tsx` para rutas que aún no tienen
