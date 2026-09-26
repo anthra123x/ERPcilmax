@@ -7,6 +7,7 @@ import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts'
 import { cn } from '@/lib/utils'
 import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { AiFloatingChat } from '@/components/assistant/ai-floating-chat'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -71,6 +72,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
+
+      {/* Chat flotante de IA — disponible en todas las páginas */}
+      <AiFloatingChat />
     </div>
   )
 }
