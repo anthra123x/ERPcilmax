@@ -29,11 +29,67 @@ const eslintConfig = defineConfig([
       "jsx-a11y/alt-text": "off",
     },
   },
+  {
+    // ── Frontera de capas del monolito modular ───────────────────────────────
+    // Una Server Action es la FRONTERA HTTP: autentica, valida con Zod,
+    // delega en un service y revalida. El acceso a datos vive en
+    // `*.service.ts`. Prohibir el import aquí hace la regla mecánica en vez de
+    // una nota en la documentación.
+    files: ["src/modules/**/*.actions.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@/lib/prisma",
+              message:
+                "Las Server Actions no acceden a la base de datos. Mueve la query a un *.service.ts y delega desde la action.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    // ── Deuda técnica: módulos aún por migrar a la convención de capas ──────
+    // Cada línea es un módulo pendiente. Bórrala al migrarlo: mover el data
+    // access de la action a un *.service.ts y quitar el archivo de aquí.
+    // Hoy: 18 archivos.
+    files: [
+      "src/modules/auth/auth.actions.ts",
+      "src/modules/cleanup/cleanup.actions.ts",
+      "src/modules/clients/clients.actions.ts",
+      "src/modules/dashboard/dashboard.actions.ts",
+      "src/modules/export/export.actions.ts",
+      "src/modules/finance/expenses.actions.ts",
+      "src/modules/inventory/categories.actions.ts",
+      "src/modules/inventory/inventory.actions.ts",
+      "src/modules/inventory/stock.actions.ts",
+      "src/modules/notifications/notifications.actions.ts",
+      "src/modules/reports/reports.actions.ts",
+      "src/modules/sales/payments.actions.ts",
+      "src/modules/sales/sales.actions.ts",
+      "src/modules/search/search.actions.ts",
+      "src/modules/suppliers/suppliers.actions.ts",
+      "src/modules/web/web-content.actions.ts",
+      "src/modules/web/web-orders.actions.ts",
+      "src/modules/web/web-products.actions.ts",
+    ],
+    rules: {
+      "no-restricted-imports": "off",
+    },
+  },
   globalIgnores([
     ".next/**",
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Agentes/skills externas: no son código de la app
+    ".agents/**",
+    ".opencode/**",
+    ".codex/**",
+    "docs/**",
   ]),
 ]);
 
