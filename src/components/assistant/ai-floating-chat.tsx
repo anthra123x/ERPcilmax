@@ -66,6 +66,15 @@ export function AiFloatingChat() {
     }
   }, [open])
 
+  useEffect(() => {
+    if (!open) return
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [open])
+
   async function send(text: string) {
     const trimmed = text.trim()
     if (!trimmed || loading) return
@@ -101,18 +110,20 @@ export function AiFloatingChat() {
   }
 
   const chatHeight = expanded ? 'h-[600px]' : 'h-[460px]'
-  const chatWidth = expanded ? 'w-[480px]' : 'w-[380px]'
+  const chatWidth = expanded
+    ? 'w-[calc(100vw-2rem)] max-w-[480px]'
+    : 'w-[calc(100vw-2rem)] max-w-[380px]'
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
       {/* Panel de chat */}
       <div
         className={cn(
-          'flex flex-col rounded-2xl border border-border/60 bg-background shadow-2xl shadow-black/20 transition-all duration-300 ease-out',
+          'flex max-h-[calc(100dvh-7rem)] flex-col rounded-2xl border border-border/60 bg-background shadow-2xl shadow-black/20 transition-all duration-300 ease-out',
+          chatHeight,
           chatWidth,
           open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none scale-95',
         )}
-        style={{ maxHeight: expanded ? 640 : 520 }}
         aria-hidden={!open}
       >
         {/* Header */}
@@ -153,7 +164,7 @@ export function AiFloatingChat() {
         {/* Mensajes */}
         <div
           ref={scrollRef}
-          className={cn('flex-1 overflow-y-auto space-y-3.5 p-4 transition-all duration-300', chatHeight)}
+          className="min-h-0 flex-1 overflow-y-auto space-y-3.5 p-4 transition-all duration-300"
         >
           {messages.length === 0 && (
             <div className="flex h-full flex-col items-center justify-center text-center gap-4 px-4">
