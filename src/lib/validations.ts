@@ -1,9 +1,13 @@
 import { z } from 'zod'
 
-// Notification schemas
-export const NotificationTypeSchema = z.enum(['SYSTEM', 'LOW_STOCK'])
+// ─── Shared helpers ─────────────────────────────────────────────────────────
+export const optionalText = (schema: z.ZodType<string>) =>
+  z.preprocess(
+    (value) => (value === null || value === undefined || value === '' ? undefined : value),
+    schema.optional(),
+  )
 
-// Product schemas
+// ─── Inventory ──────────────────────────────────────────────────────────────
 export const CreateProductSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   description: z.string().optional().nullable(),
@@ -18,7 +22,6 @@ export const CreateProductSchema = z.object({
 
 export const UpdateProductSchema = CreateProductSchema.partial()
 
-// Product Category schemas
 export const CreateProductCategorySchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   color: z.string().optional().nullable(),
@@ -26,7 +29,6 @@ export const CreateProductCategorySchema = z.object({
 
 export const UpdateProductCategorySchema = CreateProductCategorySchema.partial()
 
-// Supplier schemas
 export const CreateSupplierSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   phone: z.string().optional().nullable(),
@@ -36,7 +38,6 @@ export const CreateSupplierSchema = z.object({
 
 export const UpdateSupplierSchema = CreateSupplierSchema.partial()
 
-// Stock Movement schemas
 export const StockMovementTypeSchema = z.enum(['PURCHASE', 'SALE', 'IN', 'OUT', 'ADJUST'])
 
 export const CreateStockMovementSchema = z.object({
@@ -48,7 +49,7 @@ export const CreateStockMovementSchema = z.object({
   reference: z.string().optional().nullable(),
 })
 
-// Sale schemas
+// ─── Sales ──────────────────────────────────────────────────────────────────
 export const PaymentMethodSchema = z.enum(['CASH', 'CARD', 'TRANSFER', 'CREDITO'])
 export const CashPaymentMethodSchema = z.enum(['CASH', 'CARD', 'TRANSFER'])
 export const SaleStatusSchema = z.enum(['COMPLETED', 'CANCELLED'])
@@ -77,22 +78,13 @@ export const CreateSaleSchema = z
   })
   .superRefine((data, ctx) => {
     if (data.paymentMethod === 'CREDITO' && !data.clientId) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'El cliente es requerido para ventas a crédito',
-        path: ['clientId'],
-      })
+      ctx.addIssue({ code: 'custom', message: 'El cliente es requerido para ventas a crédito', path: ['clientId'] })
     }
     if (data.paymentMethod !== 'CREDITO' && (data.initialPayment > 0 || data.installments.length > 0)) {
-      ctx.addIssue({
-        code: 'custom',
-        message: 'Anticipo y cuotas solo aplican para ventas a crédito',
-        path: ['paymentMethod'],
-      })
+      ctx.addIssue({ code: 'custom', message: 'Anticipo y cuotas solo aplican para ventas a crédito', path: ['paymentMethod'] })
     }
   })
 
-// Credit payments (abonos)
 export const RegisterPaymentSchema = z.object({
   saleId: z.string().min(1, 'La venta es requerida'),
   amount: z.coerce.number().positive('El monto debe ser mayor a 0'),
@@ -101,13 +93,7 @@ export const RegisterPaymentSchema = z.object({
   notes: z.string().max(300, 'La nota es demasiado larga').optional().nullable(),
 })
 
-// Client schemas
-const optionalText = (schema: z.ZodType<string>) =>
-  z.preprocess(
-    (value) => (value === null || value === undefined || value === '' ? undefined : value),
-    schema.optional(),
-  )
-
+// ─── Clients ────────────────────────────────────────────────────────────────
 export const CreateClientSchema = z.object({
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres'),
   phone: z.string().min(8, 'El teléfono debe tener al menos 8 caracteres'),
@@ -117,7 +103,9 @@ export const CreateClientSchema = z.object({
 
 export const UpdateClientSchema = CreateClientSchema.partial()
 
-// Notification schemas
+// ─── Notifications ──────────────────────────────────────────────────────────
+export const NotificationTypeSchema = z.enum(['SYSTEM', 'LOW_STOCK'])
+
 export const CreateNotificationSchema = z.object({
   userId: z.string().nullable().optional(),
   type: NotificationTypeSchema,
@@ -127,7 +115,24 @@ export const CreateNotificationSchema = z.object({
   entityId: z.string().optional().nullable(),
 })
 
-// Finance schemas
+// ─── Auth ───────────────────────────────────────────────────────────────────
+export const ChangePasswordSchema = z.object({
+  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
+})
+
+// ─── Settings ───────────────────────────────────────────────────────────────
+export const UpdateSettingsSchema = z.object({
+  companyName: z.string().min(1, 'El nombre es requerido').optional(),
+  companyAddress: z.string().optional().nullable(),
+  companyPhone: z.string().optional().nullable(),
+  companyEmail: z.string().email('Email inválido').optional().nullable(),
+  currency: z.string().optional(),
+  invoicePrefix: z.string().optional(),
+  invoiceFooter: z.string().optional().nullable(),
+  lowStockThreshold: z.coerce.number().int().min(0).optional(),
+})
+
+// ─── Finance ────────────────────────────────────────────────────────────────
 export const CategoryTypeSchema = z.enum(['INCOME', 'EXPENSE', 'SAVING_GOAL'])
 export const TransactionTypeSchema = z.enum(['INCOME', 'EXPENSE'])
 
@@ -177,33 +182,12 @@ export const CloseWeekSchema = z.object({
   savingsTarget: z.coerce.number().min(0).optional().nullable(),
 })
 
-// Auth schemas
-export const ChangePasswordSchema = z.object({
-  password: z.string().min(6, 'La contraseña debe tener al menos 6 caracteres'),
-})
-
-// Settings schemas
-export const UpdateSettingsSchema = z.object({
-  companyName: z.string().min(1, 'El nombre es requerido').optional(),
-  companyAddress: z.string().optional().nullable(),
-  companyPhone: z.string().optional().nullable(),
-  companyEmail: z.string().email('Email inválido').optional().nullable(),
-  currency: z.string().optional(),
-  invoicePrefix: z.string().optional(),
-  invoiceFooter: z.string().optional().nullable(),
-  lowStockThreshold: z.coerce.number().int().min(0).optional(),
-})
-
-// Storefront (tienda online) schemas — contrato de la API pública /api/web/*
+// ─── Web / Storefront ────────────────────────────────────────────────────────
 export const CreateProductReviewSchema = z.object({
   productId: z.string().min(1, 'El producto es requerido'),
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
   email: optionalText(z.string().email('Email inválido')).nullable(),
-  rating: z.coerce
-    .number()
-    .int()
-    .min(1, 'La calificación debe estar entre 1 y 5')
-    .max(5, 'La calificación debe estar entre 1 y 5'),
+  rating: z.coerce.number().int().min(1, 'La calificación debe estar entre 1 y 5').max(5, 'La calificación debe estar entre 1 y 5'),
   comment: z.string().min(1, 'El comentario es requerido').max(2000, 'El comentario es demasiado largo'),
 })
 
@@ -216,11 +200,7 @@ export const CreateContactMessageSchema = z.object({
 
 export const CreateWebOrderItemSchema = z.object({
   productId: z.string().min(1, 'El producto es requerido'),
-  quantity: z.coerce
-    .number()
-    .int()
-    .min(1, 'La cantidad debe ser al menos 1')
-    .max(99, 'La cantidad es demasiado grande'),
+  quantity: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1').max(99, 'La cantidad es demasiado grande'),
 })
 
 export const CreateWebOrderSchema = z.object({
@@ -231,13 +211,8 @@ export const CreateWebOrderSchema = z.object({
   items: z.array(CreateWebOrderItemSchema).min(1, 'El pedido está vacío').max(50, 'Demasiados productos en el pedido'),
 })
 
-// Tienda online — panel admin (Fase 3b)
 export const UpdateWebProductSchema = z.object({
-  slug: z
-    .string()
-    .trim()
-    .min(1, 'El slug es requerido')
-    .max(120, 'El slug es demasiado largo')
+  slug: z.string().trim().min(1, 'El slug es requerido').max(120, 'El slug es demasiado largo')
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Slug inválido: solo minúsculas, números y guiones'),
   webSortOrder: z.coerce.number().int().min(0, 'El orden no puede ser negativo').max(9999),
   webDescription: z.string().trim().max(20000, 'La descripción es demasiado larga').optional().default(''),
@@ -266,14 +241,6 @@ export const UpdateWebSettingsSchema = z.object({
   email: z.string().trim().email('Email inválido').optional().or(z.literal('')).default(''),
   shippingInfo: z.string().trim().max(2000, 'La información de envío es demasiado larga').optional().default(''),
   webPendingExpiryHours: z.coerce.number().int().min(1, 'Mínimo 1 hora').max(720, 'Máximo 720 horas').default(24),
-  primaryColor: z
-    .string()
-    .trim()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Color primario inválido (usa formato #rrggbb)')
-    .default('#008a93'),
-  goldColor: z
-    .string()
-    .trim()
-    .regex(/^#[0-9a-fA-F]{6}$/, 'Color dorado inválido (usa formato #rrggbb)')
-    .default('#d4af37'),
+  primaryColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, 'Color primario inválido (usa formato #rrggbb)').default('#008a93'),
+  goldColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, 'Color dorado inválido (usa formato #rrggbb)').default('#d4af37'),
 })
