@@ -5,7 +5,7 @@ import { Sidebar } from './sidebar'
 import { Header } from './header'
 import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts'
 import { cn } from '@/lib/utils'
-import { X, Store } from 'lucide-react'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { AiFloatingChat } from '@/components/assistant/ai-floating-chat'
 
@@ -64,18 +64,21 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
       >
         <div className="flex h-full flex-col bg-sidebar shadow-md">
           {/* Header móvil */}
-          <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-sidebar-border bg-sidebar">
+          <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-sidebar-border/80 bg-sidebar">
             <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center bg-sidebar-primary text-sidebar-primary-foreground shrink-0 shadow-sm border border-sidebar-primary/40">
-                <Store className="h-4 w-4" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-black text-sm shadow-sm ring-1 ring-white/15 shrink-0">
+                C
               </div>
-              <h1 className="text-base font-bold text-white tracking-tight">Cilmax ERP</h1>
+              <div className="flex items-baseline gap-1.5">
+                <h1 className="text-base font-bold text-white tracking-tight">Cilmax</h1>
+                <span className="text-[11px] font-semibold text-sidebar-primary uppercase tracking-wider">ERP</span>
+              </div>
             </div>
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSidebarOpen(false)}
-              className="text-white/70 hover:text-white hover:bg-sidebar-accent"
+              className="text-white/70 hover:text-white hover:bg-sidebar-accent rounded-lg"
             >
               <X className="h-5 w-5" />
             </Button>

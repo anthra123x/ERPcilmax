@@ -10,10 +10,8 @@ import {
   AlertTriangle,
   ArrowRight,
   HandCoins,
-  Bot,
   PlusCircle,
   Clock,
-  Sparkles,
   Phone,
   Wallet,
   RefreshCw,
@@ -129,7 +127,7 @@ export default function DashboardPage() {
           <Button
             render={<Link href="/sales" />}
             size="sm"
-            className="font-semibold shadow-sm"
+            className="font-semibold shadow-sm rounded-xl"
           >
             <PlusCircle className="h-4 w-4 mr-1.5" />
             Nueva Venta
@@ -139,25 +137,15 @@ export default function DashboardPage() {
             render={<Link href="/web/orders" className="relative" />}
             variant="outline"
             size="sm"
-            className="font-medium"
+            className="font-medium rounded-xl"
           >
             <ShoppingBag className="h-4 w-4 mr-1.5" />
             Pedidos Web
             {hasPendingOrders && (
-              <span className="ml-1.5 px-1.5 py-0.2 bg-destructive text-destructive-foreground text-[10px] font-bold font-mono">
+              <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold font-mono">
                 {webOrdersSummary.pendingCount}
               </span>
             )}
-          </Button>
-
-          <Button
-            render={<Link href="/assistant" />}
-            variant="outline"
-            size="sm"
-            className="font-medium border-primary/40 text-primary bg-primary/5 hover:bg-primary/15"
-          >
-            <Bot className="h-4 w-4 mr-1.5" />
-            Asistente IA
           </Button>
         </div>
       </div>
@@ -165,14 +153,14 @@ export default function DashboardPage() {
       {/* 2. Grid de 6 KPIs Estratégicos */}
       <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         {/* KPI 1: Facturación Hoy */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Ventas Hoy
               </span>
-              <div className="p-1 bg-primary/10 text-primary border border-primary/20">
-                <ShoppingCart className="h-3.5 w-3.5" />
+              <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <ShoppingCart className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -188,14 +176,14 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 2: Recaudo Efectivo en Caja */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Caja Hoy
               </span>
-              <div className="p-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                <Wallet className="h-3.5 w-3.5" />
+              <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <Wallet className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -210,14 +198,14 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 3: Margen y Ganancia Estimada */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Utilidad Hoy
               </span>
-              <div className="p-1 bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
-                <TrendingUp className="h-3.5 w-3.5" />
+              <div className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                <TrendingUp className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -235,14 +223,14 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 4: Cartera por Cobrar */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Cartera Crédito
               </span>
-              <div className="p-1 bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
-                <HandCoins className="h-3.5 w-3.5" />
+              <div className="p-1.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                <HandCoins className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -260,20 +248,20 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 5: Pedidos Web */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Tienda Online
               </span>
               <div
-                className={`p-1 border ${
+                className={`p-1.5 rounded-xl border ${
                   hasPendingOrders
                     ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
                     : 'bg-muted text-muted-foreground border-border'
                 }`}
               >
-                <ShoppingBag className="h-3.5 w-3.5" />
+                <ShoppingBag className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -292,20 +280,20 @@ export default function DashboardPage() {
         </Card>
 
         {/* KPI 6: Catálogo & Stock Crítico */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm hover:shadow-md transition-shadow">
           <CardContent className="p-3.5 space-y-1.5">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                 Inventario
               </span>
               <div
-                className={`p-1 border ${
+                className={`p-1.5 rounded-xl border ${
                   hasOutOfStock || hasLowStock
                     ? 'bg-destructive/15 text-destructive border-destructive/30'
                     : 'bg-primary/10 text-primary border-primary/20'
                 }`}
               >
-                <Package className="h-3.5 w-3.5" />
+                <Package className="h-4 w-4" />
               </div>
             </div>
             <div>
@@ -347,12 +335,12 @@ export default function DashboardPage() {
       {/* 5. Fila Operativa: Pedidos Web y Ventas Recientes */}
       <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
         {/* Tarjeta de Pedidos Web Pendientes */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm">
           <CardHeader className="pb-3 border-b border-border/60">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2.5">
                 <div
-                  className={`p-1.5 border ${
+                  className={`p-2 rounded-xl border ${
                     hasPendingOrders
                       ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
                       : 'bg-muted text-muted-foreground border-border'
@@ -373,7 +361,7 @@ export default function DashboardPage() {
                 render={<Link href="/web/orders" />}
                 variant="ghost"
                 size="sm"
-                className="text-xs text-primary"
+                className="text-xs text-primary rounded-xl"
               >
                 Gestionar <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
@@ -387,7 +375,7 @@ export default function DashboardPage() {
             ) : (
               <div className="divide-y divide-border/60">
                 {webOrdersSummary.pendingOrders.map((order) => (
-                  <div key={order.id} className="py-2.5 flex items-center justify-between gap-3">
+                  <div key={order.id} className="py-2.5 px-1.5 rounded-xl hover:bg-muted/40 transition-colors flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-foreground">
@@ -417,7 +405,7 @@ export default function DashboardPage() {
                         render={<Link href="/web/orders" />}
                         size="sm"
                         variant="outline"
-                        className="h-6 text-[10px] px-2 mt-1"
+                        className="h-6 text-[10px] px-2 mt-1 rounded-lg"
                       >
                         Atender
                       </Button>
@@ -430,11 +418,11 @@ export default function DashboardPage() {
         </Card>
 
         {/* Tarjeta de Ventas Recientes */}
-        <Card className="border border-border bg-card">
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-sm">
           <CardHeader className="pb-3 border-b border-border/60">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <div className="p-1.5 bg-primary/10 text-primary border border-primary/20">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
                   <Clock className="h-4 w-4" />
                 </div>
                 <div>
@@ -446,7 +434,7 @@ export default function DashboardPage() {
                 render={<Link href="/sales/history" />}
                 variant="ghost"
                 size="sm"
-                className="text-xs text-primary"
+                className="text-xs text-primary rounded-xl"
               >
                 Historial <ArrowRight className="h-3 w-3 ml-1" />
               </Button>
@@ -463,7 +451,7 @@ export default function DashboardPage() {
                   <Link
                     key={sale.id}
                     href={`/sales/${sale.id}`}
-                    className="py-2 px-1 flex items-center justify-between hover:bg-muted/50 transition-colors"
+                    className="py-2.5 px-2 rounded-xl flex items-center justify-between hover:bg-muted/50 transition-colors"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -495,33 +483,6 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {/* 6. Centro de Inteligencia Artificial para Reportes y Finanzas */}
-      <div className="p-4 bg-card border border-border flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 bg-primary/10 text-primary flex items-center justify-center shrink-0 border border-primary/20">
-            <Bot className="h-5 w-5" />
-          </div>
-          <div>
-            <h4 className="text-sm font-semibold flex items-center gap-1.5 text-foreground">
-              Asistente IA para Reportes y Finanzas Integradas
-              <Sparkles className="h-3.5 w-3.5 text-primary" />
-            </h4>
-            <p className="text-xs text-muted-foreground">
-              Pídele al agente: &quot;Reporte ejecutivo&quot;, &quot;Reporte de ventas de este mes&quot;, &quot;Balance financiero&quot; o &quot;Compras sugeridas de inventario&quot;.
-            </p>
-          </div>
-        </div>
-
-        <Button
-          render={<Link href="/assistant" />}
-          size="sm"
-          className="shrink-0 font-medium shadow-sm"
-        >
-          Abrir Asistente IA
-          <ArrowRight className="h-4 w-4 ml-1.5" />
-        </Button>
       </div>
     </div>
   )

@@ -70,7 +70,7 @@ function SectionHeader({
 }) {
   return (
     <div className="flex items-center gap-2.5">
-      <div className="bg-primary/10 text-primary p-2 border border-primary/20 shrink-0">
+      <div className="bg-primary/10 text-primary p-2 rounded-xl border border-primary/20 shrink-0">
         <Icon className="h-4 w-4" />
       </div>
       <div>
@@ -98,7 +98,7 @@ export function PaymentDonut({
   const total = chartData.reduce((s, d) => s + d.value, 0)
 
   return (
-    <Card className="border border-border bg-card h-full flex flex-col">
+    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
       <CardHeader className="pb-3 border-b border-border/60">
         <SectionHeader
           icon={Banknote}
@@ -182,7 +182,7 @@ export function SalesMonthlyBar({
   const totalPeriod = data.reduce((sum, d) => sum + d.total, 0)
 
   return (
-    <Card className="border border-border bg-card h-full flex flex-col">
+    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
       <CardHeader className="pb-3 border-b border-border/60">
         <div className="flex items-center justify-between">
           <SectionHeader
@@ -225,8 +225,7 @@ export function SalesMonthlyBar({
                   />
                 }
               />
-              {/* Barra nítida sin bordes redondeados (radius=[0,0,0,0]) */}
-              <Bar dataKey="Total" radius={[0, 0, 0, 0]} maxBarSize={32}>
+              <Bar dataKey="Total" radius={[6, 6, 0, 0]} maxBarSize={32}>
                 {chartData.map((_, i) => (
                   <Cell
                     key={i}
@@ -243,7 +242,7 @@ export function SalesMonthlyBar({
   )
 }
 
-// 3. Top Productos Más Vendidos (Corregido y con ranking visual)
+// 3. Top Productos Más Vendidos (Diseño premium, redondeado y con ranking visual)
 export interface TopProductData {
   productId: string
   name: string
@@ -251,50 +250,78 @@ export interface TopProductData {
   total: number
 }
 
+const RANK_BADGES = [
+  { label: '1', bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold' },
+  { label: '2', bg: 'bg-slate-400/15 text-slate-600 dark:text-slate-300 border-slate-400/30 font-semibold' },
+  { label: '3', bg: 'bg-amber-700/15 text-amber-700 dark:text-amber-500 border-amber-700/30 font-semibold' },
+  { label: '4', bg: 'bg-muted text-muted-foreground border-border font-medium' },
+  { label: '5', bg: 'bg-muted text-muted-foreground border-border font-medium' },
+]
+
 export function TopProductsBar({ data }: { data: TopProductData[] }) {
   const maxQty = Math.max(...data.map((d) => d.quantity), 1)
+  const topFive = data.slice(0, 5)
+  const totalRevenueTop = topFive.reduce((sum, item) => sum + item.total, 0)
 
   return (
-    <Card className="border border-border bg-card h-full flex flex-col">
-      <CardHeader className="pb-3 border-b border-border/60">
-        <SectionHeader
-          icon={Package}
-          title="Productos Más Vendidos"
-          description="Artículos con mayor rotación en los últimos 30 días"
-        />
+    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
+      <CardHeader className="pb-3.5 border-b border-border/60">
+        <div className="flex items-center justify-between">
+          <SectionHeader
+            icon={TrendingUp}
+            title="Productos Más Vendidos"
+            description="Líderes de rotación en los últimos 30 días"
+          />
+          {topFive.length > 0 && (
+            <div className="text-right">
+              <span className="text-[10px] uppercase font-mono text-muted-foreground block">Recaudo Top</span>
+              <span className="text-xs font-bold text-foreground font-mono">{formatCurrency(totalRevenueTop)}</span>
+            </div>
+          )}
+        </div>
       </CardHeader>
-      <CardContent className="pt-3 flex-1">
+      <CardContent className="pt-3.5 flex-1 flex flex-col justify-center">
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-xs text-muted-foreground">
             <Package className="h-8 w-8 mb-2 text-muted-foreground/30" />
             <p>No hay ventas registradas en los últimos 30 días</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {data.slice(0, 5).map((item, index) => {
+          <div className="space-y-2.5">
+            {topFive.map((item, index) => {
               const progressPercent = Math.round((item.quantity / maxQty) * 100)
+              const badgeStyle = RANK_BADGES[index] || RANK_BADGES[3]
+
               return (
-                <div key={item.productId || index} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="flex h-5 w-5 items-center justify-center bg-muted text-[10px] font-bold font-mono text-muted-foreground shrink-0 border border-border">
-                        #{index + 1}
+                <div
+                  key={item.productId || index}
+                  className="group rounded-xl p-2.5 transition-all duration-200 hover:bg-muted/40 border border-transparent hover:border-border/60 space-y-2"
+                >
+                  <div className="flex items-center justify-between text-xs gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <span
+                        className={`flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-mono border shrink-0 ${badgeStyle.bg}`}
+                      >
+                        #{badgeStyle.label}
                       </span>
-                      <span className="font-medium text-foreground truncate" title={item.name}>
+                      <span className="font-semibold text-foreground truncate text-sm" title={item.name}>
                         {item.name}
                       </span>
                     </div>
-                    <div className="text-right shrink-0 font-mono">
-                      <span className="font-bold text-foreground">{formatNumber(item.quantity)} uds</span>
-                      <span className="text-[11px] text-muted-foreground ml-2">
+                    <div className="flex items-center gap-3 shrink-0 font-mono">
+                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                        {formatNumber(item.quantity)} uds
+                      </span>
+                      <span className="font-bold text-foreground text-xs min-w-[70px] text-right">
                         {formatCurrency(item.total)}
                       </span>
                     </div>
                   </div>
-                  {/* Barra de progreso recta */}
-                  <div className="h-1.5 w-full bg-muted overflow-hidden">
+
+                  {/* Barra de progreso suave con gradiente y extremos redondeados */}
+                  <div className="h-2 w-full bg-muted/80 rounded-full overflow-hidden p-0.5">
                     <div
-                      className="h-full bg-primary transition-all duration-300"
+                      className="h-full bg-gradient-to-r from-primary to-teal-400 rounded-full transition-all duration-500 ease-out"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -315,7 +342,7 @@ export function LowStockList({
   data: { id: string; name: string; stock: number; lowStockThreshold: number; salePrice?: number }[]
 }) {
   return (
-    <Card className="border border-border bg-card h-full flex flex-col">
+    <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
       <CardHeader className="pb-3 border-b border-border/60">
         <SectionHeader
           icon={ShoppingCart}
@@ -345,7 +372,7 @@ export function LowStockList({
                   </div>
                   <div className="text-right shrink-0">
                     <span
-                      className={`inline-block px-2 py-0.5 font-mono text-[11px] font-bold border ${
+                      className={`inline-block px-2.5 py-0.5 font-mono text-[11px] font-bold rounded-lg border ${
                         isOut
                           ? 'bg-destructive/15 text-destructive border-destructive/30'
                           : 'bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30'

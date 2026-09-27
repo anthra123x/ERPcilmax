@@ -47,15 +47,15 @@
   --color-info-foreground: var(--info-foreground);
   --color-gold: var(--gold);
   --color-gold-foreground: var(--gold-foreground);
-  --radius-xs: 0px;
-  --radius-sm: 0px;
-  --radius-md: 0px;
-  --radius-lg: 0px;
-  --radius-xl: 0px;
-  --radius-2xl: 0px;
-  --radius-3xl: 0px;
-  --radius-4xl: 0px;
-  --radius-full: 0px;
+  --radius-xs: calc(var(--radius) * 0.4);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-full: 9999px;
 }
 
 :root {
@@ -82,7 +82,7 @@
   --chart-3: oklch(0.62 0.12 190);
   --chart-4: oklch(0.83 0.15 90);
   --chart-5: oklch(0.45 0.1 200);
-  --radius: 0px;
+  --radius: 0.75rem;
   --sidebar: oklch(0.2 0.02 40);
   --sidebar-foreground: oklch(0.94 0.01 70);
   --sidebar-primary: oklch(0.62 0.13 184);
@@ -142,7 +142,6 @@
   *::before,
   *::after {
     @apply border-border outline-ring/50;
-    border-radius: 0px !important;
   }
 
   html {
@@ -169,21 +168,21 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: oklch(0 0 0 / 0.12);
-    border-radius: 0px !important;
+    background: oklch(0 0 0 / 0.15);
+    border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: oklch(0 0 0 / 0.22);
+    background: oklch(0 0 0 / 0.25);
   }
 
   .dark ::-webkit-scrollbar-thumb {
-    background: oklch(1 0 0 / 0.12);
-    border-radius: 0px !important;
+    background: oklch(1 0 0 / 0.15);
+    border-radius: 4px;
   }
 
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: oklch(1 0 0 / 0.22);
+    background: oklch(1 0 0 / 0.25);
   }
 }
 
