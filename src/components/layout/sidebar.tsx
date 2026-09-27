@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -45,7 +46,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         collapsed ? 'w-18' : 'w-64'
       )}
     >
-      {/* Header del sidebar: logo simplificado y limpio */}
+      {/* Header del sidebar: logo oficial de Cilmax */}
       <div
         className={cn(
           'flex h-16 items-center border-b border-sidebar-border/80 transition-all duration-300',
@@ -54,21 +55,30 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
       >
         <Link
           href="/dashboard"
-          className="flex items-center gap-3 overflow-hidden group focus:outline-none"
+          className="flex items-center gap-2 overflow-hidden group focus:outline-none"
+          title="Cilmax ERP"
         >
-          {/* Logo cilmax: moderno, suave y redondeado */}
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-black text-base shadow-sm ring-1 ring-white/15 group-hover:scale-105 group-hover:shadow-md transition-all duration-200 shrink-0">
-            C
-          </div>
-
-          {!collapsed && (
-            <div className="flex items-baseline gap-1.5 min-w-0 transition-opacity duration-200">
-              <span className="text-base font-bold tracking-tight text-white truncate">
-                Cilmax
-              </span>
-              <span className="text-[11px] font-semibold text-sidebar-primary uppercase tracking-wider">
-                ERP
-              </span>
+          {collapsed ? (
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-accent/60 p-1 border border-sidebar-border/60 group-hover:scale-105 transition-all">
+              <Image
+                src="/logo cilmax.png"
+                alt="Cilmax"
+                width={36}
+                height={36}
+                priority
+                className="h-full w-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="relative flex items-center">
+              <Image
+                src="/logo cilmax.png"
+                alt="Cilmax ERP"
+                width={160}
+                height={40}
+                priority
+                className="h-8.5 w-auto max-w-[155px] object-contain transition-transform duration-200 group-hover:scale-105"
+              />
             </div>
           )}
         </Link>

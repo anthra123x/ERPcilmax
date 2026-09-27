@@ -265,6 +265,8 @@
   --animate-fade-in: fade-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-slide-in-left: slide-in-left 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
   --animate-float: float 6s ease-in-out infinite;
+  --animate-float-reverse: float-reverse 7s ease-in-out infinite;
+  --animate-pulse-slow: pulse-slow 4s ease-in-out infinite;
 }
 
 @keyframes fade-up {
@@ -299,11 +301,23 @@
   50% { transform: translateY(-8px); }
 }
 
+@keyframes float-reverse {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(8px); }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { opacity: 0.3; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.08); }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,
   .animate-slide-in-left,
-  .animate-float {
+  .animate-float,
+  .animate-float-reverse,
+  .animate-pulse-slow {
     animation: none !important;
     opacity: 1 !important;
     transform: none !important;

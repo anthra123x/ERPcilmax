@@ -1,7 +1,5 @@
 'use client'
 
-import Image from 'next/image'
-import Link from 'next/link'
 import { useRef, useState, useEffect } from 'react'
 import { Search, LogOut, User, Menu, Package, Users, Receipt, PackageSearch, Loader2, ArrowRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -137,28 +135,19 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border bg-background/90 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-sm shadow-primary/[0.03]">
-      <div className="flex items-center gap-3 lg:gap-4">
-        <Link href="/" className="shrink-0 leading-none" aria-label="Ir al inicio">
-          <Image
-            src="/logo cilmax.png"
-            alt="Cilmax"
-            width={200}
-            height={40}
-            priority
-            className="h-9 w-auto object-contain lg:h-10"
-          />
-        </Link>
-        <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden -ml-1.5">
+    <header className="flex h-16 items-center justify-between border-b border-border/80 bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
+      {/* Botón menú móvil y Barra flotante de búsqueda */}
+      <div className="flex items-center gap-2 flex-1 max-w-xl">
+        <Button variant="ghost" size="icon" onClick={onMenuClick} className="lg:hidden shrink-0 rounded-xl text-muted-foreground hover:text-foreground">
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div ref={searchBoxRef} className="relative flex-1 max-w-sm lg:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/60" />
+        <div ref={searchBoxRef} className="relative flex-1 max-w-md lg:max-w-lg">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
           <Input
             id="global-search"
             type="search"
-            placeholder="Buscar producto, cliente o factura... (Alt+Q)"
+            placeholder="Buscar producto, cliente o factura..."
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -168,11 +157,14 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             onBlur={() => {
               if (debounceTimer.current) clearTimeout(debounceTimer.current)
             }}
-            className="w-full pl-10 bg-muted/40 border-border/60 focus-visible:bg-background transition-colors duration-200"
+            className="w-full pl-10 pr-16 h-10 rounded-full bg-muted/50 border-border/70 text-sm shadow-xs focus-visible:bg-background focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary transition-all duration-200"
           />
+          <kbd className="absolute right-3.5 top-1/2 -translate-y-1/2 hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 text-[10px] font-mono font-medium text-muted-foreground/70 bg-background/80 rounded-md border border-border/60 pointer-events-none shadow-xs">
+            Alt+Q
+          </kbd>
 
           {open && query.trim().length >= 2 && (
-            <div className="absolute left-0 right-0 top-full mt-2 z-50 rounded-lg border border-border bg-popover text-popover-foreground shadow-lg overflow-hidden">
+            <div className="absolute left-0 right-0 top-full mt-2.5 z-50 rounded-2xl border border-border/80 bg-popover/95 backdrop-blur-xl text-popover-foreground shadow-2xl overflow-hidden">
               {searching ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-sm text-muted-foreground">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -285,31 +277,31 @@ export function Header({ user, onMenuClick }: HeaderProps) {
         <NotificationsDropdown />
 
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center gap-2 lg:gap-3 cursor-pointer rounded-lg p-1.5 hover:bg-muted/70 transition-all duration-200 active:scale-[0.98]">
+          <DropdownMenuTrigger className="flex items-center gap-2.5 cursor-pointer rounded-full p-1 pl-2.5 pr-1 hover:bg-muted/70 transition-all duration-200 active:scale-[0.98] outline-none">
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-medium leading-tight">{user.name}</div>
-              <div className="text-xs text-muted-foreground/70">Administrador</div>
+              <div className="text-xs font-semibold text-foreground leading-tight">{user.name}</div>
+              <div className="text-[10px] text-muted-foreground/75 font-mono">Administrador</div>
             </div>
-            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0">
-              <span className="text-sm font-semibold text-primary-foreground">{user.name.charAt(0).toUpperCase()}</span>
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center shrink-0 shadow-xs ring-2 ring-primary/20">
+              <span className="text-xs font-bold text-primary-foreground">{user.name.charAt(0).toUpperCase()}</span>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56 mt-1">
+          <DropdownMenuContent align="end" className="w-56 mt-2 rounded-2xl border-border/80 shadow-2xl p-1.5">
             <DropdownMenuGroup>
-              <DropdownMenuLabel className="font-normal">
+              <DropdownMenuLabel className="font-normal px-2.5 py-2">
                 <div className="flex flex-col gap-0.5">
-                  <span className="font-medium text-foreground">{user.name}</span>
-                  <span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+                  <span className="font-semibold text-sm text-foreground">{user.name}</span>
+                  <span className="text-xs text-muted-foreground font-normal truncate">{user.email}</span>
                 </div>
               </DropdownMenuLabel>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer">
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem onClick={() => router.push('/profile')} className="cursor-pointer rounded-xl px-2.5 py-2">
               <User className="mr-2 h-4 w-4" />
               <span>Perfil</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer">
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem onClick={handleLogout} className="text-destructive focus:text-destructive cursor-pointer rounded-xl px-2.5 py-2">
               <LogOut className="mr-2 h-4 w-4" />
               <span>Cerrar Sesión</span>
             </DropdownMenuItem>

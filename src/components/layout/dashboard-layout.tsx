@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
@@ -63,16 +64,17 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         )}
       >
         <div className="flex h-full flex-col bg-sidebar shadow-md">
-          {/* Header móvil */}
+          {/* Header móvil con logo oficial */}
           <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-sidebar-border/80 bg-sidebar">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground font-black text-sm shadow-sm ring-1 ring-white/15 shrink-0">
-                C
-              </div>
-              <div className="flex items-baseline gap-1.5">
-                <h1 className="text-base font-bold text-white tracking-tight">Cilmax</h1>
-                <span className="text-[11px] font-semibold text-sidebar-primary uppercase tracking-wider">ERP</span>
-              </div>
+            <div className="flex items-center gap-2">
+              <Image
+                src="/logo cilmax.png"
+                alt="Cilmax ERP"
+                width={130}
+                height={32}
+                priority
+                className="h-7.5 w-auto object-contain"
+              />
             </div>
             <Button
               variant="ghost"
