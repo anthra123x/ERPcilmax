@@ -9,7 +9,7 @@ export default function WebProductsLoading() {
       </div>
       <div className="space-y-2">
         {Array.from({ length: 10 }).map((_, i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          <Skeleton key={i} className="h-16 w-full rounded-none" />
         ))}
       </div>
     </div>

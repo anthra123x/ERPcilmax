@@ -243,7 +243,7 @@ export default function AdminPage() {
             <CardDescription>Administrar usuarios del sistema</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-none border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -510,7 +510,7 @@ export default function AdminPage() {
           </CardHeader>
           <CardContent>
             <div className="grid gap-6 md:grid-cols-2">
-              <div className="p-4 bg-primary/5 rounded-lg border border-primary/10">
+              <div className="p-4 bg-primary/5 rounded-none border border-primary/10">
                 <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
                   <Download className="h-4 w-4" />
                   Backup de Datos
@@ -524,7 +524,7 @@ export default function AdminPage() {
                 </Button>
               </div>
 
-              <div className="p-4 bg-red-100 rounded-lg border border-red-300">
+              <div className="p-4 bg-red-100 rounded-none border border-red-300">
                 <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
                   <AlertTriangle className="h-4 w-4" />
                   Limpieza del Sistema

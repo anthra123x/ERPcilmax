@@ -361,7 +361,7 @@ export default function NewSalePage() {
                     type="button"
                     onClick={() => addToCart(product)}
                     disabled={product.stock <= 0}
-                    className="p-3 border rounded-lg text-left hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="p-3 border rounded-none text-left hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center gap-2.5">
                       {product.imageUrl ? (
@@ -369,10 +369,10 @@ export default function NewSalePage() {
                         <img
                           src={product.imageUrl}
                           alt=""
-                          className="h-12 w-12 rounded-md object-cover border border-border/60 shrink-0"
+                          className="h-12 w-12 rounded-none object-cover border border-border/60 shrink-0"
                         />
                       ) : (
-                        <div className="h-12 w-12 rounded-md bg-muted/40 border border-border/60 flex items-center justify-center shrink-0">
+                        <div className="h-12 w-12 rounded-none bg-muted/40 border border-border/60 flex items-center justify-center shrink-0">
                           <ShoppingCart className="h-5 w-5 text-muted-foreground/50" />
                         </div>
                       )}
@@ -444,7 +444,7 @@ export default function NewSalePage() {
                 )}
 
                 {suggestOpen && suggestions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg max-h-40 overflow-y-auto">
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none shadow-lg max-h-40 overflow-y-auto">
                     {suggestions.map((client, index) => (
                       <button
                         key={client.id}
@@ -468,7 +468,7 @@ export default function NewSalePage() {
                   </div>
                 )}
                 {suggestOpen && clientName.trim().length >= 2 && !suggestLoading && suggestions.length === 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-lg shadow-lg">
+                  <div className="absolute z-50 w-full mt-1 bg-popover border rounded-none shadow-lg">
                     <div className="px-3 py-2 text-sm text-muted-foreground flex items-center gap-2">
                       <UserPlus className="h-4 w-4" />
                       Se registrará como cliente nuevo

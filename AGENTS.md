@@ -22,7 +22,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 | Charts | Ninguno | - | Gráficos server-side; `recharts` instalado pero sin uso |
 | PDF | @react-pdf/renderer | 4.9.0 | Facturas POS, estado de cuenta y recibos (`/print` + `/api/sales/*/pdf`) |
 | Excel | xlsx (SheetJS) | 0.18.5 | Exportación de reportes |
-| Testing | Vitest | 4.1.7 | 217 tests en 19 files |
+| Testing | Vitest | 4.1.7 | 222 tests en 20 files |
 | Lint | ESLint | 9.x | `eslint-config-next` + `unused-imports` |
 | Format | Prettier | - | Config en `.prettierrc` |
 | Monitoreo | @sentry/nextjs | 10.53.1 | Instalado pero INACTIVO: `SENTRY_DSN` está vacío en `.env.local` y en `.env.example` → no se envían eventos |
@@ -34,7 +34,7 @@ npm run dev         # Dev server (http://localhost:3000) + React Scan for rerend
 npm run build       # Prisma generate + Next build (usa Webpack + WASM SWC)
 npm run lint        # ESLint (incluye detección de imports muertos)
 npm run typecheck   # TypeScript check sin emitir
-npm run test        # Vitest (217 tests)
+npm run test        # Vitest (222 tests)
 npm run db:push     # Sync schema a DB (dev)
 npm run db:studio   # Prisma Studio
 npm run db:migrate  # Crear migración
@@ -262,9 +262,9 @@ git submodule update --remote docs && git add docs && git commit -m "docs: sync 
 
 ## Deuda técnica conocida
 
-- [ ] **Migrar a la convención de capas**: 18 `*.actions.ts` aún importan `@/lib/prisma`.
+- [ ] **Migrar a la convención de capas**: 17 `*.actions.ts` aún importan `@/lib/prisma`.
       La lista exacta está en `eslint.config.mjs` (bloque "Deuda técnica"); bórrala de ahí
-      al migrar el módulo. Empezó por `web/web-overview` → `web-overview.service.ts`.
+      al migrar el módulo. Migrados: `web/web-overview` → `web-overview.service.ts` y `dashboard` → `dashboard.service.ts`.
 - [ ] **Importar los datos del schema `erp` a `public`** (o eliminar `erp`). Prisma opera
       sobre `public` y está vacío; los datos reales están en `erp`. Ver `NEON.md`.
 - [ ] Migrar Float→Decimal en 20 campos financieros. Prisma **no** acepta

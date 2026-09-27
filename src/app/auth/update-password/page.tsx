@@ -116,7 +116,7 @@ function UpdatePasswordInner() {
           </div>
         </div>
 
-        <div className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10">
+        <div className="w-full max-w-sm rounded-none bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10">
           <div className="space-y-2 text-center">
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Restablecer contraseña</h2>
             <p className="text-sm text-gray-600">
@@ -133,7 +133,7 @@ function UpdatePasswordInner() {
 
           {status === 'error' && (
             <div className="mt-8 space-y-4">
-              <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+              <div className="flex items-center gap-2 rounded-none bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
                 <span>{statusMessage}</span>
               </div>
@@ -146,7 +146,7 @@ function UpdatePasswordInner() {
 
           {status === 'ready' && saved && (
             <div className="mt-8 space-y-4">
-              <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2.5 text-sm text-primary">
+              <div className="flex items-center gap-2 rounded-none bg-primary/10 px-3 py-2.5 text-sm text-primary">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span>Contraseña actualizada correctamente.</span>
               </div>
@@ -192,7 +192,7 @@ function UpdatePasswordInner() {
                 />
               </div>
               {statusMessage && (
-                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                <div className="flex items-center gap-2 rounded-none bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{statusMessage}</span>
                 </div>
@@ -200,7 +200,7 @@ function UpdatePasswordInner() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
+                className="w-full h-12 rounded-none transition-all duration-150 active:scale-[0.98]"
                 disabled={saving}
                 aria-busy={saving}
               >

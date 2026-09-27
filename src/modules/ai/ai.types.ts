@@ -48,6 +48,15 @@ export type AssistantToolName =
   | 'get_pending_credit'
   | 'get_contact_messages'
   | 'get_finance_summary'
+  | 'generate_executive_report'
+  | 'generate_sales_report'
+  | 'generate_inventory_report'
+  | 'generate_client_report'
+  | 'generate_channel_report'
+  | 'search_products'
+  | 'adjust_product_stock'
+  | 'search_clients'
+  | 'manage_web_order'
 
 export interface AssistantToolResult<T = Record<string, unknown>> {
   name: AssistantToolName

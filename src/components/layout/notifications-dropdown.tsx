@@ -50,9 +50,8 @@ function getEntityRoute(entityType: string | null, entityId: string | null): str
   if (!entityType || !entityId) return null
   switch (entityType) {
     case 'budget_period':
-      return '/finances'
     case 'saving_goal':
-      return '/finances/goals'
+      return '/assistant'
     default:
       return null
   }

@@ -1,6 +1,11 @@
 {
-  "name": "sistema-gestion",
+  "name": "erpcilmax",
   "version": "0.1.0",
+  "description": "Tecnicell ERP / ERP Cilmax - Sistema integral de gestión de inventario, punto de venta (POS), finanzas, catálogo web y asistente IA",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthra123x/ERPcilmax.git"
+  },
   "private": true,
   "scripts": {
     "dev": "NEXT_TEST_WASM=1 SENTRY_SUPPRESS_INSTRUMENTATION_FILE_WARNING=1 bash scripts/with-node.sh next dev --webpack",
@@ -9,8 +14,8 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "bash scripts/with-node.sh vitest run",
+    "test:watch": "bash scripts/with-node.sh vitest",
     "db:push": "bash scripts/with-node.sh node --env-file=.env.local node_modules/prisma/build/index.js db push",
     "db:migrate": "bash scripts/with-node.sh node --env-file=.env.local node_modules/prisma/build/index.js migrate dev",
     "db:migrate:deploy": "bash scripts/with-node.sh node --env-file=.env.local node_modules/prisma/build/index.js migrate deploy",

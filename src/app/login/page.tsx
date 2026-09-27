@@ -95,7 +95,7 @@ export default function LoginPage() {
         </div>
 
         <div
-          className="w-full max-w-sm rounded-2xl bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10 animate-fade-up"
+          className="w-full max-w-sm rounded-none bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10 animate-fade-up"
           style={{ animationDelay: '80ms' }}
         >
           <div className="space-y-2 text-center">
@@ -123,13 +123,13 @@ export default function LoginPage() {
                   />
                 </div>
                 {error && (
-                  <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
+                  <div className="flex items-center gap-2 rounded-none bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
                     <AlertCircle className="h-4 w-4 shrink-0" />
                     <span>{error}</span>
                   </div>
                 )}
                 {recoveryMessage && (
-                  <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-2.5 text-sm text-primary animate-fade-in">
+                  <div className="flex items-center gap-2 rounded-none bg-primary/10 px-3 py-2.5 text-sm text-primary animate-fade-in">
                     <MailCheck className="h-4 w-4 shrink-0" />
                     <span>{recoveryMessage}</span>
                   </div>
@@ -137,7 +137,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   size="lg"
-                  className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
+                  className="w-full h-12 rounded-none transition-all duration-150 active:scale-[0.98]"
                   disabled={recoveryLoading}
                   aria-busy={recoveryLoading}
                 >
@@ -212,7 +212,7 @@ export default function LoginPage() {
                 />
               </div>
               {error && (
-                <div className="flex items-center gap-2 rounded-lg bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
+                <div className="flex items-center gap-2 rounded-none bg-destructive/10 px-3 py-2.5 text-sm text-destructive animate-fade-in">
                   <AlertCircle className="h-4 w-4 shrink-0" />
                   <span>{error}</span>
                 </div>
@@ -220,7 +220,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 size="lg"
-                className="w-full h-12 rounded-xl transition-all duration-150 active:scale-[0.98]"
+                className="w-full h-12 rounded-none transition-all duration-150 active:scale-[0.98]"
                 disabled={isLoading}
                 aria-busy={isLoading}
               >

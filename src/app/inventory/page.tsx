@@ -175,10 +175,10 @@ export default function InventoryPage() {
                           <img
                             src={product.imageUrl}
                             alt=""
-                            className="h-10 w-10 rounded-md object-cover border border-border/60 shrink-0"
+                            className="h-10 w-10 rounded-none object-cover border border-border/60 shrink-0"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-md bg-muted/40 border border-border/60 flex items-center justify-center shrink-0">
+                          <div className="h-10 w-10 rounded-none bg-muted/40 border border-border/60 flex items-center justify-center shrink-0">
                             <Package className="h-5 w-5 text-muted-foreground/50" />
                           </div>
                         )}

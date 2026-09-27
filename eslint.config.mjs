@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
   {
     plugins: { "unused-imports": unusedImports },
     rules: {
+      "@typescript-eslint/no-explicit-any": "warn",
       "unused-imports/no-unused-imports": "error",
       "unused-imports/no-unused-vars": [
         "warn",
@@ -55,12 +56,11 @@ const eslintConfig = defineConfig([
     // ── Deuda técnica: módulos aún por migrar a la convención de capas ──────
     // Cada línea es un módulo pendiente. Bórrala al migrarlo: mover el data
     // access de la action a un *.service.ts y quitar el archivo de aquí.
-    // Hoy: 18 archivos.
+    // Hoy: 17 archivos.
     files: [
       "src/modules/auth/auth.actions.ts",
       "src/modules/cleanup/cleanup.actions.ts",
       "src/modules/clients/clients.actions.ts",
-      "src/modules/dashboard/dashboard.actions.ts",
       "src/modules/export/export.actions.ts",
       "src/modules/finance/expenses.actions.ts",
       "src/modules/inventory/categories.actions.ts",

@@ -20,11 +20,11 @@ interface ChatMessage {
 }
 
 const SUGGESTED_QUESTIONS = [
-  '¿Cómo van las ventas de hoy?',
-  '¿Qué productos tienen stock bajo?',
-  '¿Pedidos pendientes en la tienda?',
-  '¿Cuánto deben a crédito?',
-  'Resumen del negocio',
+  'Generar reporte ejecutivo',
+  'Reporte de ventas de este mes',
+  'Reporte de inventario y stock crítico',
+  'Cartera de créditos pendientes',
+  'Comparativa POS vs Tienda Web',
 ]
 
 const TOOL_LABELS: Record<AssistantToolName, string> = {
@@ -37,6 +37,15 @@ const TOOL_LABELS: Record<AssistantToolName, string> = {
   get_pending_credit: 'Créditos',
   get_contact_messages: 'Mensajes',
   get_finance_summary: 'Finanzas',
+  generate_executive_report: 'Informe Ejecutivo',
+  generate_sales_report: 'Reporte de Ventas',
+  generate_inventory_report: 'Reporte de Inventario',
+  generate_client_report: 'Reporte de Clientes',
+  generate_channel_report: 'Reporte de Canales',
+  search_products: 'Buscar Producto',
+  adjust_product_stock: 'Ajuste de Stock',
+  search_clients: 'Buscar Cliente',
+  manage_web_order: 'Gestión Pedido Web',
 }
 
 export function AiFloatingChat() {

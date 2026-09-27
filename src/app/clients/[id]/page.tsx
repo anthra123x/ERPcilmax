@@ -90,11 +90,11 @@ export default async function ClientPage({ params }: ClientPageProps) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
-              <div className="rounded-lg border p-4">
+              <div className="rounded-none border p-4">
                 <p className="text-2xl font-bold text-amber-600">{formatCurrency(pendingTotal)}</p>
                 <p className="text-sm text-muted-foreground">Saldo pendiente total</p>
               </div>
-              <div className="rounded-lg border p-4">
+              <div className="rounded-none border p-4">
                 <p className="text-2xl font-bold">{creditSales.length}</p>
                 <p className="text-sm text-muted-foreground">Ventas a crédito</p>
               </div>

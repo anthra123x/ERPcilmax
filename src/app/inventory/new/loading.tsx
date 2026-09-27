@@ -8,11 +8,11 @@ export default function NewProductLoading() {
         {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="space-y-2">
             <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-10 w-full rounded-lg" />
+            <Skeleton className="h-10 w-full rounded-none" />
           </div>
         ))}
       </div>
-      <Skeleton className="h-10 w-32 rounded-lg" />
+      <Skeleton className="h-10 w-32 rounded-none" />
     </div>
   )
 }
