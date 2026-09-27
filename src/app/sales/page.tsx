@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, Eye, Ban, Receipt, Plus } from 'lucide-react'
+import { Search, Ban, Receipt, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -140,7 +140,7 @@ export default function SalesPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[700px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Factura</TableHead>
@@ -157,14 +157,20 @@ export default function SalesPage() {
                 {sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>
-                      <span className="font-mono text-sm">{sale.invoiceNumber}</span>
+                      <Link
+                        href={`/sales/${sale.id}/invoice`}
+                        className="font-mono text-sm font-semibold hover:underline text-foreground"
+                        title="Ver Factura"
+                      >
+                        {sale.invoiceNumber}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       {sale.client ? (
                         <div>
-                          <div className="text-sm">{sale.client.name}</div>
+                          <div className="text-sm font-medium">{sale.client.name}</div>
                           {sale.client.phone && (
-                            <div className="text-xs text-muted-foreground">{sale.client.phone}</div>
+                            <div className="text-xs text-muted-foreground font-mono">{sale.client.phone}</div>
                           )}
                         </div>
                       ) : (
@@ -179,11 +185,11 @@ export default function SalesPage() {
                     <TableCell>
                       <Badge variant="outline">{getPaymentMethodLabel(sale.paymentMethod)}</Badge>
                     </TableCell>
-                    <TableCell className="text-right font-medium">{formatCurrency(sale.total)}</TableCell>
+                    <TableCell className="text-right font-medium font-mono">{formatCurrency(sale.total)}</TableCell>
                     <TableCell>
                       <div className="flex flex-col items-start gap-1">
                         {sale.status === 'COMPLETED' ? (
-                          <Badge variant="default" className="bg-green-500">
+                          <Badge variant="default" className="bg-emerald-600 dark:bg-emerald-500">
                             Completada
                           </Badge>
                         ) : (
@@ -203,31 +209,26 @@ export default function SalesPage() {
                       {new Date(sale.saleDate).toLocaleDateString('es-CO')}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link href={`/sales/${sale.id}`}>
-                          <Button variant="ghost" size="icon-sm">
-                            <Eye className="h-4 w-4" />
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Link href={`/sales/${sale.id}/invoice`} title="Ver Factura Electrónica">
+                          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs rounded-xl">
+                            <Receipt className="h-3.5 w-3.5" />
+                            Factura
                           </Button>
                         </Link>
                         {sale.status === 'COMPLETED' && (
-                          <>
-                            <Link href={`/sales/${sale.id}/invoice`}>
-                              <Button variant="ghost" size="icon-sm">
-                                <Receipt className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              className="text-destructive"
-                              onClick={() => {
-                                setSaleToCancel(sale)
-                                setCancelDialogOpen(true)
-                              }}
-                            >
-                              <Ban className="h-4 w-4" />
-                            </Button>
-                          </>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                            title="Anular venta"
+                            onClick={() => {
+                              setSaleToCancel(sale)
+                              setCancelDialogOpen(true)
+                            }}
+                          >
+                            <Ban className="h-4 w-4" />
+                          </Button>
                         )}
                       </div>
                     </TableCell>

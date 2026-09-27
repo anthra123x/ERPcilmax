@@ -76,7 +76,7 @@ export default async function WebOrdersPage({
             <EmptyState title="Sin pedidos web" description="No hay pedidos que coincidan con el filtro." />
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="min-w-[650px]">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Referencia</TableHead>

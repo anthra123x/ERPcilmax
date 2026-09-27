@@ -153,7 +153,7 @@ export default function InventoryPage() {
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="min-w-[680px]">
               <TableHeader>
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Producto</TableHead>

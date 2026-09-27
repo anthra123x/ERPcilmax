@@ -66,6 +66,12 @@ async function completeOpenAI(
     headers: {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${agent.key}`,
+      ...(agent.baseUrl?.includes('openrouter')
+        ? {
+            'HTTP-Referer': process.env.APP_URL || 'https://erpcilmax.vercel.app',
+            'X-Title': 'Cilmax ERP',
+          }
+        : {}),
     },
     body: JSON.stringify({
       model: agent.model,

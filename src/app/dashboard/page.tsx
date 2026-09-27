@@ -431,7 +431,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <Button
-                render={<Link href="/sales/history" />}
+                render={<Link href="/sales" />}
                 variant="ghost"
                 size="sm"
                 className="text-xs text-primary rounded-xl"

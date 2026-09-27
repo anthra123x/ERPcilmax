@@ -10,7 +10,7 @@ import { resolveSaleUnitPrice, resolveSalesIncomeCategory } from './sales.helper
 import { revalidateSalePaths } from '@/lib/revalidation'
 import type { Prisma } from '@prisma/client'
 
-export type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>
+type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>
 
 export async function createSale(
   data: {

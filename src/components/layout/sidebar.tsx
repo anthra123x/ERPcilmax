@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -46,71 +45,25 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps) {
         collapsed ? 'w-18' : 'w-64'
       )}
     >
-      {/* Header del sidebar: logo oficial de Cilmax */}
+      {/* Header del sidebar: zona completamente limpia con botón de colapso */}
       <div
         className={cn(
-          'flex h-16 items-center border-b border-sidebar-border/80 transition-all duration-300',
-          collapsed ? 'justify-center px-2' : 'justify-between px-4'
+          'flex h-14 items-center transition-all duration-300 border-b border-sidebar-border/40',
+          collapsed ? 'justify-center px-2' : 'justify-end px-3'
         )}
       >
-        <Link
-          href="/dashboard"
-          className="flex items-center gap-2 overflow-hidden group focus:outline-none"
-          title="Cilmax ERP"
-        >
-          {collapsed ? (
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sidebar-accent/60 p-1 border border-sidebar-border/60 group-hover:scale-105 transition-all">
-              <Image
-                src="/logo cilmax.png"
-                alt="Cilmax"
-                width={36}
-                height={36}
-                priority
-                className="h-full w-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="relative flex items-center">
-              <Image
-                src="/logo cilmax.png"
-                alt="Cilmax ERP"
-                width={160}
-                height={40}
-                priority
-                className="h-8.5 w-auto max-w-[155px] object-contain transition-transform duration-200 group-hover:scale-105"
-              />
-            </div>
-          )}
-        </Link>
-
-        {/* Botón para contraer / retraer el sidebar en escritorio */}
-        {onToggleCollapse && !collapsed && (
+        {onToggleCollapse && (
           <button
             type="button"
             onClick={onToggleCollapse}
-            title="Contraer barra lateral"
-            aria-label="Contraer barra lateral"
+            title={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
+            aria-label="Alternar barra lateral"
             className="hidden lg:flex items-center justify-center h-8 w-8 rounded-lg text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent/80 transition-all cursor-pointer"
           >
-            <PanelLeftClose className="h-4 w-4" />
+            {collapsed ? <PanelLeftOpen className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
         )}
       </div>
-
-      {/* Si está contraído, botón toggle en la parte superior */}
-      {onToggleCollapse && collapsed && (
-        <div className="hidden lg:flex justify-center pt-2 pb-1 border-b border-sidebar-border/40">
-          <button
-            type="button"
-            onClick={onToggleCollapse}
-            title="Expandir barra lateral"
-            aria-label="Expandir barra lateral"
-            className="flex items-center justify-center h-9 w-9 rounded-xl text-sidebar-foreground/60 hover:text-white hover:bg-sidebar-accent/80 transition-all cursor-pointer shadow-sm"
-          >
-            <PanelLeftOpen className="h-4 w-4" />
-          </button>
-        </div>
-      )}
 
       {/* Navegación de módulos con bordes suaves y transiciones limpias */}
       <nav

@@ -37,9 +37,9 @@ const sale = {
   ],
   client: { name: 'Cliente Prueba', phone: '300 000 0000', email: 'cliente@example.com', address: 'Calle 1 #2-3' },
   items: [
-    { quantity: 1, unitPrice: 300000, total: 300000, product: { name: 'iPhone 15 Pro Max 256GB' } },
-    { quantity: 2, unitPrice: 80000, total: 160000, product: { name: 'Forro transparente' } },
-    { quantity: 1, unitPrice: 20000, total: 20000, product: { name: 'Vidrio templado' } },
+    { quantity: 1, unitPrice: 300000, total: 300000, product: { name: 'Combo Olla de Presión 6L Acero Inoxidable' } },
+    { quantity: 2, unitPrice: 80000, total: 160000, product: { name: 'Sartén Antiadherente 24cm Granito' } },
+    { quantity: 1, unitPrice: 20000, total: 20000, product: { name: 'Válvula de Seguridad Reforzada' } },
   ],
   user: { name: 'Admin' },
   invoice: null,

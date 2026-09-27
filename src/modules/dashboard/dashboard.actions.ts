@@ -2,9 +2,6 @@
 
 import { requireAuth } from '@/modules/auth/auth.actions'
 import { getDashboardOverviewService } from './dashboard.service'
-import type { DashboardOverview } from './dashboard.service'
-
-export type { DashboardOverview }
 
 export async function getDashboardStats() {
   await requireAuth()

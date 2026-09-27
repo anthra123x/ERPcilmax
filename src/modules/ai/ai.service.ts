@@ -3,7 +3,6 @@ import { buildSystemPrompt, collectBusinessData } from './ai.context'
 import { runMockAssistant } from './ai.mock'
 import { completeWithRotation } from './ai.rotation'
 import { isAssistantToolName, runAssistantTool } from './ai.tools'
-import { AiProviderError } from './ai.types'
 import type { AiProviderId, AssistantMessage, AssistantToolName, AssistantTurnResult } from './ai.types'
 
 const MAX_HISTORY_MESSAGES = 8
@@ -112,11 +111,8 @@ export async function runAssistantTurn(input: {
       toolsUsed = result.toolsUsed
       agent = result.agent
     } catch (error) {
-      if (error instanceof AiProviderError && error.code === 'all_failed') {
-        mode = 'mock'
-      } else {
-        throw error
-      }
+      console.warn('Real AI agent error, falling back to business tools:', error)
+      mode = 'mock'
     }
   }
 

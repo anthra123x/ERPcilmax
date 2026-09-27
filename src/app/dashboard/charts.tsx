@@ -12,16 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
-  PieChart as RePieChart,
-  Pie,
 } from 'recharts'
-
-const PAYMENT_METHOD_COLORS: Record<string, string> = {
-  CASH: 'oklch(0.6 0.16 150)',
-  CARD: 'oklch(0.55 0.14 210)',
-  TRANSFER: 'oklch(0.65 0.15 65)',
-  CREDITO: 'oklch(0.6 0.18 25)',
-}
 
 interface TooltipPayloadEntry {
   name?: string
@@ -81,7 +72,7 @@ function SectionHeader({
   )
 }
 
-// 1. Gráfico de Ingresos por Método de Pago
+// 1. Matriz de Recaudo por Métodos de Pago (Enfoque Contable & Tesorería)
 export function PaymentDonut({
   data,
 }: {
@@ -90,68 +81,152 @@ export function PaymentDonut({
   const chartData = data.map((d) => ({
     name: getPaymentMethodLabel(d.paymentMethod),
     rawMethod: d.paymentMethod,
-    value: d._sum.total || 0,
+    amount: d._sum.total || 0,
     count: d._count.id || 0,
-    color: PAYMENT_METHOD_COLORS[d.paymentMethod] || 'oklch(0.55 0.05 180)',
   }))
 
-  const total = chartData.reduce((s, d) => s + d.value, 0)
+  const totalRevenue = chartData.reduce((s, d) => s + d.amount, 0)
+  const totalTransactions = chartData.reduce((s, d) => s + d.count, 0)
+
+  // Desglose contable: Liquidez Inmediata (Caja/Bancos/Tarjetas) vs Cartera Exigible (Créditos)
+  const immediateLiquidity = chartData
+    .filter((d) => d.rawMethod !== 'CREDITO')
+    .reduce((s, d) => s + d.amount, 0)
+  const creditReceivables = chartData
+    .filter((d) => d.rawMethod === 'CREDITO')
+    .reduce((s, d) => s + d.amount, 0)
+
+  // Mapeo contable de cuentas y badges
+  const METHOD_ACCOUNT_META: Record<
+    string,
+    { account: string; badge: string; colorClass: string; barColor: string }
+  > = {
+    CASH: {
+      account: 'Caja General (Disponible)',
+      badge: 'Inmediata',
+      colorClass: 'text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/20',
+      barColor: 'bg-emerald-600 dark:bg-emerald-500',
+    },
+    TRANSFER: {
+      account: 'Bancos / Transferencia',
+      badge: 'Bancos',
+      colorClass: 'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20',
+      barColor: 'bg-blue-600 dark:bg-blue-500',
+    },
+    CARD: {
+      account: 'Datáfono / Tarjetas',
+      badge: 'Por Liquidar',
+      colorClass: 'text-indigo-600 dark:text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+      barColor: 'bg-indigo-600 dark:bg-indigo-500',
+    },
+    CREDITO: {
+      account: 'Cuentas por Cobrar (CxC)',
+      badge: 'Cartera a Plazo',
+      colorClass: 'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+      barColor: 'bg-amber-600 dark:bg-amber-500',
+    },
+  }
 
   return (
     <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
       <CardHeader className="pb-3 border-b border-border/60">
-        <SectionHeader
-          icon={Banknote}
-          title="Métodos de Pago"
-          description="Distribución de ingresos por canal de recaudo"
-        />
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <SectionHeader
+            icon={Banknote}
+            title="Tesorería & Métodos de Pago"
+            description="Distribución de recaudo y liquidez según canal de cobro"
+          />
+          {totalRevenue > 0 && (
+            <div className="flex items-center gap-3 text-right">
+              <div>
+                <span className="text-[10px] uppercase font-mono text-muted-foreground block">
+                  Liquidez Inmediata
+                </span>
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                  {formatCurrency(immediateLiquidity)}
+                </span>
+              </div>
+              {creditReceivables > 0 && (
+                <div className="border-l border-border pl-3">
+                  <span className="text-[10px] uppercase font-mono text-muted-foreground block">
+                    Cartera / Crédito
+                  </span>
+                  <span className="text-xs font-bold text-amber-600 dark:text-amber-400 font-mono">
+                    {formatCurrency(creditReceivables)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </CardHeader>
       <CardContent className="pt-4 flex-1 flex flex-col justify-center">
-        {total === 0 ? (
+        {totalRevenue === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-xs text-muted-foreground">
             <Banknote className="h-8 w-8 mb-2 text-muted-foreground/30" />
-            <p>No hay ventas registradas aún</p>
+            <p>No hay recaudos registrados en el sistema</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-center">
-            <div className="flex justify-center items-center">
-              <ResponsiveContainer width={150} height={150}>
-                <RePieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={42}
-                    outerRadius={66}
-                    paddingAngle={2}
-                    dataKey="value"
-                    stroke="var(--color-card)"
-                    strokeWidth={2}
-                  >
-                    {chartData.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<CustomChartTooltip formatter={(v: number) => formatCurrency(v)} />} />
-                </RePieChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="space-y-2 min-w-0">
-              {chartData.map((d) => {
-                const percent = total > 0 ? Math.round((d.value / total) * 100) : 0
-                return (
-                  <div key={d.name} className="flex items-center justify-between gap-2 text-xs">
-                    <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="h-2.5 w-2.5 shrink-0" style={{ backgroundColor: d.color }} />
-                      <span className="text-muted-foreground truncate">{d.name}</span>
-                    </div>
-                    <div className="text-right shrink-0 font-mono">
-                      <span className="font-semibold text-foreground">{formatCurrency(d.value)}</span>
-                      <span className="text-[10px] text-muted-foreground ml-1.5 font-normal">({percent}%)</span>
-                    </div>
-                  </div>
-                )
-              })}
+          <div className="space-y-4">
+            {/* Matriz Contable de Recaudo */}
+            <div className="border border-border/70 rounded-xl overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs min-w-[460px] sm:min-w-0">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
+                    <th className="py-2 px-3">Cuenta / Canal</th>
+                    <th className="py-2 px-3 text-center">Operaciones</th>
+                    <th className="py-2 px-3 text-right">Ticket Prom.</th>
+                    <th className="py-2 px-3 text-right">Monto Recaudado</th>
+                    <th className="py-2 px-3 text-right w-24">Participación</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/40 font-normal">
+                  {chartData.map((d) => {
+                    const percent = totalRevenue > 0 ? Math.round((d.amount / totalRevenue) * 100) : 0
+                    const avgTicket = d.count > 0 ? Math.round(d.amount / d.count) : 0
+                    const meta = METHOD_ACCOUNT_META[d.rawMethod] || {
+                      account: d.name,
+                      badge: 'General',
+                      colorClass: 'text-muted-foreground bg-muted border-border',
+                      barColor: 'bg-primary',
+                    }
+
+                    return (
+                      <tr key={d.name} className="hover:bg-muted/30 transition-colors">
+                        <td className="py-2.5 px-3">
+                          <div className="flex items-center gap-2">
+                            <span className={`h-2 w-2 rounded-full shrink-0 ${meta.barColor}`} />
+                            <div>
+                              <div className="font-semibold text-foreground text-xs">{d.name}</div>
+                              <div className="text-[10px] text-muted-foreground">{meta.account}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3 text-center font-mono text-xs text-muted-foreground">
+                          {d.count} <span className="text-[10px]">({totalTransactions > 0 ? Math.round((d.count / totalTransactions) * 100) : 0}%)</span>
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono text-xs text-muted-foreground">
+                          {formatCurrency(avgTicket)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right font-mono text-xs font-bold text-foreground">
+                          {formatCurrency(d.amount)}
+                        </td>
+                        <td className="py-2.5 px-3 text-right">
+                          <div className="flex items-center justify-end gap-2 font-mono text-xs font-semibold text-foreground">
+                            <span>{percent}%</span>
+                            <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
+                              <div
+                                className={`h-full ${meta.barColor}`}
+                                style={{ width: `${percent}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
@@ -250,84 +325,96 @@ export interface TopProductData {
   total: number
 }
 
-const RANK_BADGES = [
-  { label: '1', bg: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30 font-bold' },
-  { label: '2', bg: 'bg-slate-400/15 text-slate-600 dark:text-slate-300 border-slate-400/30 font-semibold' },
-  { label: '3', bg: 'bg-amber-700/15 text-amber-700 dark:text-amber-500 border-amber-700/30 font-semibold' },
-  { label: '4', bg: 'bg-muted text-muted-foreground border-border font-medium' },
-  { label: '5', bg: 'bg-muted text-muted-foreground border-border font-medium' },
-]
-
+// 3. Matriz de Rotación & Análisis de Pareto (Ley 80/20 de Facturación)
 export function TopProductsBar({ data }: { data: TopProductData[] }) {
-  const maxQty = Math.max(...data.map((d) => d.quantity), 1)
   const topFive = data.slice(0, 5)
   const totalRevenueTop = topFive.reduce((sum, item) => sum + item.total, 0)
+  const totalUnitsTop = topFive.reduce((sum, item) => sum + item.quantity, 0)
 
   return (
     <Card className="border border-border/80 bg-card h-full flex flex-col rounded-2xl shadow-sm">
-      <CardHeader className="pb-3.5 border-b border-border/60">
-        <div className="flex items-center justify-between">
+      <CardHeader className="pb-3 border-b border-border/60">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <SectionHeader
             icon={TrendingUp}
-            title="Productos Más Vendidos"
-            description="Líderes de rotación en los últimos 30 días"
+            title="Rotación de Inventario & Pareto"
+            description="Líderes de facturación y unidades despachadas (últimos 30 días)"
           />
           {topFive.length > 0 && (
             <div className="text-right">
-              <span className="text-[10px] uppercase font-mono text-muted-foreground block">Recaudo Top</span>
-              <span className="text-xs font-bold text-foreground font-mono">{formatCurrency(totalRevenueTop)}</span>
+              <span className="text-[10px] uppercase font-mono text-muted-foreground block">
+                Facturación Top 5
+              </span>
+              <span className="text-xs font-bold text-foreground font-mono">
+                {formatCurrency(totalRevenueTop)} &bull; {formatNumber(totalUnitsTop)} uds
+              </span>
             </div>
           )}
         </div>
       </CardHeader>
-      <CardContent className="pt-3.5 flex-1 flex flex-col justify-center">
+      <CardContent className="pt-4 flex-1 flex flex-col justify-center">
         {data.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-10 text-xs text-muted-foreground">
             <Package className="h-8 w-8 mb-2 text-muted-foreground/30" />
             <p>No hay ventas registradas en los últimos 30 días</p>
           </div>
         ) : (
-          <div className="space-y-2.5">
-            {topFive.map((item, index) => {
-              const progressPercent = Math.round((item.quantity / maxQty) * 100)
-              const badgeStyle = RANK_BADGES[index] || RANK_BADGES[3]
+          <div className="border border-border/70 rounded-xl overflow-x-auto">
+            <table className="w-full text-left border-collapse text-xs min-w-[500px] sm:min-w-0">
+              <thead>
+                <tr className="bg-muted/40 border-b border-border/60 text-muted-foreground uppercase text-[10px] font-semibold tracking-wider">
+                  <th className="py-2 px-3 w-10 text-center">#</th>
+                  <th className="py-2 px-3">Producto / Referencia</th>
+                  <th className="py-2 px-3 text-center">Volumen</th>
+                  <th className="py-2 px-3 text-right">Precio Prom.</th>
+                  <th className="py-2 px-3 text-right">Total Facturado</th>
+                  <th className="py-2 px-3 text-right w-24">Contribución</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40 font-normal">
+                {topFive.map((item, index) => {
+                  const percentOfTop =
+                    totalRevenueTop > 0 ? Math.round((item.total / totalRevenueTop) * 100) : 0
+                  const avgPrice =
+                    item.quantity > 0 ? Math.round(item.total / item.quantity) : 0
 
-              return (
-                <div
-                  key={item.productId || index}
-                  className="group rounded-xl p-2.5 transition-all duration-200 hover:bg-muted/40 border border-transparent hover:border-border/60 space-y-2"
-                >
-                  <div className="flex items-center justify-between text-xs gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-lg text-[11px] font-mono border shrink-0 ${badgeStyle.bg}`}
-                      >
-                        #{badgeStyle.label}
-                      </span>
-                      <span className="font-semibold text-foreground truncate text-sm" title={item.name}>
-                        {item.name}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 shrink-0 font-mono">
-                      <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+                  return (
+                    <tr key={item.productId || index} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 px-3 text-center font-mono text-xs font-bold text-muted-foreground">
+                        <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-muted border border-border/80 text-[10px]">
+                          {index + 1}
+                        </span>
+                      </td>
+                      <td className="py-2.5 px-3">
+                        <div className="font-semibold text-foreground text-xs line-clamp-1" title={item.name}>
+                          {item.name}
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-center font-mono text-xs text-muted-foreground">
                         {formatNumber(item.quantity)} uds
-                      </span>
-                      <span className="font-bold text-foreground text-xs min-w-[70px] text-right">
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-xs text-muted-foreground">
+                        {formatCurrency(avgPrice)}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-xs font-bold text-foreground">
                         {formatCurrency(item.total)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Barra de progreso suave con gradiente y extremos redondeados */}
-                  <div className="h-2 w-full bg-muted/80 rounded-full overflow-hidden p-0.5">
-                    <div
-                      className="h-full bg-gradient-to-r from-primary to-teal-400 rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${progressPercent}%` }}
-                    />
-                  </div>
-                </div>
-              )
-            })}
+                      </td>
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-2 font-mono text-xs font-semibold text-foreground">
+                          <span>{percentOfTop}%</span>
+                          <div className="w-10 h-1.5 bg-muted rounded-full overflow-hidden shrink-0">
+                            <div
+                              className="h-full bg-primary/80 dark:bg-primary"
+                              style={{ width: `${percentOfTop}%` }}
+                            />
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
           </div>
         )}
       </CardContent>

@@ -309,7 +309,7 @@ export default function NewSalePage() {
       }
 
       toast.success('Venta registrada exitosamente')
-      router.push(`/sales/${result.sale?.id}`)
+      router.push(`/sales/${result.sale?.id}/invoice`)
       router.refresh()
     } catch {
       toast.error('Error al procesar la venta')
@@ -354,7 +354,7 @@ export default function NewSalePage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-[420px] overflow-y-auto">
                 {filteredProducts.map((product) => (
                   <button
                     key={product.id}
@@ -560,7 +560,7 @@ export default function NewSalePage() {
                 </p>
               ) : (
                 <div className="overflow-x-auto">
-                  <Table>
+                  <Table className="min-w-[480px]">
                     <TableHeader>
                       <TableRow className="hover:bg-transparent">
                         <TableHead>Producto</TableHead>
@@ -635,7 +635,7 @@ export default function NewSalePage() {
           {/* Descuento + pago + total */}
           <Card>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium">Descuento (opcional)</label>
                   <Input
@@ -689,7 +689,7 @@ export default function NewSalePage() {
 
               {isCredit && (
                 <div className="space-y-4 pt-2 border-t">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium">Abono inicial (opcional)</label>
                       <Input
@@ -719,7 +719,7 @@ export default function NewSalePage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
                       <label className="text-xs font-medium">Fecha de vencimiento (opcional)</label>
                       <Input
@@ -745,7 +745,7 @@ export default function NewSalePage() {
                   {useInstallments && (
                     <div className="space-y-2">
                       {installments.map((inst, idx) => (
-                        <div key={idx} className="grid grid-cols-[1fr_1fr_auto] gap-2 items-center">
+                        <div key={idx} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-2 items-center">
                           <Input
                             type="number"
                             min="0"

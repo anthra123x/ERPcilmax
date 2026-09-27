@@ -52,17 +52,15 @@ const styles = StyleSheet.create({
     paddingBottom: 66,
     backgroundColor: COLORS.white,
   },
-  accentBar: { flexDirection: 'row', height: 4, width: '100%' },
-  accentTeal: { flexGrow: 1, backgroundColor: COLORS.teal },
-  accentAmber: { width: 90, backgroundColor: COLORS.amber },
-  body: { paddingHorizontal: 40, paddingTop: 26 },
+  accentBar: { height: 3, width: '100%', backgroundColor: COLORS.slate900 },
+  body: { paddingHorizontal: 36, paddingTop: 24 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   brand: { flexDirection: 'row', alignItems: 'center', flexGrow: 1, paddingRight: 12 },
   logo: { height: 30, width: 30 * LOGO_ASPECT, objectFit: 'contain' },
   brandText: { marginLeft: 10 },
   brandName: { fontSize: 17, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  brandKind: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, letterSpacing: 1.2, marginTop: 3 },
+  brandKind: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 1.2, marginTop: 3 },
 
   docBox: { alignItems: 'flex-end' },
   docLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
@@ -94,19 +92,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 22,
-    paddingVertical: 16,
-    paddingHorizontal: 18,
-    backgroundColor: COLORS.tealLight,
-    borderWidth: 1,
-    borderColor: COLORS.tealBorder,
-    borderRadius: 6,
+    marginTop: 20,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.slate900,
+    borderRadius: 4,
   },
-  amountLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, letterSpacing: 1.2 },
-  amountValue: { fontSize: 24, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, marginTop: 4 },
+  amountLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
+  amountValue: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: COLORS.white, marginTop: 4 },
   amountMeta: { alignItems: 'flex-end' },
-  amountMetaLine: { fontSize: 8.5, color: COLORS.slate600, marginBottom: 3 },
-  amountMetaStrong: { fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  amountMetaLine: { fontSize: 8.5, color: COLORS.slate300, marginBottom: 3 },
+  amountMetaStrong: { fontFamily: 'Helvetica-Bold', color: COLORS.white },
 
   sectionTitle: {
     fontSize: 7,
@@ -242,10 +238,7 @@ export function ReceiptDocument({
       creator={company.name}
     >
       <Page size="A4" style={styles.page} wrap>
-        <View style={styles.accentBar}>
-          <View style={styles.accentTeal} />
-          <View style={styles.accentAmber} />
-        </View>
+        <View style={styles.accentBar} />
 
         <View style={styles.body}>
           <View style={styles.header}>

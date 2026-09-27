@@ -52,80 +52,80 @@ const styles = StyleSheet.create({
     paddingBottom: 66,
     backgroundColor: COLORS.white,
   },
-  accentBar: { flexDirection: 'row', height: 4, width: '100%' },
-  accentTeal: { flexGrow: 1, backgroundColor: COLORS.teal },
-  accentAmber: { width: 90, backgroundColor: COLORS.amber },
-  body: { paddingHorizontal: 40, paddingTop: 26 },
+  accentBar: { height: 3, width: '100%', backgroundColor: COLORS.slate900 },
+  body: { paddingHorizontal: 36, paddingTop: 24 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   brand: { flexDirection: 'row', alignItems: 'center', flexGrow: 1, paddingRight: 12 },
-  logo: { height: 30, width: 30 * LOGO_ASPECT, objectFit: 'contain' },
+  logo: { height: 32, width: 32 * LOGO_ASPECT, objectFit: 'contain' },
   brandText: { marginLeft: 10 },
-  brandName: { fontSize: 17, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  brandKind: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, letterSpacing: 1.2, marginTop: 3 },
+  brandName: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  brandKind: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 1.2, marginTop: 3 },
 
   docBox: { alignItems: 'flex-end' },
   docLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
-  docNumber: { fontSize: 19, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 },
-  docDate: { fontSize: 8, color: COLORS.slate500, marginTop: 4 },
+  docNumber: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 },
+  docDate: { fontSize: 8, color: COLORS.slate500, marginTop: 3 },
 
   contact: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: 18,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    backgroundColor: COLORS.gray50,
+    marginTop: 16,
+    paddingVertical: 7,
+    paddingHorizontal: 10,
+    backgroundColor: COLORS.slate50,
     borderWidth: 1,
-    borderColor: COLORS.gray200,
+    borderColor: COLORS.slate200,
     borderRadius: 4,
   },
   contactItem: { fontSize: 8, color: COLORS.slate600, marginRight: 16, marginBottom: 2 },
 
-  metaRow: { flexDirection: 'row', marginTop: 20 },
+  metaRow: { flexDirection: 'row', marginTop: 18, borderTopWidth: 1, borderTopColor: COLORS.slate200, paddingTop: 14 },
   metaCol: { flexGrow: 1, flexBasis: 0, paddingRight: 16 },
   metaColRight: { flexGrow: 1, flexBasis: 0, alignItems: 'flex-end' },
-  metaLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2, marginBottom: 5 },
-  metaName: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  metaLine: { fontSize: 8.5, color: COLORS.slate500, marginTop: 2 },
-  metaValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  metaLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2, marginBottom: 4 },
+  metaName: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  metaLine: { fontSize: 8, color: COLORS.slate500, marginTop: 2 },
+  metaValue: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
 
   sectionTitle: {
     fontSize: 7,
     fontFamily: 'Helvetica-Bold',
     color: COLORS.slate400,
     letterSpacing: 1.2,
-    marginTop: 22,
-    marginBottom: 7,
+    marginTop: 20,
+    marginBottom: 6,
   },
 
   tableHead: {
     flexDirection: 'row',
-    backgroundColor: COLORS.tealLight,
-    paddingVertical: 7,
+    backgroundColor: COLORS.slate100,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.slate300,
+    paddingVertical: 6,
     paddingHorizontal: 8,
     borderRadius: 3,
   },
-  th: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, letterSpacing: 0.6 },
+  th: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate700, letterSpacing: 0.5 },
   row: {
     flexDirection: 'row',
     paddingVertical: 7,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray100,
+    borderBottomColor: COLORS.slate200,
   },
-  rowAlt: { backgroundColor: COLORS.gray50 },
-  td: { fontSize: 9, color: COLORS.slate600 },
-  tdBold: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  rowAlt: { backgroundColor: COLORS.slate50 },
+  td: { fontSize: 8.5, color: COLORS.slate600 },
+  tdBold: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
   colDesc: { flexGrow: 4, flexBasis: 0, paddingRight: 8 },
   colQty: { width: 42, textAlign: 'center' },
-  colMoney: { width: 74, textAlign: 'right' },
+  colMoney: { width: 78, textAlign: 'right' },
 
-  totals: { alignItems: 'flex-end', marginTop: 16 },
-  totalsBox: { width: 230 },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 },
-  totalLabel: { fontSize: 9, color: COLORS.slate600 },
-  totalValue: { fontSize: 9, color: COLORS.slate700 },
+  totals: { alignItems: 'flex-end', marginTop: 14 },
+  totalsBox: { width: 220 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5 },
+  totalLabel: { fontSize: 8.5, color: COLORS.slate600 },
+  totalValue: { fontSize: 8.5, color: COLORS.slate700 },
   totalDiscount: { color: COLORS.red600 },
   grandRow: {
     flexDirection: 'row',
@@ -134,72 +134,70 @@ const styles = StyleSheet.create({
     marginTop: 5,
     paddingVertical: 8,
     paddingHorizontal: 10,
-    backgroundColor: COLORS.tealLight,
-    borderTopWidth: 2,
-    borderTopColor: COLORS.teal,
+    backgroundColor: COLORS.slate900,
     borderRadius: 3,
   },
-  grandLabel: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  grandValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark },
+  grandLabel: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.white },
+  grandValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: COLORS.white },
 
-  creditBox: { flexDirection: 'row', marginTop: 18 },
+  creditBox: { flexDirection: 'row', marginTop: 14 },
   creditItem: {
     flexGrow: 1,
     flexBasis: 0,
-    marginRight: 8,
-    padding: 9,
+    marginRight: 6,
+    padding: 8,
     borderWidth: 1,
-    borderColor: COLORS.gray200,
+    borderColor: COLORS.slate200,
     borderRadius: 4,
-    backgroundColor: COLORS.gray50,
+    backgroundColor: COLORS.slate50,
   },
   creditItemLast: {
     flexGrow: 1,
     flexBasis: 0,
-    padding: 9,
+    padding: 8,
     borderWidth: 1,
-    borderColor: COLORS.gray200,
+    borderColor: COLORS.slate200,
     borderRadius: 4,
-    backgroundColor: COLORS.gray50,
+    backgroundColor: COLORS.slate50,
   },
-  creditLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 0.8 },
-  creditValue: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 },
+  creditLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 0.8 },
+  creditValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 2 },
   creditValueGreen: { color: COLORS.emerald700 },
   creditValueRed: { color: COLORS.red600 },
 
   badge: {
     alignSelf: 'flex-start',
-    marginTop: 6,
-    paddingVertical: 3,
-    paddingHorizontal: 7,
-    borderRadius: 20,
-    fontSize: 7,
+    marginTop: 4,
+    paddingVertical: 2,
+    paddingHorizontal: 6,
+    borderRadius: 12,
+    fontSize: 6.5,
     fontFamily: 'Helvetica-Bold',
   },
 
   note: {
-    marginTop: 22,
-    paddingVertical: 9,
-    paddingHorizontal: 12,
+    marginTop: 18,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: COLORS.slate300,
     borderRadius: 4,
   },
-  noteText: { fontSize: 7.5, color: COLORS.slate400 },
+  noteText: { fontSize: 7, color: COLORS.slate500, lineHeight: 1.3 },
 
   footer: {
     position: 'absolute',
-    left: 40,
-    right: 40,
-    bottom: 26,
+    left: 36,
+    right: 36,
+    bottom: 22,
     borderTopWidth: 1,
-    borderTopColor: COLORS.gray200,
-    paddingTop: 10,
+    borderTopColor: COLORS.slate200,
+    paddingTop: 8,
   },
-  footerBrand: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, textAlign: 'center' },
-  footerNote: { marginTop: 3, fontSize: 7, color: COLORS.slate400, textAlign: 'center' },
-  footerPage: { marginTop: 3, fontSize: 6.5, color: COLORS.slate300, textAlign: 'center' },
+  footerBrand: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate700, textAlign: 'center' },
+  footerNote: { marginTop: 2, fontSize: 6.5, color: COLORS.slate400, textAlign: 'center' },
+  footerPage: { marginTop: 2, fontSize: 6.5, color: COLORS.slate400, textAlign: 'center' },
 })
 
 function ContactStrip({ company }: { company: PdfCompany }) {
@@ -325,10 +323,7 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
       creator={company.name}
     >
       <Page size="A4" style={styles.page} wrap>
-        <View style={styles.accentBar}>
-          <View style={styles.accentTeal} />
-          <View style={styles.accentAmber} />
-        </View>
+        <View style={styles.accentBar} />
 
         <View style={styles.body}>
           <View style={styles.header}>
@@ -336,7 +331,7 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
               {logo ? <Image style={styles.logo} src={logo} /> : null}
               <View style={styles.brandText}>
                 <Text style={styles.brandName}>{company.name}</Text>
-                <Text style={styles.brandKind}>FACTURA DE VENTA</Text>
+                <Text style={styles.brandKind}>FACTURA ELECTRÓNICA DE VENTA</Text>
               </View>
             </View>
             <View style={styles.docBox}>
@@ -399,7 +394,7 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
 
           <View style={styles.note}>
             <Text style={styles.noteText}>
-              Conserve esta factura para efectos de garantía del producto. Documento generado el{' '}
+              Conserve esta factura para efectos de garantía legal sobre los productos adquiridos de conformidad con la ley aplicable. Documento generado el{' '}
               {formatLongDate(generatedAt)} a las {formatTime(generatedAt)}
             </Text>
           </View>

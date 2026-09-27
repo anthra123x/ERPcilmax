@@ -12,8 +12,6 @@
  */
 
 export { getWebOverview } from './web-overview.actions'
-
-export type { AdminWebProductFilters } from './web-products.actions'
 export {
   getAdminWebProducts,
   getWebCategoryOptions,

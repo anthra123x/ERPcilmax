@@ -56,17 +56,15 @@ const styles = StyleSheet.create({
     paddingBottom: 66,
     backgroundColor: COLORS.white,
   },
-  accentBar: { flexDirection: 'row', height: 4, width: '100%' },
-  accentTeal: { flexGrow: 1, backgroundColor: COLORS.teal },
-  accentAmber: { width: 90, backgroundColor: COLORS.amber },
-  body: { paddingHorizontal: 40, paddingTop: 26 },
+  accentBar: { height: 3, width: '100%', backgroundColor: COLORS.slate900 },
+  body: { paddingHorizontal: 36, paddingTop: 24 },
 
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
   brand: { flexDirection: 'row', alignItems: 'center', flexGrow: 1, paddingRight: 12 },
   logo: { height: 30, width: 30 * LOGO_ASPECT, objectFit: 'contain' },
   brandText: { marginLeft: 10 },
   brandName: { fontSize: 17, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  brandKind: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.tealDark, letterSpacing: 1.2, marginTop: 3 },
+  brandKind: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 1.2, marginTop: 3 },
 
   docBox: { alignItems: 'flex-end' },
   docLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
@@ -265,10 +263,7 @@ export function CreditStatementDocument({ sale, settings }: { sale: StatementSal
       creator={company.name}
     >
       <Page size="A4" style={styles.page} wrap>
-        <View style={styles.accentBar}>
-          <View style={styles.accentTeal} />
-          <View style={styles.accentAmber} />
-        </View>
+        <View style={styles.accentBar} />
 
         <View style={styles.body}>
           <View style={styles.header}>

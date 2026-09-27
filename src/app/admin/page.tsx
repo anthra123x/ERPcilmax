@@ -1,80 +1,186 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Users, Settings, Trash2, UserPlus, Database, Download, AlertTriangle } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Users,
+  Trash2,
+  UserPlus,
+  Download,
+  Building2,
+  Receipt,
+  FileSpreadsheet,
+  Radio,
+  CheckCircle2,
+  Loader2,
+  Lock,
+  Mail,
+  User as UserIcon,
+  Phone,
+  MapPin,
+  Hash,
+  Shield,
+  Coins,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { getUsers, deleteUser, createUserByAdmin } from '@/modules/auth/auth.actions'
 import { getSystemSettings, updateSystemSettings } from '@/modules/settings/settings.actions'
-import { exportData, cleanupAll } from '@/modules/cleanup/cleanup.actions'
 import {
   exportProductsToExcel,
   exportSalesToExcel,
   exportClientsToExcel,
   exportInventoryToExcel,
 } from '@/modules/export/export.actions'
+import { createClientSupabase } from '@/lib/supabase'
+
+interface SystemSettingsData {
+  companyName: string
+  companyNit?: string | null
+  companyAddress?: string | null
+  companyCity?: string | null
+  companyPhone?: string | null
+  companyEmail?: string | null
+  currency: string
+  invoicePrefix: string
+  invoiceFooter?: string | null
+  lowStockThreshold: number
+  nextInvoiceNumber?: number
+}
+
+const defaultSettings: SystemSettingsData = {
+  companyName: 'Cilmax S.A.S.',
+  companyNit: '901.482.391-4',
+  companyAddress: 'Calle Principal #10-24',
+  companyCity: 'Colombia',
+  companyPhone: '+57 (300) 000-0000',
+  companyEmail: 'contacto@cilmax.com',
+  currency: 'COP',
+  invoicePrefix: 'CIL-',
+  invoiceFooter: 'Garantía legal sobre productos de conformidad con la ley aplicable.',
+  lowStockThreshold: 5,
+  nextInvoiceNumber: 1,
+}
 
 export default function AdminPage() {
   type UserRow = Awaited<ReturnType<typeof getUsers>>[number]
   const [users, setUsers] = useState<UserRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [newUserEmail, setNewUserEmail] = useState('')
+  const [createUserOpen, setCreateUserOpen] = useState(false)
   const [newUserName, setNewUserName] = useState('')
+  const [newUserEmail, setNewUserEmail] = useState('')
   const [newUserPassword, setNewUserPassword] = useState('')
-  const [cleanupDialogOpen, setCleanupDialogOpen] = useState(false)
-  const [cleanupLoading, setCleanupLoading] = useState(false)
+  const [createUserLoading, setCreateUserLoading] = useState(false)
+
   const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<string | null>(null)
   const [exportExcelLoading, setExportExcelLoading] = useState<string | null>(null)
-  const [backupLoading, setBackupLoading] = useState(false)
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [settings, setSettings] = useState<any>({})
-  const [settingsLoading, setSettingsLoading] = useState(true)
 
+  const [settings, setSettings] = useState<SystemSettingsData>(defaultSettings)
+  const [settingsLoading, setSettingsLoading] = useState(true)
+  const [isPendingSave, startSaveTransition] = useTransition()
+  const [wsConnected, setWsConnected] = useState(false)
+
+  // 1. Carga inicial y Suscripción WebSocket en Tiempo Real con Supabase (JWT)
   useEffect(() => {
-    async function loadUsers() {
+    async function loadInitialData() {
       try {
-        const data = await getUsers()
-        setUsers(data)
-      } catch (_error) {
-        console.error('Error loading users:', _error)
+        const [usersData, settingsResult] = await Promise.all([
+          getUsers(),
+          getSystemSettings(),
+        ])
+        setUsers(usersData)
+        if (settingsResult.success && settingsResult.data) {
+          setSettings(settingsResult.data as unknown as SystemSettingsData)
+        }
+      } catch (err) {
+        console.error('Error cargando datos de configuración:', err)
       } finally {
         setLoading(false)
-      }
-    }
-    loadUsers()
-
-    async function loadSettings() {
-      try {
-        const result = await getSystemSettings()
-        if (result.success) setSettings(result.data)
-      } catch (_error) {
-        console.error('Error loading settings:', _error)
-      } finally {
         setSettingsLoading(false)
       }
     }
-    loadSettings()
+
+    loadInitialData()
+
+    // Conexión WebSockets en tiempo real vía Supabase Realtime (Compatible con Vercel)
+    const supabase = createClientSupabase()
+    const channel = supabase.channel('system-settings-realtime')
+
+    channel
+      .on(
+        'broadcast',
+        { event: 'settings-updated' },
+        (payload: { payload: SystemSettingsData }) => {
+          if (payload?.payload) {
+            setSettings(payload.payload)
+            toast.info('Configuración del sistema actualizada en tiempo real')
+          }
+        },
+      )
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          setWsConnected(true)
+        } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
+          setWsConnected(false)
+        }
+      })
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
-  async function handleDeleteUser(userId: string) {
-    const result = await deleteUser(userId)
-    if (result.success) {
-      const updated = await getUsers()
-      setUsers(updated)
-    }
-    setDeleteUserDialogOpen(false)
-    setUserToDelete(null)
+  // 2. Guardar Ajustes del Sistema y Notificar por WebSockets
+  async function handleUpdateSettings(e: React.FormEvent) {
+    e.preventDefault()
+
+    startSaveTransition(async () => {
+      const formData = new FormData()
+      formData.append('companyName', settings.companyName || '')
+      formData.append('companyNit', settings.companyNit || '')
+      formData.append('companyAddress', settings.companyAddress || '')
+      formData.append('companyCity', settings.companyCity || '')
+      formData.append('companyPhone', settings.companyPhone || '')
+      formData.append('companyEmail', settings.companyEmail || '')
+      formData.append('currency', settings.currency || 'COP')
+      formData.append('invoicePrefix', settings.invoicePrefix || 'CIL-')
+      formData.append('invoiceFooter', settings.invoiceFooter || '')
+      formData.append('lowStockThreshold', String(settings.lowStockThreshold ?? 5))
+
+      const result = await updateSystemSettings(formData)
+
+      if (result.success) {
+        toast.success('Configuración guardada exitosamente')
+        const updated = await getSystemSettings()
+        if (updated.success && updated.data) {
+          const freshData = updated.data as unknown as SystemSettingsData
+          setSettings(freshData)
+
+          // Emisión WebSocket a todos los navegadores/pestañas conectadas
+          const supabase = createClientSupabase()
+          await supabase.channel('system-settings-realtime').send({
+            type: 'broadcast',
+            event: 'settings-updated',
+            payload: freshData,
+          })
+        }
+      } else {
+        toast.error(result.error || 'Error al actualizar la configuración')
+      }
+    })
   }
 
+  // 3. Gestión de Usuarios
   async function handleCreateUser(e: React.FormEvent) {
     e.preventDefault()
+    setCreateUserLoading(true)
 
     const formData = new FormData()
     formData.append('email', newUserEmail)
@@ -82,12 +188,14 @@ export default function AdminPage() {
     formData.append('password', newUserPassword)
 
     const result = await createUserByAdmin(formData)
+    setCreateUserLoading(false)
 
     if (result.success) {
       toast.success(result.success)
       setNewUserEmail('')
       setNewUserName('')
       setNewUserPassword('')
+      setCreateUserOpen(false)
       const updated = await getUsers()
       setUsers(updated)
     } else {
@@ -95,97 +203,33 @@ export default function AdminPage() {
     }
   }
 
-  async function handleUpdateSettings(e: React.FormEvent) {
-    e.preventDefault()
-
-    const formData = new FormData()
-    formData.append('companyName', settings.companyName || '')
-    formData.append('companyNit', settings.companyNit || '')
-    formData.append('companyAddress', settings.companyAddress || '')
-    formData.append('companyCity', settings.companyCity || '')
-    formData.append('companyPhone', settings.companyPhone || '')
-    formData.append('companyEmail', settings.companyEmail || '')
-    formData.append('currency', settings.currency || 'COP')
-    formData.append('invoicePrefix', settings.invoicePrefix || 'CIL-')
-    formData.append('invoiceFooter', settings.invoiceFooter || '')
-    formData.append('lowStockThreshold', String(settings.lowStockThreshold ?? 5))
-
-    const result = await updateSystemSettings(formData)
-
+  async function handleDeleteUser(userId: string) {
+    const result = await deleteUser(userId)
     if (result.success) {
-      toast.success('Configuración actualizada exitosamente')
-      const updated = await getSystemSettings()
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      if (updated.success) setSettings(updated.data as any)
+      toast.success('Usuario eliminado del sistema')
+      const updated = await getUsers()
+      setUsers(updated)
     } else {
-      toast.error(result.error)
+      toast.error(result.error || 'Error al eliminar usuario')
     }
+    setDeleteUserDialogOpen(false)
+    setUserToDelete(null)
   }
 
+  // 4. Exportaciones de Datos a Excel (.xlsx)
   function downloadXlsx(base64: string, filename: string) {
     const binaryStr = atob(base64)
     const bytes = new Uint8Array(binaryStr.length)
     for (let i = 0; i < binaryStr.length; i++) bytes[i] = binaryStr.charCodeAt(i)
-    const blob = new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
+    const blob = new Blob([bytes], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
     link.download = filename
     link.click()
     URL.revokeObjectURL(url)
-  }
-
-  async function handleExportData() {
-    setBackupLoading(true)
-    try {
-      const result = await exportData()
-      if (result.success && result.data && result.filename) {
-        downloadXlsx(result.data, result.filename)
-        toast.success('Backup exportado exitosamente')
-      } else {
-        toast.error(result.error || 'Error al exportar backup')
-      }
-    } catch (_error) {
-      toast.error('Error al exportar backup')
-    } finally {
-      setBackupLoading(false)
-    }
-  }
-
-  function openCleanupDialog() {
-    setCleanupDialogOpen(true)
-  }
-
-  async function handleCleanup() {
-    setCleanupLoading(true)
-
-    try {
-      // Backup opcional — si falla, advertimos pero no bloqueamos
-      try {
-        const backupResult = await exportData()
-        if (backupResult.success && backupResult.data && backupResult.filename) {
-          downloadXlsx(backupResult.data, backupResult.filename.replace('backup_', 'backup_before_cleanup_'))
-          toast.success('Backup descargado automáticamente')
-        } else {
-          toast.warning('No se pudo generar el backup automático. La limpieza continuará de todos modos.')
-        }
-      } catch {
-        toast.warning('No se pudo generar el backup automático. La limpieza continuará de todos modos.')
-      }
-
-      const result = await cleanupAll()
-
-      if (result.success) {
-        toast.success(result.success)
-        setCleanupDialogOpen(false)
-      } else {
-        toast.error(result.error)
-      }
-    } catch (_error) {
-      toast.error('Error durante la limpieza')
-    } finally {
-      setCleanupLoading(false)
-    }
   }
 
   async function handleExportExcel(type: string) {
@@ -213,9 +257,9 @@ export default function AdminPage() {
         downloadXlsx(result.data, result.filename)
         toast.success('Archivo Excel exportado exitosamente')
       } else {
-        toast.error(result.error || 'Error al exportar')
+        toast.error(result.error || 'Error al exportar datos')
       }
-    } catch (_error) {
+    } catch {
       toast.error('Error al exportar')
     } finally {
       setExportExcelLoading(null)
@@ -223,384 +267,602 @@ export default function AdminPage() {
   }
 
   if (loading) {
-    return <div>Cargando...</div>
+    return (
+      <div className="flex items-center justify-center min-h-[50vh]">
+        <div className="flex flex-col items-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm">Cargando panel de configuración...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div className="space-y-8 pb-8">
-      <div className="space-y-2">
-        <h1 className="text-4xl font-bold tracking-tight">Panel de Administración</h1>
-        <p className="text-gray-600 text-lg">Configuración y gestión del sistema</p>
+    <div className="space-y-6 pb-12">
+      {/* Encabezado Principal y Monitor WebSockets */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/80">
+        <div className="space-y-1">
+          <h1 className="text-3xl font-extrabold tracking-tight">Configuración del Sistema</h1>
+          <p className="text-sm text-muted-foreground">
+            Ajustes generales, identidad fiscal, parámetros de venta y accesos de usuario
+          </p>
+        </div>
+
+        {/* Indicador de Conexión en Tiempo Real */}
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted/60 border border-border/80 text-xs">
+          <Radio className={`h-3.5 w-3.5 ${wsConnected ? 'text-emerald-500 animate-pulse' : 'text-amber-500'}`} />
+          <span className="text-muted-foreground font-medium">
+            {wsConnected ? 'Sincronización en vivo activa' : 'Conectando tiempo real...'}
+          </span>
+        </div>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Gestión de Usuarios
-            </CardTitle>
-            <CardDescription>Administrar usuarios del sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-none border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {users.map((user) => (
-                    <TableRow key={user.id}>
-                      <TableCell>{user.name}</TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          aria-label="Eliminar usuario"
-                          onClick={() => {
-                            setUserToDelete(user.id)
-                            setDeleteUserDialogOpen(true)
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Pestañas Ejecutivas */}
+      <Tabs defaultValue="company" className="space-y-6">
+        <TabsList className="bg-muted/70 p-1 rounded-2xl border border-border/70 flex flex-wrap gap-1 w-full sm:w-auto h-auto">
+          <TabsTrigger value="company" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+            <Building2 className="mr-2 h-4 w-4 text-teal-500" />
+            Empresa & Identidad
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+            <Receipt className="mr-2 h-4 w-4 text-teal-500" />
+            Facturación & POS
+          </TabsTrigger>
+          <TabsTrigger value="users" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+            <Users className="mr-2 h-4 w-4 text-teal-500" />
+            Usuarios & Accesos
+          </TabsTrigger>
+          <TabsTrigger value="exports" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+            <FileSpreadsheet className="mr-2 h-4 w-4 text-teal-500" />
+            Respaldos & Excel
+          </TabsTrigger>
+        </TabsList>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <UserPlus className="h-5 w-5" />
-              Crear Usuario
-            </CardTitle>
-            <CardDescription>Agregar un nuevo usuario al sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleCreateUser} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="newUserName">Nombre</Label>
-                <Input id="newUserName" value={newUserName} onChange={(e) => setNewUserName(e.target.value)} required />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newUserEmail">Email</Label>
-                <Input
-                  id="newUserEmail"
-                  type="email"
-                  value={newUserEmail}
-                  onChange={(e) => setNewUserEmail(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="newUserPassword">Contraseña (opcional)</Label>
-                <Input
-                  id="newUserPassword"
-                  type="password"
-                  placeholder="Dejar vacío para generar automática"
-                  value={newUserPassword}
-                  onChange={(e) => setNewUserPassword(e.target.value)}
-                />
-              </div>
-
-              <Button type="submit" className="w-full">
-                Crear Usuario
-              </Button>
-            </form>
-            <p className="text-xs text-gray-500 mt-2">
-              Si no asignas contraseña, se generará una automática que se mostrará al crear.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Settings className="h-5 w-5" />
-              Configuración del Sistema
-            </CardTitle>
-            <CardDescription>Ajustes generales del sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {settingsLoading ? (
-              <p className="text-sm text-gray-600">Cargando configuración...</p>
-            ) : (
-              <form onSubmit={handleUpdateSettings} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="companyName">Nombre de la Empresa</Label>
-                  <Input
-                    id="companyName"
-                    value={settings?.companyName || ''}
-                    onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
-                  />
+        {/* ======================================================== */}
+        {/* PESTAÑA 1: DATOS DE LA EMPRESA & FISCALES */}
+        {/* ======================================================== */}
+        <TabsContent value="company" className="space-y-6">
+          <Card className="rounded-3xl border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Building2 className="h-5 w-5 text-teal-500" />
+                Información Comercial y Fiscal
+              </CardTitle>
+              <CardDescription>
+                Estos datos aparecen en las facturas de venta, recibos de caja y estado de cuenta.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {settingsLoading ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-6">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Cargando datos...
                 </div>
+              ) : (
+                <form onSubmit={handleUpdateSettings} className="space-y-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyName" className="text-xs font-semibold flex items-center gap-1.5">
+                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                        Razón Social / Nombre Comercial
+                      </Label>
+                      <Input
+                        id="companyName"
+                        value={settings.companyName || ''}
+                        onChange={(e) => setSettings({ ...settings, companyName: e.target.value })}
+                        className="rounded-xl"
+                        required
+                      />
+                    </div>
 
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyNit">NIT / Cédula</Label>
-                    <Input
-                      id="companyNit"
-                      value={settings?.companyNit || ''}
-                      onChange={(e) => setSettings({ ...settings, companyNit: e.target.value })}
-                      placeholder="Ej: 901234567-8"
-                    />
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyNit" className="text-xs font-semibold flex items-center gap-1.5">
+                        <Hash className="h-3.5 w-3.5 text-muted-foreground" />
+                        NIT o Identificación Tributaria
+                      </Label>
+                      <Input
+                        id="companyNit"
+                        value={settings.companyNit || ''}
+                        onChange={(e) => setSettings({ ...settings, companyNit: e.target.value })}
+                        placeholder="Ej: 901.482.391-4"
+                        className="rounded-xl"
+                      />
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companyCity">Ciudad</Label>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5 md:col-span-2">
+                      <Label htmlFor="companyAddress" className="text-xs font-semibold flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        Dirección Principal
+                      </Label>
+                      <Input
+                        id="companyAddress"
+                        value={settings.companyAddress || ''}
+                        onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
+                        placeholder="Ej: Calle Principal #10-24"
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyCity" className="text-xs font-semibold">
+                        Ciudad / Municipio
+                      </Label>
+                      <Input
+                        id="companyCity"
+                        value={settings.companyCity || ''}
+                        onChange={(e) => setSettings({ ...settings, companyCity: e.target.value })}
+                        placeholder="Ej: Cali, Colombia"
+                        className="rounded-xl"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyPhone" className="text-xs font-semibold flex items-center gap-1.5">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        Teléfono / WhatsApp
+                      </Label>
+                      <Input
+                        id="companyPhone"
+                        value={settings.companyPhone || ''}
+                        onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
+                        placeholder="+57 300 000 0000"
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="companyEmail" className="text-xs font-semibold flex items-center gap-1.5">
+                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                        Correo Electrónico
+                      </Label>
+                      <Input
+                        id="companyEmail"
+                        type="email"
+                        value={settings.companyEmail || ''}
+                        onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
+                        placeholder="contacto@cilmax.com"
+                        className="rounded-xl"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="currency" className="text-xs font-semibold flex items-center gap-1.5">
+                        <Coins className="h-3.5 w-3.5 text-muted-foreground" />
+                        Moneda del Sistema
+                      </Label>
+                      <Select
+                        value={settings.currency || 'COP'}
+                        onValueChange={(val) => setSettings({ ...settings, currency: val || 'COP' })}
+                      >
+                        <SelectTrigger className="rounded-xl">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-xl">
+                          <SelectItem value="COP">COP - Peso Colombiano</SelectItem>
+                          <SelectItem value="USD">USD - Dólar Estadounidense</SelectItem>
+                          <SelectItem value="EUR">EUR - Euro</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-3">
+                    <Button
+                      type="submit"
+                      disabled={isPendingSave}
+                      className="rounded-xl bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
+                    >
+                      {isPendingSave ? (
+                        <span className="flex items-center gap-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Guardando...
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4" /> Guardar Información
+                        </span>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* ======================================================== */}
+        {/* PESTAÑA 2: FACTURACIÓN & POS */}
+        {/* ======================================================== */}
+        <TabsContent value="billing" className="space-y-6">
+          <Card className="rounded-3xl border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <Receipt className="h-5 w-5 text-teal-500" />
+                Parámetros de Facturación y Punto de Venta
+              </CardTitle>
+              <CardDescription>
+                Define numeraciones, prefijos, avisos legales y alertas de inventario.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdateSettings} className="space-y-5">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="invoicePrefix" className="text-xs font-semibold">
+                      Prefijo de Factura
+                    </Label>
                     <Input
-                      id="companyCity"
-                      value={settings?.companyCity || ''}
-                      onChange={(e) => setSettings({ ...settings, companyCity: e.target.value })}
-                      placeholder="Ej: Cali"
+                      id="invoicePrefix"
+                      value={settings.invoicePrefix || 'CIL-'}
+                      onChange={(e) => setSettings({ ...settings, invoicePrefix: e.target.value })}
+                      placeholder="Ej: CIL- o FAC-"
+                      className="rounded-xl font-mono"
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                      Antepuesto a cada factura generada (ej: {settings.invoicePrefix || 'CIL-'}1084).
+                    </p>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="lowStockThreshold" className="text-xs font-semibold">
+                      Umbral de Alerta de Stock Bajo
+                    </Label>
+                    <Input
+                      id="lowStockThreshold"
+                      type="number"
+                      min="1"
+                      value={settings.lowStockThreshold ?? 5}
+                      onChange={(e) => setSettings({ ...settings, lowStockThreshold: Number(e.target.value) })}
+                      className="rounded-xl font-mono"
+                    />
+                    <p className="text-[11px] text-muted-foreground">
+                      Cuando un producto tenga esta cantidad o menos, el sistema emitirá alertas visuales.
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="companyAddress">Dirección</Label>
-                  <Input
-                    id="companyAddress"
-                    value={settings?.companyAddress || ''}
-                    onChange={(e) => setSettings({ ...settings, companyAddress: e.target.value })}
-                  />
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="companyPhone">Teléfono / WhatsApp</Label>
-                    <Input
-                      id="companyPhone"
-                      value={settings?.companyPhone || ''}
-                      onChange={(e) => setSettings({ ...settings, companyPhone: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="companyEmail">Email</Label>
-                    <Input
-                      id="companyEmail"
-                      type="email"
-                      value={settings?.companyEmail || ''}
-                      onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="currency">Moneda</Label>
-                  <Select
-                    value={settings?.currency || 'COP'}
-                    onValueChange={(value) => setSettings({ ...settings, currency: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="COP">COP - Peso Colombiano</SelectItem>
-                      <SelectItem value="USD">USD - Dólar Estadounidense</SelectItem>
-                      <SelectItem value="EUR">EUR - Euro</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="invoicePrefix">Prefijo de Factura</Label>
-                  <Input
-                    id="invoicePrefix"
-                    value={settings?.invoicePrefix || 'CIL-'}
-                    onChange={(e) => setSettings({ ...settings, invoicePrefix: e.target.value })}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="invoiceFooter">Pie de Página de Factura</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="invoiceFooter" className="text-xs font-semibold">
+                    Términos Legales y Pie de Factura
+                  </Label>
                   <Input
                     id="invoiceFooter"
-                    value={settings?.invoiceFooter || ''}
+                    value={settings.invoiceFooter || ''}
                     onChange={(e) => setSettings({ ...settings, invoiceFooter: e.target.value })}
+                    placeholder="Garantía legal sobre productos de conformidad con la ley aplicable."
+                    className="rounded-xl"
                   />
+                  <p className="text-[11px] text-muted-foreground">
+                    Este texto se imprime en el pie de página de cada factura y comprobante.
+                  </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lowStockThreshold">Umbral de Stock Bajo</Label>
-                  <Input
-                    id="lowStockThreshold"
-                    type="number"
-                    value={settings?.lowStockThreshold ?? 5}
-                    onChange={(e) => setSettings({ ...settings, lowStockThreshold: Number(e.target.value) })}
-                  />
+                <div className="flex justify-end pt-3">
+                  <Button
+                    type="submit"
+                    disabled={isPendingSave}
+                    className="rounded-xl bg-primary text-primary-foreground font-semibold px-6 shadow-sm"
+                  >
+                    {isPendingSave ? (
+                      <span className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" /> Guardando...
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4" /> Guardar Parámetros
+                      </span>
+                    )}
+                  </Button>
                 </div>
-
-                <Button type="submit" className="w-full">
-                  Guardar Configuración
-                </Button>
               </form>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Download className="h-5 w-5" />
-              Exportación de Datos
-            </CardTitle>
-            <CardDescription>Exporta datos del sistema a Excel</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <Button
-                onClick={() => handleExportExcel('products')}
-                variant="outline"
-                className="w-full"
-                disabled={exportExcelLoading !== null}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {exportExcelLoading === 'products' ? 'Exportando...' : 'Exportar Productos'}
-              </Button>
-              <Button
-                onClick={() => handleExportExcel('sales')}
-                variant="outline"
-                className="w-full"
-                disabled={exportExcelLoading !== null}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {exportExcelLoading === 'sales' ? 'Exportando...' : 'Exportar Ventas'}
-              </Button>
-              <Button
-                onClick={() => handleExportExcel('inventory')}
-                variant="outline"
-                className="w-full"
-                disabled={exportExcelLoading !== null}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {exportExcelLoading === 'inventory' ? 'Exportando...' : 'Exportar Inventario'}
-              </Button>
-              <Button
-                onClick={() => handleExportExcel('clients')}
-                variant="outline"
-                className="w-full"
-                disabled={exportExcelLoading !== null}
-              >
-                <Download className="h-4 w-4 mr-2" />
-                {exportExcelLoading === 'clients' ? 'Exportando...' : 'Exportar Clientes'}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="col-span-2 border-red-200 bg-red-50/30">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-red-700">
-              <Database className="h-5 w-5" />
-              Zona Crítica - Sistema
-            </CardTitle>
-            <CardDescription className="text-red-600">Backup y limpieza del sistema</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="grid gap-6 md:grid-cols-2">
-              <div className="p-4 bg-primary/5 rounded-none border border-primary/10">
-                <h4 className="font-semibold text-primary mb-2 flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Backup de Datos
-                </h4>
-                <p className="text-sm text-primary/80 mb-3">
-                  Exporta todos los datos del sistema antes de realizar cualquier limpieza.
-                </p>
-                <Button onClick={handleExportData} variant="default" className="w-full" disabled={backupLoading}>
-                  <Download className="h-4 w-4 mr-2" />
-                  {backupLoading ? 'Generando backup...' : 'Generar Backup Completo'}
-                </Button>
+        {/* ======================================================== */}
+        {/* PESTAÑA 3: USUARIOS & ACCESOS */}
+        {/* ======================================================== */}
+        <TabsContent value="users" className="space-y-6">
+          <Card className="rounded-3xl border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
+            <CardHeader className="flex flex-row items-center justify-between pb-4">
+              <div>
+                <CardTitle className="text-lg font-bold flex items-center gap-2">
+                  <Users className="h-5 w-5 text-teal-500" />
+                  Equipo y Cuentas de Acceso
+                </CardTitle>
+                <CardDescription>
+                  Administra las cuentas con acceso al ERP Cilmax.
+                </CardDescription>
               </div>
-
-              <div className="p-4 bg-red-100 rounded-none border border-red-300">
-                <h4 className="font-semibold text-red-900 mb-2 flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4" />
-                  Limpieza del Sistema
-                </h4>
-                <p className="text-sm text-red-800 mb-3">
-                  Esta acción eliminará todos los datos del sistema permanentemente. Se generará un backup
-                  automáticamente antes de ejecutar.
-                </p>
-                <Button onClick={openCleanupDialog} variant="destructive" className="w-full">
-                  Limpiar Todo el Sistema
-                </Button>
+              <Button
+                onClick={() => setCreateUserOpen(true)}
+                className="rounded-xl bg-primary text-primary-foreground font-semibold text-xs shadow-sm"
+              >
+                <UserPlus className="mr-1.5 h-4 w-4" />
+                Nuevo Usuario
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-2xl border border-border/80 overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <tr className="bg-muted/50 text-xs font-semibold">
+                      <TableHead className="py-3 px-4">Usuario</TableHead>
+                      <TableHead className="py-3 px-4">Correo Electrónico</TableHead>
+                      <TableHead className="py-3 px-4 text-center">Rol</TableHead>
+                      <TableHead className="py-3 px-4 text-right">Acción</TableHead>
+                    </tr>
+                  </TableHeader>
+                  <TableBody className="text-xs">
+                    {users.map((u) => (
+                      <TableRow key={u.id} className="hover:bg-muted/40 transition-colors">
+                        <TableCell className="py-3 px-4 font-semibold text-foreground flex items-center gap-2.5">
+                          <div className="h-7 w-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs">
+                            {u.name?.charAt(0).toUpperCase() || 'U'}
+                          </div>
+                          <span>{u.name}</span>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-muted-foreground font-mono">
+                          {u.email}
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-center">
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[10px] font-semibold text-teal-600 dark:text-teal-400">
+                            <Shield className="h-3 w-3" /> Administrador
+                          </span>
+                        </TableCell>
+                        <TableCell className="py-3 px-4 text-right">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive hover:bg-destructive/10 rounded-xl"
+                            title="Eliminar usuario"
+                            onClick={() => {
+                              setUserToDelete(u.id)
+                              setDeleteUserDialogOpen(true)
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-      <Dialog open={deleteUserDialogOpen} onOpenChange={setDeleteUserDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Confirmar Eliminación
+        {/* ======================================================== */}
+        {/* PESTAÑA 4: RESPALDOS & EXCEL */}
+        {/* ======================================================== */}
+        <TabsContent value="exports" className="space-y-6">
+          <Card className="rounded-3xl border-border/80 bg-card/80 backdrop-blur-md shadow-xs">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-bold flex items-center gap-2">
+                <FileSpreadsheet className="h-5 w-5 text-teal-500" />
+                Exportaciones y Respaldos en Excel
+              </CardTitle>
+              <CardDescription>
+                Genera reportes completos en hojas de cálculo con un solo clic.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* Exportar Productos */}
+                <div className="p-5 rounded-2xl bg-muted/40 border border-border/70 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Catálogo de Productos</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Listado de precios, costos, categorías y códigos.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleExportExcel('products')}
+                    variant="outline"
+                    className="rounded-xl text-xs font-semibold w-full"
+                    disabled={exportExcelLoading !== null}
+                  >
+                    {exportExcelLoading === 'products' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Descargar Excel
+                  </Button>
+                </div>
+
+                {/* Exportar Ventas */}
+                <div className="p-5 rounded-2xl bg-muted/40 border border-border/70 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Historial de Ventas</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Registro de transacciones, métodos de pago y totales.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleExportExcel('sales')}
+                    variant="outline"
+                    className="rounded-xl text-xs font-semibold w-full"
+                    disabled={exportExcelLoading !== null}
+                  >
+                    {exportExcelLoading === 'sales' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Descargar Excel
+                  </Button>
+                </div>
+
+                {/* Exportar Inventario */}
+                <div className="p-5 rounded-2xl bg-muted/40 border border-border/70 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Inventario & Stock</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Stock actual en bodega, umbrales y alertas.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleExportExcel('inventory')}
+                    variant="outline"
+                    className="rounded-xl text-xs font-semibold w-full"
+                    disabled={exportExcelLoading !== null}
+                  >
+                    {exportExcelLoading === 'inventory' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Descargar Excel
+                  </Button>
+                </div>
+
+                {/* Exportar Clientes */}
+                <div className="p-5 rounded-2xl bg-muted/40 border border-border/70 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 className="text-sm font-bold text-foreground">Directorio de Clientes</h3>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Base de datos de compradores, teléfonos y correos.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleExportExcel('clients')}
+                    variant="outline"
+                    className="rounded-xl text-xs font-semibold w-full"
+                    disabled={exportExcelLoading !== null}
+                  >
+                    {exportExcelLoading === 'clients' ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Descargar Excel
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+
+      {/* Modal: Crear Nuevo Usuario */}
+      <Dialog open={createUserOpen} onOpenChange={setCreateUserOpen}>
+        <DialogContent className="rounded-3xl p-6 sm:p-8 max-w-md">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-teal-500" />
+              Nuevo Usuario del Sistema
             </DialogTitle>
-            <DialogDescription>
-              ¿Estás seguro de eliminar este usuario? Esta acción no se puede deshacer.
+            <DialogDescription className="text-xs">
+              Asigna nombre y credenciales de acceso para el colaborador.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setDeleteUserDialogOpen(false)
-                setUserToDelete(null)
-              }}
-            >
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={() => userToDelete && handleDeleteUser(userToDelete)}>
-              Eliminar
-            </Button>
-          </div>
+
+          <form onSubmit={handleCreateUser} className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="userName" className="text-xs font-semibold flex items-center gap-1.5">
+                <UserIcon className="h-3.5 w-3.5 text-muted-foreground" /> Nombre Completo
+              </Label>
+              <Input
+                id="userName"
+                value={newUserName}
+                onChange={(e) => setNewUserName(e.target.value)}
+                placeholder="Ej: Carlos Ramírez"
+                required
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="userEmail" className="text-xs font-semibold flex items-center gap-1.5">
+                <Mail className="h-3.5 w-3.5 text-muted-foreground" /> Correo Electrónico
+              </Label>
+              <Input
+                id="userEmail"
+                type="email"
+                value={newUserEmail}
+                onChange={(e) => setNewUserEmail(e.target.value)}
+                placeholder="carlos@cilmax.com"
+                required
+                className="rounded-xl"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="userPass" className="text-xs font-semibold flex items-center gap-1.5">
+                <Lock className="h-3.5 w-3.5 text-muted-foreground" /> Contraseña (opcional)
+              </Label>
+              <Input
+                id="userPass"
+                type="password"
+                placeholder="Dejar vacío para autogenerar"
+                value={newUserPassword}
+                onChange={(e) => setNewUserPassword(e.target.value)}
+                className="rounded-xl"
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Si la dejas en blanco, el sistema generará una clave aleatoria segura.
+              </p>
+            </div>
+
+            <DialogFooter className="pt-3 gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateUserOpen(false)}
+                className="rounded-xl"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={createUserLoading}
+                className="rounded-xl bg-primary text-primary-foreground font-semibold"
+              >
+                {createUserLoading ? (
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Creando...
+                  </span>
+                ) : (
+                  'Crear Usuario'
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={cleanupDialogOpen} onOpenChange={setCleanupDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-600">
-              <AlertTriangle className="h-5 w-5" />
-              Confirmar Limpieza
+      {/* Modal: Confirmación de Eliminación de Usuario */}
+      <Dialog open={deleteUserDialogOpen} onOpenChange={setDeleteUserDialogOpen}>
+        <DialogContent className="rounded-3xl p-6 max-w-sm">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-lg font-bold text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              ¿Eliminar usuario?
             </DialogTitle>
-            <DialogDescription>
-              Esta acción generará un backup automático y luego eliminará todos los datos del sistema.
-              <br />
-              <br />
-              <strong>Tipo de limpieza:</strong> TODO
-              <br />
-              <br />
-              ¿Estás seguro de continuar?
+            <DialogDescription className="text-xs">
+              Esta acción revocará el acceso de este usuario al sistema de inmediato.
             </DialogDescription>
           </DialogHeader>
-          <div className="flex justify-end space-x-2">
+          <DialogFooter className="pt-3 gap-2">
             <Button
               variant="outline"
-              onClick={() => {
-                setCleanupDialogOpen(false)
-              }}
-              disabled={cleanupLoading}
+              onClick={() => setDeleteUserDialogOpen(false)}
+              className="rounded-xl"
             >
               Cancelar
             </Button>
-            <Button variant="destructive" onClick={handleCleanup} disabled={cleanupLoading}>
-              {cleanupLoading ? 'Generando backup y limpiando...' : 'Confirmar Limpieza'}
+            <Button
+              variant="destructive"
+              onClick={() => userToDelete && handleDeleteUser(userToDelete)}
+              className="rounded-xl"
+            >
+              Confirmar Eliminación
             </Button>
-          </div>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

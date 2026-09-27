@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
@@ -64,18 +63,8 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
         )}
       >
         <div className="flex h-full flex-col bg-sidebar shadow-md">
-          {/* Header móvil con logo oficial */}
-          <div className="flex items-center justify-between px-4 py-3 lg:hidden border-b border-sidebar-border/80 bg-sidebar">
-            <div className="flex items-center gap-2">
-              <Image
-                src="/logo cilmax.png"
-                alt="Cilmax ERP"
-                width={130}
-                height={32}
-                priority
-                className="h-7.5 w-auto object-contain"
-              />
-            </div>
+          {/* Header móvil: zona limpia con botón de cerrar */}
+          <div className="flex items-center justify-end px-4 py-3 lg:hidden border-b border-sidebar-border/80 bg-sidebar">
             <Button
               variant="ghost"
               size="icon"

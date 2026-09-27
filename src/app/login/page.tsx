@@ -192,18 +192,18 @@ export default function LoginPage() {
 
                 <div className="py-3 space-y-2 text-xs">
                   <div className="flex justify-between text-white/80">
-                    <span className="truncate max-w-[280px]">Módulo Pantalla iPhone 14 Pro Max</span>
-                    <span className="font-mono font-medium text-white">$285.000</span>
+                    <span className="truncate max-w-[280px]">Combo Olla de Presión 6L Acero Inoxidable</span>
+                    <span className="font-mono font-medium text-white">$380.000</span>
                   </div>
                   <div className="flex justify-between text-white/50 text-[11px]">
-                    <span>Servicio Instalación & Test</span>
-                    <span className="font-mono">$35.000</span>
+                    <span>Válvula de Seguridad Reforzada</span>
+                    <span className="font-mono">$100.000</span>
                   </div>
                 </div>
 
                 <div className="flex items-center justify-between pt-2.5 border-t border-white/[0.08] text-xs">
                   <span className="text-white/40">Total</span>
-                  <span className="font-mono text-sm font-bold text-teal-400">$320.000 COP</span>
+                  <span className="font-mono text-sm font-bold text-teal-400">$480.000 COP</span>
                 </div>
               </div>
 
@@ -271,7 +271,7 @@ export default function LoginPage() {
           {/* ======================================================== */}
           {/* LADO DERECHO: Tarjeta de Acceso Flotante (Alineado a la Derecha) */}
           {/* ======================================================== */}
-          <div className="w-full lg:col-span-5 flex justify-center lg:justify-end ml-auto">
+          <div className="w-full lg:col-span-5 flex justify-center lg:justify-end ml-auto lg:mt-8 xl:mt-12">
             <div className="w-full max-w-[440px] xl:max-w-[460px] p-7 sm:p-9 xl:p-10 rounded-3xl bg-white/[0.04] backdrop-blur-2xl border border-white/10 shadow-2xl shadow-black/50 animate-fade-up">
               {recover ? (
                 /* Vista de Recuperación de Contraseña */

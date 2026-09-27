@@ -5,17 +5,17 @@ import { formatCurrency } from '@/lib/format'
 export const FONT = 'Helvetica'
 
 export const COLORS = {
-  teal: '#0d9488',
-  tealDark: '#0f766e',
-  tealLight: '#f0fdfa',
-  tealBorder: '#99f6e4',
-  amber: '#f59e0b',
+  slate950: '#020617',
   slate900: '#0f172a',
+  slate800: '#1e293b',
   slate700: '#334155',
   slate600: '#475569',
   slate500: '#64748b',
   slate400: '#94a3b8',
   slate300: '#cbd5e1',
+  slate200: '#e2e8f0',
+  slate100: '#f1f5f9',
+  slate50: '#f8fafc',
   gray100: '#f3f4f6',
   gray200: '#e5e7eb',
   gray50: '#f9fafb',
@@ -27,6 +27,11 @@ export const COLORS = {
   amberBg: '#fffbeb',
   white: '#ffffff',
   black: '#111827',
+  teal: '#0f172a',
+  tealDark: '#0f172a',
+  tealLight: '#f8fafc',
+  tealBorder: '#e2e8f0',
+  amber: '#64748b',
 } as const
 
 export interface PdfSettings {
@@ -49,7 +54,7 @@ export const defaultPdfSettings: PdfSettings = {
   companyPhone: null,
   companyEmail: null,
   invoicePrefix: 'CIL-',
-  invoiceFooter: null,
+  invoiceFooter: 'Garantía legal sobre productos de conformidad con la ley aplicable.',
   currency: 'COP',
 }
 
