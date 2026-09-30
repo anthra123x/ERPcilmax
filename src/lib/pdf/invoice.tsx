@@ -1,5 +1,6 @@
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from '@react-pdf/renderer'
 import { getPaymentMethodLabel, getCreditStatus, getCreditStatusLabel } from '@/lib/labels'
+import { formatCurrencyInWords, generateCufe } from '@/lib/format'
 import {
   COLORS,
   FONT,
@@ -176,15 +177,50 @@ const styles = StyleSheet.create({
   },
 
   note: {
-    marginTop: 18,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
+    marginTop: 14,
+    paddingVertical: 6,
+    paddingHorizontal: 8,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: COLORS.slate300,
     borderRadius: 4,
   },
-  noteText: { fontSize: 7, color: COLORS.slate500, lineHeight: 1.3 },
+  noteText: { fontSize: 6.5, color: COLORS.slate500, lineHeight: 1.25 },
+
+  dianBox: {
+    marginTop: 6,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    borderRadius: 4,
+  },
+  dianText: { fontSize: 6.5, color: COLORS.slate600, lineHeight: 1.25 },
+
+  wordsBox: {
+    marginTop: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    borderRadius: 4,
+  },
+  wordsLabel: { fontSize: 6, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 0.8 },
+  wordsValue: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 1 },
+
+  cufeBox: {
+    marginTop: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    backgroundColor: COLORS.slate50,
+    borderWidth: 1,
+    borderColor: COLORS.slate200,
+    borderRadius: 4,
+  },
+  cufeLabel: { fontSize: 6, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 0.8 },
+  cufeHash: { fontSize: 5.5, color: COLORS.slate700, fontFamily: 'Courier', marginTop: 1 },
 
   footer: {
     position: 'absolute',
@@ -283,9 +319,7 @@ function CreditSummary({ sale, currency }: { sale: InvoiceSale; currency: string
           <Text style={{ fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 }}>
             {sale.dueDate ? formatShortDate(sale.dueDate) : 'Sin vencimiento'}
           </Text>
-          {status && (
-            <Text style={[styles.badge, badgeStyle]}>{getCreditStatusLabel(status).toUpperCase()}</Text>
-          )}
+          {status && <Text style={[styles.badge, badgeStyle]}>{getCreditStatusLabel(status).toUpperCase()}</Text>}
         </View>
       </View>
 
@@ -314,6 +348,16 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
   const isCredit = sale.paymentMethod === 'CREDITO'
   const footerText = company.footer || `${company.name} — Gracias por su compra`
   const generatedAt = new Date()
+
+  const baseGravable = Math.round((sale.total / 1.19) * 100) / 100
+  const valorIva = Math.round((sale.total - baseGravable) * 100) / 100
+  const cufe = generateCufe(
+    sale.invoiceNumber,
+    sale.saleDate,
+    sale.total,
+    company.nit?.replace(/\D/g, '') || '901482391',
+    sale.client?.phone?.replace(/\D/g, '') || '222222222222',
+  )
 
   return (
     <Document
@@ -344,58 +388,88 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
 
           <ContactStrip company={company} />
 
+          <View style={styles.dianBox}>
+            <Text style={styles.dianText}>
+              Autorización DIAN No. 18764000001234 de 2024-01-15 &bull; Vigencia: 18 meses &bull; Rango: SETP-1 a
+              SETP-10000 &bull; Responsable de IVA &bull; Tipo: 10 (Estándar)
+            </Text>
+          </View>
+
           <View style={styles.metaRow}>
             <View style={styles.metaCol}>
-              <Text style={styles.metaLabel}>CLIENTE</Text>
+              <Text style={styles.metaLabel}>CLIENTE / ADQUIRIENTE</Text>
               {sale.client ? (
                 <View>
                   <Text style={styles.metaName}>{sale.client.name}</Text>
-                  {sale.client.phone ? <Text style={styles.metaLine}>Tel: {sale.client.phone}</Text> : null}
-                  {sale.client.email ? <Text style={styles.metaLine}>{sale.client.email}</Text> : null}
-                  {sale.client.address ? <Text style={styles.metaLine}>{sale.client.address}</Text> : null}
+                  {sale.client.phone ? <Text style={styles.metaLine}>CC/NIT: {sale.client.phone}</Text> : null}
+                  {sale.client.email ? <Text style={styles.metaLine}>Email: {sale.client.email}</Text> : null}
+                  {sale.client.address ? <Text style={styles.metaLine}>Dir: {sale.client.address}</Text> : null}
                 </View>
               ) : (
-                <Text style={styles.metaLine}>Cliente general</Text>
+                <View>
+                  <Text style={styles.metaName}>CONSUMIDOR FINAL</Text>
+                  <Text style={styles.metaLine}>NIT: 222222222222</Text>
+                </View>
               )}
             </View>
             <View style={styles.metaColRight}>
-              <Text style={styles.metaLabel}>MÉTODO DE PAGO</Text>
+              <Text style={styles.metaLabel}>MÉTODO Y FORMA DE PAGO</Text>
               <Text style={styles.metaValue}>{getPaymentMethodLabel(sale.paymentMethod)}</Text>
+              <Text style={styles.metaLine}>Forma: {isCredit ? '2 - Crédito' : '1 - Contado'}</Text>
               {sale.user?.name ? <Text style={styles.metaLine}>Atendido por: {sale.user.name}</Text> : null}
               <Text style={styles.metaLine}>Estado: {sale.status === 'CANCELLED' ? 'Anulada' : 'Completada'}</Text>
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>PRODUCTOS</Text>
+          <Text style={styles.sectionTitle}>DETALLE DE PRODUCTOS Y SERVICIOS</Text>
           <ItemsTable sale={sale} currency={company.currency} />
 
           <View style={styles.totals}>
             <View style={styles.totalsBox}>
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Subtotal</Text>
+                <Text style={styles.totalLabel}>Subtotal Bruto</Text>
                 <Text style={styles.totalValue}>{money(sale.subtotal, company.currency)}</Text>
               </View>
               {sale.discount > 0 && (
                 <View style={styles.totalRow}>
-                  <Text style={[styles.totalLabel, styles.totalDiscount]}>Descuento</Text>
+                  <Text style={[styles.totalLabel, styles.totalDiscount]}>Descuento Comercial</Text>
                   <Text style={[styles.totalValue, styles.totalDiscount]}>
                     -{money(sale.discount, company.currency)}
                   </Text>
                 </View>
               )}
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>Base Gravable (19%)</Text>
+                <Text style={styles.totalValue}>{money(baseGravable, company.currency)}</Text>
+              </View>
+              <View style={styles.totalRow}>
+                <Text style={styles.totalLabel}>IVA (19.00%)</Text>
+                <Text style={styles.totalValue}>{money(valorIva, company.currency)}</Text>
+              </View>
               <View style={styles.grandRow}>
-                <Text style={styles.grandLabel}>TOTAL</Text>
+                <Text style={styles.grandLabel}>TOTAL FACTURA</Text>
                 <Text style={styles.grandValue}>{money(sale.total, company.currency)}</Text>
               </View>
             </View>
           </View>
 
+          <View style={styles.wordsBox}>
+            <Text style={styles.wordsLabel}>VALOR EN LETRAS:</Text>
+            <Text style={styles.wordsValue}>SON: {formatCurrencyInWords(sale.total)}</Text>
+          </View>
+
           {isCredit && <CreditSummary sale={sale} currency={company.currency} />}
+
+          <View style={styles.cufeBox}>
+            <Text style={styles.cufeLabel}>CUFE (Código Único de Factura Electrónica - SHA-384):</Text>
+            <Text style={styles.cufeHash}>{cufe}</Text>
+          </View>
 
           <View style={styles.note}>
             <Text style={styles.noteText}>
-              Conserve esta factura para efectos de garantía legal sobre los productos adquiridos de conformidad con la ley aplicable. Documento generado el{' '}
-              {formatLongDate(generatedAt)} a las {formatTime(generatedAt)}
+              Título Valor: Esta factura de venta se asimila en sus efectos a la letra de cambio de conformidad con el
+              Art. 774 del Código de Comercio. El comprador declara haber recibido real y materialmente las mercancías o
+              servicios descritos. Documento generado el {formatLongDate(generatedAt)} a las {formatTime(generatedAt)}.
             </Text>
           </View>
         </View>

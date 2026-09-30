@@ -11,10 +11,7 @@ export const prisma =
     // Neon; el default de 5s se queda corto y provoca rollbacks. 15s da margen.
     transactionOptions: { timeout: 15000 },
     // En dev se loguean queries para detectar N+1 y queries lentas.
-    log:
-      process.env.NODE_ENV === 'development'
-        ? ['query', 'warn', 'error']
-        : ['warn', 'error'],
+    log: process.env.NODE_ENV === 'development' ? ['query', 'warn', 'error'] : ['warn', 'error'],
   })
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma

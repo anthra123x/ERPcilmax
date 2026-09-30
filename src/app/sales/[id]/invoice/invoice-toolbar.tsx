@@ -40,7 +40,7 @@ export function InvoiceToolbar({
   function handleWhatsAppShare() {
     const name = clientName || 'Estimado cliente'
     const message = `Hola *${name}*, te compartimos el comprobante de tu compra en *${companyName}*:\n\n📄 *Factura:* #${invoiceNumber}\n💰 *Total:* ${totalFormatted}\n\nPuedes consultar o descargar tu factura aquí:\n${window.location.href}\n\n¡Gracias por tu compra!`
-    
+
     // Si el cliente tiene teléfono registrado, formatear sin caracteres no numéricos
     const cleanPhone = clientPhone ? clientPhone.replace(/\D/g, '') : ''
     const waUrl = cleanPhone

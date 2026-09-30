@@ -13,12 +13,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { Pagination } from '@/components/ui/pagination'
 import { formatCurrency } from '@/lib/format'
-import {
-  getCreditStatus,
-  getCreditStatusColor,
-  getCreditStatusLabel,
-  getPaymentMethodLabel,
-} from '@/lib/labels'
+import { getCreditStatus, getCreditStatusColor, getCreditStatusLabel, getPaymentMethodLabel } from '@/lib/labels'
 import { toast } from 'sonner'
 import { getSales, deleteSale } from '@/modules/sales/sales.actions'
 import {
@@ -29,7 +24,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-
+import { InvoiceDrawer } from '@/components/sales/invoice-drawer'
 
 interface Sale {
   id: string
@@ -56,7 +51,20 @@ export default function SalesPage() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false)
   const [saleToCancel, setSaleToCancel] = useState<Sale | null>(null)
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
   const pageSize = 20
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const invoiceId = params.get('invoiceId') || params.get('openInvoice')
+      if (invoiceId) {
+        setSelectedSaleId(invoiceId)
+        setDrawerOpen(true)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     const timer = setTimeout(() => setDebouncedSearch(search), 300)
@@ -157,13 +165,17 @@ export default function SalesPage() {
                 {sales.map((sale) => (
                   <TableRow key={sale.id}>
                     <TableCell>
-                      <Link
-                        href={`/sales/${sale.id}/invoice`}
-                        className="font-mono text-sm font-semibold hover:underline text-foreground"
-                        title="Ver Factura"
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedSaleId(sale.id)
+                          setDrawerOpen(true)
+                        }}
+                        className="font-mono text-sm font-semibold hover:underline text-foreground cursor-pointer text-left focus:outline-hidden"
+                        title="Inspeccionar Factura"
                       >
                         {sale.invoiceNumber}
-                      </Link>
+                      </button>
                     </TableCell>
                     <TableCell>
                       {sale.client ? (
@@ -210,12 +222,19 @@ export default function SalesPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Link href={`/sales/${sale.id}/invoice`} title="Ver Factura Electrónica">
-                          <Button variant="outline" size="sm" className="h-8 gap-1 text-xs rounded-xl">
-                            <Receipt className="h-3.5 w-3.5" />
-                            Factura
-                          </Button>
-                        </Link>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 text-xs rounded-xl cursor-pointer"
+                          title="Inspeccionar Factura y Vista Previa DIAN"
+                          onClick={() => {
+                            setSelectedSaleId(sale.id)
+                            setDrawerOpen(true)
+                          }}
+                        >
+                          <Receipt className="h-3.5 w-3.5" />
+                          Factura
+                        </Button>
                         {sale.status === 'COMPLETED' && (
                           <Button
                             variant="ghost"
@@ -278,6 +297,15 @@ export default function SalesPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <InvoiceDrawer
+        saleId={selectedSaleId}
+        open={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedSaleId(null)
+        }}
+      />
     </div>
   )
 }

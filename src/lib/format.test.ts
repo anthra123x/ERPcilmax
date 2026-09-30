@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { formatCurrency, formatNumber } from './format'
+import { formatCurrency, formatNumber, formatCurrencyInWords, generateCufe } from './format'
 
 describe('formatCurrency', () => {
   it('formats a number as COP', () => {
@@ -73,5 +73,39 @@ describe('formatNumber', () => {
 
   it('formats large numbers', () => {
     expect(formatNumber(1000000)).toBe('1.000.000')
+  })
+})
+
+describe('formatCurrencyInWords', () => {
+  it('formats zero', () => {
+    expect(formatCurrencyInWords(0)).toBe('CERO PESOS M/CTE')
+  })
+
+  it('formats thousands', () => {
+    expect(formatCurrencyInWords(20000)).toBe('VEINTE MIL PESOS M/CTE')
+    expect(formatCurrencyInWords(150000)).toBe('CIENTO CINCUENTA MIL PESOS M/CTE')
+  })
+
+  it('formats pure millions with DE PESOS M/CTE', () => {
+    expect(formatCurrencyInWords(1000000)).toBe('UN MILLÓN DE PESOS M/CTE')
+    expect(formatCurrencyInWords(2000000)).toBe('DOS MILLONES DE PESOS M/CTE')
+  })
+
+  it('formats millions and thousands with PESOS M/CTE', () => {
+    expect(formatCurrencyInWords(1500000)).toBe('UN MILLÓN QUINIENTOS MIL PESOS M/CTE')
+  })
+})
+
+describe('generateCufe', () => {
+  it('generates a 96-character hex string', () => {
+    const cufe = generateCufe('CIL-001', new Date('2026-01-01'), 150000)
+    expect(cufe).toHaveLength(96)
+    expect(/^[0-9a-f]{96}$/.test(cufe)).toBe(true)
+  })
+
+  it('is deterministic for the same parameters', () => {
+    const c1 = generateCufe('CIL-001', '2026-01-01', 150000)
+    const c2 = generateCufe('CIL-001', '2026-01-01', 150000)
+    expect(c1).toBe(c2)
   })
 })

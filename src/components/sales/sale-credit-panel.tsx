@@ -17,13 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { formatCurrency } from '@/lib/format'
-import {
-  getCreditStatus,
-  getCreditStatusColor,
-  getCreditStatusLabel,
-  getPaymentMethodLabel,
-  round,
-} from '@/lib/labels'
+import { getCreditStatus, getCreditStatusColor, getCreditStatusLabel, getPaymentMethodLabel, round } from '@/lib/labels'
 import { deletePayment } from '@/modules/sales/payments.actions'
 import { RegistrarAbonoDialog } from '@/components/sales/registrar-abono-dialog'
 
@@ -165,9 +159,7 @@ export function SaleCreditPanel({ sale }: SaleCreditPanelProps) {
                         <td className="py-2 text-sm">{getPaymentMethodLabel(p.paymentMethod)}</td>
                         <td className="py-2 text-sm text-right font-medium">{formatCurrency(p.amount)}</td>
                         <td className="py-2 text-right">
-                          {p.notes && (
-                            <span className="text-xs text-muted-foreground block text-right">{p.notes}</span>
-                          )}
+                          {p.notes && <span className="text-xs text-muted-foreground block text-right">{p.notes}</span>}
                           <a
                             href={`/api/sales/${sale.id}/receipt/${p.id}/pdf`}
                             title="Descargar recibo"
@@ -200,7 +192,11 @@ export function SaleCreditPanel({ sale }: SaleCreditPanelProps) {
                                 <Button variant="outline" onClick={() => setConfirmOpen(null)}>
                                   Cancelar
                                 </Button>
-                                <Button variant="destructive" onClick={() => handleDelete(p.id)} disabled={deletingId === p.id}>
+                                <Button
+                                  variant="destructive"
+                                  onClick={() => handleDelete(p.id)}
+                                  disabled={deletingId === p.id}
+                                >
                                   {deletingId === p.id ? 'Eliminando...' : 'Eliminar'}
                                 </Button>
                               </DialogFooter>
@@ -237,7 +233,11 @@ export function SaleCreditPanel({ sale }: SaleCreditPanelProps) {
                     {installmentRows.map(({ inst, markedPaid, overdue }) => (
                       <tr key={inst.id} className="border-b">
                         <td className="py-2 text-sm">
-                          {inst.dueDate.toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' })}
+                          {inst.dueDate.toLocaleDateString('es-CO', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          })}
                         </td>
                         <td className="py-2 text-sm text-right font-medium">{formatCurrency(inst.amount)}</td>
                         <td className="py-2 text-right">

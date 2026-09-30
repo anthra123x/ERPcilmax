@@ -129,8 +129,7 @@ describe('handleApiError', () => {
 })
 
 describe('enforceRateLimit', () => {
-  const request = (ip: string) =>
-    new NextRequest('http://localhost', { headers: { 'x-forwarded-for': ip } })
+  const request = (ip: string) => new NextRequest('http://localhost', { headers: { 'x-forwarded-for': ip } })
 
   it('returns null while requests stay within the limit', () => {
     for (let i = 0; i < 10; i++) {

@@ -22,5 +22,12 @@ export function CreditSearch({ initialSearch, estado }: { initialSearch: string;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, estado])
 
-  return <Input value={value} onChange={(e) => setValue(e.target.value)} placeholder="Buscar factura o cliente..." className="w-64" />
+  return (
+    <Input
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      placeholder="Buscar factura o cliente..."
+      className="w-64"
+    />
+  )
 }

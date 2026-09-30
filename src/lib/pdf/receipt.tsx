@@ -276,9 +276,7 @@ export function ReceiptDocument({
               <Text style={styles.metaLabel}>VENTA ASOCIADA</Text>
               <Text style={styles.metaValue}>#{sale.invoiceNumber}</Text>
               <Text style={styles.metaLine}>Fecha de venta: {formatShortDate(sale.saleDate)}</Text>
-              {sale.dueDate ? (
-                <Text style={styles.metaLine}>Vencimiento: {formatShortDate(sale.dueDate)}</Text>
-              ) : null}
+              {sale.dueDate ? <Text style={styles.metaLine}>Vencimiento: {formatShortDate(sale.dueDate)}</Text> : null}
             </View>
           </View>
 
@@ -343,9 +341,7 @@ export function ReceiptDocument({
         </View>
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerBrand}>
-            {company.footer || `${company.name} — Gracias por su pago`}
-          </Text>
+          <Text style={styles.footerBrand}>{company.footer || `${company.name} — Gracias por su pago`}</Text>
           <Text style={styles.footerNote}>
             {company.name}
             {company.nit ? ` · NIT ${company.nit}` : ''}

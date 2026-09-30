@@ -81,7 +81,11 @@ export const CreateSaleSchema = z
       ctx.addIssue({ code: 'custom', message: 'El cliente es requerido para ventas a crédito', path: ['clientId'] })
     }
     if (data.paymentMethod !== 'CREDITO' && (data.initialPayment > 0 || data.installments.length > 0)) {
-      ctx.addIssue({ code: 'custom', message: 'Anticipo y cuotas solo aplican para ventas a crédito', path: ['paymentMethod'] })
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Anticipo y cuotas solo aplican para ventas a crédito',
+        path: ['paymentMethod'],
+      })
     }
   })
 
@@ -187,7 +191,11 @@ export const CreateProductReviewSchema = z.object({
   productId: z.string().min(1, 'El producto es requerido'),
   name: z.string().min(2, 'El nombre debe tener al menos 2 caracteres').max(120),
   email: optionalText(z.string().email('Email inválido')).nullable(),
-  rating: z.coerce.number().int().min(1, 'La calificación debe estar entre 1 y 5').max(5, 'La calificación debe estar entre 1 y 5'),
+  rating: z.coerce
+    .number()
+    .int()
+    .min(1, 'La calificación debe estar entre 1 y 5')
+    .max(5, 'La calificación debe estar entre 1 y 5'),
   comment: z.string().min(1, 'El comentario es requerido').max(2000, 'El comentario es demasiado largo'),
 })
 
@@ -200,7 +208,11 @@ export const CreateContactMessageSchema = z.object({
 
 export const CreateWebOrderItemSchema = z.object({
   productId: z.string().min(1, 'El producto es requerido'),
-  quantity: z.coerce.number().int().min(1, 'La cantidad debe ser al menos 1').max(99, 'La cantidad es demasiado grande'),
+  quantity: z.coerce
+    .number()
+    .int()
+    .min(1, 'La cantidad debe ser al menos 1')
+    .max(99, 'La cantidad es demasiado grande'),
 })
 
 export const CreateWebOrderSchema = z.object({
@@ -212,7 +224,11 @@ export const CreateWebOrderSchema = z.object({
 })
 
 export const UpdateWebProductSchema = z.object({
-  slug: z.string().trim().min(1, 'El slug es requerido').max(120, 'El slug es demasiado largo')
+  slug: z
+    .string()
+    .trim()
+    .min(1, 'El slug es requerido')
+    .max(120, 'El slug es demasiado largo')
     .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/, 'Slug inválido: solo minúsculas, números y guiones'),
   webSortOrder: z.coerce.number().int().min(0, 'El orden no puede ser negativo').max(9999),
   webDescription: z.string().trim().max(20000, 'La descripción es demasiado larga').optional().default(''),
@@ -241,6 +257,14 @@ export const UpdateWebSettingsSchema = z.object({
   email: z.string().trim().email('Email inválido').optional().or(z.literal('')).default(''),
   shippingInfo: z.string().trim().max(2000, 'La información de envío es demasiado larga').optional().default(''),
   webPendingExpiryHours: z.coerce.number().int().min(1, 'Mínimo 1 hora').max(720, 'Máximo 720 horas').default(24),
-  primaryColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, 'Color primario inválido (usa formato #rrggbb)').default('#008a93'),
-  goldColor: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, 'Color dorado inválido (usa formato #rrggbb)').default('#d4af37'),
+  primaryColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Color primario inválido (usa formato #rrggbb)')
+    .default('#008a93'),
+  goldColor: z
+    .string()
+    .trim()
+    .regex(/^#[0-9a-fA-F]{6}$/, 'Color dorado inválido (usa formato #rrggbb)')
+    .default('#d4af37'),
 })

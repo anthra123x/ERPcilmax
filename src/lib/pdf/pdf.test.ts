@@ -27,7 +27,14 @@ const sale = {
   saleDate: now,
   dueDate: plus(30),
   payments: [
-    { id: 'p1', amount: 100000, paymentMethod: 'CASH', paymentDate: now, notes: 'Cuota inicial', user: { name: 'Admin' } },
+    {
+      id: 'p1',
+      amount: 100000,
+      paymentMethod: 'CASH',
+      paymentDate: now,
+      notes: 'Cuota inicial',
+      user: { name: 'Admin' },
+    },
     { id: 'p2', amount: 50000, paymentMethod: 'TRANSFER', paymentDate: plus(5), notes: null, user: { name: 'Admin' } },
   ],
   installments: [

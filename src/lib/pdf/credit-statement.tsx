@@ -218,9 +218,7 @@ function StatusPill({ state }: { state: InstallmentState }) {
         : { backgroundColor: COLORS.amberBg, color: COLORS.amber700 }
   return (
     <View style={[styles.pill, { backgroundColor: palette.backgroundColor }]}>
-      <Text style={[styles.pillText, { color: palette.color }]}>
-        {getCreditStatusLabel(state).toUpperCase()}
-      </Text>
+      <Text style={[styles.pillText, { color: palette.color }]}>{getCreditStatusLabel(state).toUpperCase()}</Text>
     </View>
   )
 }
@@ -246,9 +244,9 @@ export function CreditStatementDocument({ sale, settings }: { sale: StatementSal
   const generatedAt = new Date()
 
   const installmentRows = sale.installments.map((inst, index) => {
-    const accumulated = Math.round(
-      sale.installments.slice(0, index + 1).reduce((total, current) => total + current.amount, 0) * 100,
-    ) / 100
+    const accumulated =
+      Math.round(sale.installments.slice(0, index + 1).reduce((total, current) => total + current.amount, 0) * 100) /
+      100
     const markedPaid = paid >= accumulated - 0.005
     const overdue = !markedPaid && new Date(inst.dueDate).getTime() < generatedAt.getTime()
     const state: InstallmentState = markedPaid ? 'PAID' : overdue ? 'OVERDUE' : 'PENDING'
@@ -299,12 +297,8 @@ export function CreditStatementDocument({ sale, settings }: { sale: StatementSal
             </View>
             <View style={styles.metaColRight}>
               <Text style={styles.metaLabel}>ESTADO DEL CRÉDITO</Text>
-              {status && (
-                <Text style={[styles.badge, badgeStyle]}>{getCreditStatusLabel(status).toUpperCase()}</Text>
-              )}
-              <Text style={[styles.metaLine, { marginTop: 5 }]}>
-                Fecha de venta: {formatShortDate(sale.saleDate)}
-              </Text>
+              {status && <Text style={[styles.badge, badgeStyle]}>{getCreditStatusLabel(status).toUpperCase()}</Text>}
+              <Text style={[styles.metaLine, { marginTop: 5 }]}>Fecha de venta: {formatShortDate(sale.saleDate)}</Text>
               <Text style={styles.metaLine}>
                 Vencimiento: {sale.dueDate ? formatShortDate(sale.dueDate) : 'Sin vencimiento'}
               </Text>
@@ -378,9 +372,7 @@ export function CreditStatementDocument({ sale, settings }: { sale: StatementSal
         </View>
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerBrand}>
-            {company.footer || `${company.name} — Gracias por su preferencia`}
-          </Text>
+          <Text style={styles.footerBrand}>{company.footer || `${company.name} — Gracias por su preferencia`}</Text>
           <Text style={styles.footerNote}>
             {company.name}
             {company.nit ? ` · NIT ${company.nit}` : ''}
@@ -396,10 +388,7 @@ export function CreditStatementDocument({ sale, settings }: { sale: StatementSal
   )
 }
 
-export async function renderCreditStatementPdf(
-  sale: StatementSale,
-  settings?: PdfSettings,
-): Promise<Uint8Array> {
+export async function renderCreditStatementPdf(sale: StatementSale, settings?: PdfSettings): Promise<Uint8Array> {
   const buffer = await renderToBuffer(<CreditStatementDocument sale={sale} settings={settings} />)
   return new Uint8Array(buffer)
 }

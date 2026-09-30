@@ -233,9 +233,7 @@ export default function NewSalePage() {
   }
 
   function updateUnitPrice(productId: string, value: number) {
-    setCart((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, unitPrice: value } : item)),
-    )
+    setCart((prev) => prev.map((item) => (item.productId === productId ? { ...item, unitPrice: value } : item)))
   }
 
   function removeFromCart(productId: string) {
@@ -417,7 +415,8 @@ export default function NewSalePage() {
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-xs font-medium text-muted-foreground">
-                Opcional — deja en blanco para vender sin cliente. Escribe el nombre para autocompletar o crea uno nuevo.
+                Opcional — deja en blanco para vender sin cliente. Escribe el nombre para autocompletar o crea uno
+                nuevo.
               </div>
 
               <div ref={clientRef} className="relative">
@@ -585,27 +584,17 @@ export default function NewSalePage() {
                               min="0"
                               step="100"
                               value={item.unitPrice}
-                              onChange={(e) =>
-                                updateUnitPrice(item.productId, Number(e.target.value) || 0)
-                              }
+                              onChange={(e) => updateUnitPrice(item.productId, Number(e.target.value) || 0)}
                               className="w-28 ml-auto text-right"
                             />
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => updateQuantity(item.productId, -1)}
-                              >
+                              <Button variant="ghost" size="icon-sm" onClick={() => updateQuantity(item.productId, -1)}>
                                 <Minus className="h-3 w-3" />
                               </Button>
                               <span className="w-8 text-center text-sm">{item.quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => updateQuantity(item.productId, 1)}
-                              >
+                              <Button variant="ghost" size="icon-sm" onClick={() => updateQuantity(item.productId, 1)}>
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
@@ -810,12 +799,7 @@ export default function NewSalePage() {
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleSubmit}
-                disabled={saving || cart.length === 0}
-              >
+              <Button className="w-full" size="lg" onClick={handleSubmit} disabled={saving || cart.length === 0}>
                 {saving ? 'Procesando...' : 'Registrar Venta y Facturar'}
               </Button>
             </CardContent>
