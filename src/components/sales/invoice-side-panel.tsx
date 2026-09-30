@@ -442,17 +442,18 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
             Imprimir
           </Button>
 
-          <a href={`/api/sales/${sale.id}/pdf`} target="_blank" rel="noopener noreferrer" className="flex-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
-              title="Descargar PDF"
-            >
-              <Download className="h-3.5 w-3.5" />
-              PDF
-            </Button>
-          </a>
+          {/* `render` y no un <a> envolviendo al Boton: anidar un <button> dentro de
+              un <a> es HTML invalido y hacia que el clic no activara la descarga. */}
+          <Button
+            render={<a href={`/api/sales/${sale.id}/pdf`} target="_blank" rel="noopener noreferrer" />}
+            variant="outline"
+            size="sm"
+            className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
+            title="Descargar PDF"
+          >
+            <Download className="h-3.5 w-3.5" />
+            PDF
+          </Button>
 
           <Button
             variant="outline"

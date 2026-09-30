@@ -134,8 +134,12 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
   return (
     <div className={`invoice-sheet bg-white text-slate-900 text-[11px] leading-[1.5] print:p-0 ${className}`}>
       <div className="p-7 sm:p-9 space-y-7">
-        {/* 1. Emisor e identificación del documento */}
-        <header className="flex items-start justify-between gap-8 pb-5 border-b border-slate-300">
+        {/* 1. Emisor e identificación del documento.
+            Ojo: es un `div` y no un `<header>` a propósito. La regla
+            `@media print` de globals.css oculta `header` para neutralizar el
+            shell del dashboard, y se llevaría por delante este bloque al
+            imprimir. */}
+        <div className="flex items-start justify-between gap-8 pb-5 border-b border-slate-300">
           <div className="flex items-start gap-4 min-w-0">
             <Image
               src="/logo cilmax-print.png"
@@ -173,7 +177,7 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
               </div>
             ) : null}
           </div>
-        </header>
+        </div>
 
         {/* 2. Comprador y condiciones de la venta */}
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-5">
