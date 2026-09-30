@@ -291,21 +291,17 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
 
         <Rule />
 
-        {/* 7. Cierre fiscal */}
-        <div className="space-y-1 text-[9px] leading-[1.6] text-slate-500">
-          <div>
-            <span className="uppercase tracking-[0.1em] text-slate-600">CUFE</span>{' '}
-            <span className="font-mono text-slate-700 break-all select-all">{cufe}</span>
-          </div>
-          <div>
-            Documento electrónico de venta. Resolución DIAN No. 18764000001234 del 15/01/2024, rango SETP-1 a
-            SETP-10000. Emitido el {dateStr} a las {timeStr} (America/Bogotá).
-          </div>
-          <div>
-            Esta factura de venta se asimila en sus efectos a la letra de cambio según el Art. 774 del Código de
-            Comercio. El comprador declara recibir a entera satisfacción los bienes o servicios descritos.
-          </div>
-          {sale.invoice?.invoiceFooter ? <div>{sale.invoice.invoiceFooter}</div> : null}
+        {/*
+          Cierre fiscal reducido a la identificacion del documento. La
+          resolucion DIAN, la nota del Art. 774 y la fecha de emision se
+          retiraron por redundantes: la fecha ya esta en la cabecera y el
+          resto es jerga normativa que ocupa espacio sin aportar a quien lee.
+          Se conserva el CUFE, que es el identificador unico exigido para
+          validar el documento.
+        */}
+        <div className="text-[8.5px] text-slate-400">
+          <span className="uppercase tracking-[0.1em]">CUFE</span>{' '}
+          <span className="font-mono break-all select-all">{cufe}</span>
         </div>
       </div>
     </div>

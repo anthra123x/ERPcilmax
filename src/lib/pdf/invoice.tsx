@@ -8,7 +8,6 @@ import {
   LOGO_ASPECT,
   PdfInvoiceSnapshot,
   PdfSettings,
-  formatLongDate,
   formatShortDate,
   formatTime,
   getLogoDataUrl,
@@ -176,7 +175,6 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
   const logo = getLogoDataUrl()
   const isCredit = sale.paymentMethod === 'CREDITO'
   const footerText = company.footer || `${company.name} — Gracias por su compra`
-  const generatedAt = new Date()
 
   const baseGravable = Math.round((sale.total / 1.19) * 100) / 100
   const valorIva = Math.round((sale.total - baseGravable) * 100) / 100
@@ -340,21 +338,13 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
 
           <View style={styles.rule} />
 
-          {/* 7. Cierre fiscal */}
+          {/* 7. Cierre fiscal: solo el identificador del documento. Mismo recorte que
+              en la version HTML. */}
           <View>
             <Text style={styles.legal}>
               <Text style={{ fontFamily: 'Helvetica-Bold' }}>CUFE </Text>
               {cufe}
             </Text>
-            <Text style={styles.legal}>
-              Documento electrónico de venta. Resolución DIAN No. 18764000001234 del 15/01/2024, rango SETP-1 a
-              SETP-10000. Emitido el {formatLongDate(sale.saleDate)} a las {formatTime(sale.saleDate)} (America/Bogotá).
-            </Text>
-            <Text style={styles.legal}>
-              Esta factura de venta se asimila en sus efectos a la letra de cambio según el Art. 774 del Código de
-              Comercio. El comprador declara recibir a entera satisfacción los bienes o servicios descritos.
-            </Text>
-            <Text style={styles.legal}>Documento generado el {formatLongDate(generatedAt)}.</Text>
           </View>
         </View>
 

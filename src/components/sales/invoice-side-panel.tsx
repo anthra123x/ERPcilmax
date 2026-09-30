@@ -59,6 +59,7 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
   const [sale, setSale] = useState<DianInvoiceSaleData | null>(null)
   const [loading, setLoading] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
+  const [pdfBusy, setPdfBusy] = useState(false)
   const [thumbScale, setThumbScale] = useState(1)
   const [thumbHeight, setThumbHeight] = useState<number | null>(null)
   const [thumbOffset, setThumbOffset] = useState(0)
@@ -260,6 +261,37 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
     }
   }, [sale])
 
+  /**
+   * Descarga el PDF como blob en lugar de abrir `/api/sales/[id]/pdf` en una
+   * pestaña nueva. Con `Content-Disposition: attachment` el enlace dejaba una
+   * pestaña en blanco que nunca se cerraba, y ante un fallo no había ni
+   * descarga ni aviso. Así hay estado de carga, nombre de archivo correcto y
+   * error visible.
+   */
+  const handleDownloadPdf = useCallback(async () => {
+    if (!sale) return
+    setPdfBusy(true)
+    try {
+      const response = await fetch(`/api/sales/${sale.id}/pdf`)
+      if (!response.ok) throw new Error(`HTTP ${response.status}`)
+
+      const blob = await response.blob()
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `factura-${sale.invoiceNumber}.pdf`
+      document.body.appendChild(link)
+      link.click()
+      link.remove()
+      URL.revokeObjectURL(url)
+    } catch (error) {
+      console.error('Error al descargar el PDF de la factura:', error)
+      toast.error('No se pudo descargar el PDF')
+    } finally {
+      setPdfBusy(false)
+    }
+  }, [sale])
+
   const isCredit = sale?.paymentMethod === 'CREDITO'
   const totalPaid = (sale?.payments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0)
   const pendingBalance = sale ? Math.max(0, sale.total - totalPaid) : 0
@@ -292,10 +324,13 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
       aria-label={`Detalle de la factura ${sale?.invoiceNumber ?? ''}`.trim()}
       className={cn(
         'w-full flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 card-shadow xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]',
-        // Entra deslizandose desde la derecha y sale por el mismo lado. Sin
-        // temporizadores: el layout colapsa la columna y estas clases acompanan.
-        'transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none',
-        saleId ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6 pointer-events-none',
+        // El contenedor se abre primero; el contenido entra con retardo para no
+        // competir con ese movimiento. Una entrada lineal y sin retardo se
+        // perceived como un golpe.
+        'transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]',
+        saleId
+          ? 'opacity-100 translate-x-0 delay-100 motion-reduce:transition-none motion-reduce:delay-0'
+          : 'opacity-0 translate-x-4 pointer-events-none',
       )}
     >
       {/*
@@ -453,16 +488,16 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
             Imprimir
           </Button>
 
-          {/* `render` y no un <a> envolviendo al Boton: anidar un <button> dentro de
-              un <a> es HTML invalido y hacia que el clic no activara la descarga. */}
+          {/* Descarga por fetch: ver handleDownloadPdf. */}
           <Button
-            render={<a href={`/api/sales/${sale.id}/pdf`} target="_blank" rel="noopener noreferrer" />}
             variant="outline"
             size="sm"
+            onClick={handleDownloadPdf}
+            disabled={pdfBusy}
             className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
             title="Descargar PDF"
           >
-            <Download className="h-3.5 w-3.5" />
+            {pdfBusy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
             PDF
           </Button>
 
