@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { InvoiceSidePanel } from '@/components/sales/invoice-side-panel'
+import { SalesInspectorLayout } from '@/components/sales/sales-inspector-layout'
 
 interface Sale {
   id: string
@@ -134,190 +134,173 @@ export default function SalesPage() {
         }
       />
 
-      {/* Contenedor Split: la sección de ventas se retrae dando espacio a la factura lateral */}
-      <div className="flex flex-col lg:flex-row gap-6 items-start transition-all duration-300">
-        {/* Sección de Ventas (Tabla) */}
-        <div
-          className={cn(
-            'w-full transition-all duration-300 min-w-0',
-            selectedSaleId ? 'lg:w-[48%] xl:w-[50%]' : 'lg:w-full'
-          )}
-        >
-          <Card>
-            <CardHeader className="pb-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Buscar por factura, cliente..."
-                    className="pl-9"
-                  />
-                </div>
+      {/* Contenedor Split: la tabla conserva la jerarquía y el panel de factura ocupa ancho fijo compacto */}
+      <SalesInspectorLayout
+        selectedSaleId={selectedSaleId}
+        onClose={() => {
+          setSelectedSaleId(null)
+        }}
+      >
+        <Card>
+          <CardHeader className="pb-4">
+            <div className="flex-1">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Buscar por factura, cliente..."
+                  className="pl-9"
+                />
               </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <Table className="min-w-[680px]">
-                  <TableHeader>
-                    <TableRow className="hover:bg-transparent">
-                      <TableHead>Factura</TableHead>
-                      <TableHead>Cliente</TableHead>
-                      <TableHead>Productos</TableHead>
-                      <TableHead>Método</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Fecha</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {sales.map((sale) => {
-                      const isSelected = selectedSaleId === sale.id
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table className="min-w-[680px]">
+                <TableHeader>
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Factura</TableHead>
+                    <TableHead>Cliente</TableHead>
+                    <TableHead>Productos</TableHead>
+                    <TableHead>Método</TableHead>
+                    <TableHead className="text-right">Total</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {sales.map((sale) => {
+                    const isSelected = selectedSaleId === sale.id
 
-                      return (
-                        <TableRow
-                          key={sale.id}
-                          className={cn(
-                            'transition-colors duration-150',
-                            isSelected && 'bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary font-medium'
+                    return (
+                      <TableRow
+                        key={sale.id}
+                        className={cn(
+                          'transition-colors duration-150',
+                          isSelected && 'bg-primary/5 dark:bg-primary/10 border-l-4 border-l-primary font-medium',
+                        )}
+                      >
+                        <TableCell>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSelectedSaleId((prev) => (prev === sale.id ? null : sale.id))
+                            }}
+                            className={cn(
+                              'font-mono text-sm font-semibold hover:underline cursor-pointer text-left focus:outline-hidden',
+                              isSelected ? 'text-primary' : 'text-foreground',
+                            )}
+                            title="Inspeccionar Factura"
+                          >
+                            {sale.invoiceNumber}
+                          </button>
+                        </TableCell>
+                        <TableCell>
+                          {sale.client ? (
+                            <div>
+                              <div className="text-sm font-medium">{sale.client.name}</div>
+                              {sale.client.phone && (
+                                <div className="text-xs text-muted-foreground font-mono">{sale.client.phone}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
                           )}
-                        >
-                          <TableCell>
-                            <button
-                              type="button"
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            {sale.items.length} {sale.items.length === 1 ? 'producto' : 'productos'}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{getPaymentMethodLabel(sale.paymentMethod)}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right font-medium font-mono">{formatCurrency(sale.total)}</TableCell>
+                        <TableCell>
+                          <div className="flex flex-col items-start gap-1">
+                            {sale.status === 'COMPLETED' ? (
+                              <Badge variant="default" className="bg-emerald-600 dark:bg-emerald-500">
+                                Completada
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive">Anulada</Badge>
+                            )}
+                            {(() => {
+                              const cs = getCreditStatus(sale)
+                              return cs ? (
+                                <Badge variant="outline" className={getCreditStatusColor(cs)}>
+                                  {getCreditStatusLabel(cs)}
+                                </Badge>
+                              ) : null
+                            })()}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {new Date(sale.saleDate).toLocaleDateString('es-CO')}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Button
+                              variant={isSelected ? 'default' : 'outline'}
+                              size="sm"
+                              className={cn(
+                                'h-8 gap-1 text-xs rounded-xl cursor-pointer transition-all',
+                                isSelected && 'bg-primary text-primary-foreground shadow-xs',
+                              )}
+                              title="Inspeccionar Factura y Vista Previa DIAN"
                               onClick={() => {
                                 setSelectedSaleId((prev) => (prev === sale.id ? null : sale.id))
                               }}
-                              className={cn(
-                                'font-mono text-sm font-semibold hover:underline cursor-pointer text-left focus:outline-hidden',
-                                isSelected ? 'text-primary' : 'text-foreground'
-                              )}
-                              title="Inspeccionar Factura"
                             >
-                              {sale.invoiceNumber}
-                            </button>
-                          </TableCell>
-                          <TableCell>
-                            {sale.client ? (
-                              <div>
-                                <div className="text-sm font-medium">{sale.client.name}</div>
-                                {sale.client.phone && (
-                                  <div className="text-xs text-muted-foreground font-mono">{sale.client.phone}</div>
-                                )}
-                              </div>
-                            ) : (
-                              <span className="text-xs text-muted-foreground">—</span>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              {sale.items.length} {sale.items.length === 1 ? 'producto' : 'productos'}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge variant="outline">{getPaymentMethodLabel(sale.paymentMethod)}</Badge>
-                          </TableCell>
-                          <TableCell className="text-right font-medium font-mono">
-                            {formatCurrency(sale.total)}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex flex-col items-start gap-1">
-                              {sale.status === 'COMPLETED' ? (
-                                <Badge variant="default" className="bg-emerald-600 dark:bg-emerald-500">
-                                  Completada
-                                </Badge>
-                              ) : (
-                                <Badge variant="destructive">Anulada</Badge>
-                              )}
-                              {(() => {
-                                const cs = getCreditStatus(sale)
-                                return cs ? (
-                                  <Badge variant="outline" className={getCreditStatusColor(cs)}>
-                                    {getCreditStatusLabel(cs)}
-                                  </Badge>
-                                ) : null
-                              })()}
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {new Date(sale.saleDate).toLocaleDateString('es-CO')}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1.5">
+                              <Receipt className="h-3.5 w-3.5" />
+                              Factura
+                            </Button>
+                            {sale.status === 'COMPLETED' && (
                               <Button
-                                variant={isSelected ? 'default' : 'outline'}
-                                size="sm"
-                                className={cn(
-                                  'h-8 gap-1 text-xs rounded-xl cursor-pointer transition-all',
-                                  isSelected && 'bg-primary text-primary-foreground shadow-xs'
-                                )}
-                                title="Inspeccionar Factura y Vista Previa DIAN"
+                                variant="ghost"
+                                size="icon-sm"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                title="Anular venta"
                                 onClick={() => {
-                                  setSelectedSaleId((prev) => (prev === sale.id ? null : sale.id))
+                                  setSaleToCancel(sale)
+                                  setCancelDialogOpen(true)
                                 }}
                               >
-                                <Receipt className="h-3.5 w-3.5" />
-                                Factura
+                                <Ban className="h-4 w-4" />
                               </Button>
-                              {sale.status === 'COMPLETED' && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon-sm"
-                                  className="h-8 w-8 text-destructive hover:bg-destructive/10"
-                                  title="Anular venta"
-                                  onClick={() => {
-                                    setSaleToCancel(sale)
-                                    setCancelDialogOpen(true)
-                                  }}
-                                >
-                                  <Ban className="h-4 w-4" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      )
-                    })}
-                  </TableBody>
-                </Table>
-              </div>
+                            )}
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  })}
+                </TableBody>
+              </Table>
+            </div>
 
-              {sales.length === 0 && (
-                <EmptyState
-                  icon={Receipt}
-                  title={search ? 'Sin resultados' : 'Sin ventas'}
-                  description={search ? 'No hay ventas que coincidan' : 'Registra tu primera venta'}
-                  action={search ? undefined : { label: 'Nueva Venta', href: '/sales/new' }}
-                />
-              )}
+            {sales.length === 0 && (
+              <EmptyState
+                icon={Receipt}
+                title={search ? 'Sin resultados' : 'Sin ventas'}
+                description={search ? 'No hay ventas que coincidan' : 'Registra tu primera venta'}
+                action={search ? undefined : { label: 'Nueva Venta', href: '/sales/new' }}
+              />
+            )}
 
-              {totalPages > 1 && (
-                <Pagination
-                  page={page}
-                  totalPages={totalPages}
-                  total={totalSales}
-                  entity="ventas"
-                  onPageChange={(p) => setPage(p)}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sección de Factura: panel lateral adyacente estilo slide-bar */}
-        {selectedSaleId && (
-          <div className="w-full lg:w-[52%] xl:w-[50%] shrink-0 transition-all duration-300">
-            <InvoiceSidePanel
-              saleId={selectedSaleId}
-              onClose={() => {
-                setSelectedSaleId(null)
-              }}
-            />
-          </div>
-        )}
-      </div>
+            {totalPages > 1 && (
+              <Pagination
+                page={page}
+                totalPages={totalPages}
+                total={totalSales}
+                entity="ventas"
+                onPageChange={(p) => setPage(p)}
+              />
+            )}
+          </CardContent>
+        </Card>
+      </SalesInspectorLayout>
 
       {/* Diálogo de Confirmación para Anular Venta */}
       <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>

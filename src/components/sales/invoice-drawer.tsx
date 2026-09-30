@@ -201,7 +201,7 @@ export function InvoiceDrawer({ saleId, open, onClose }: InvoiceDrawerProps) {
 
       {/* Contenedor del Slide Drawer anclado a la derecha */}
       <div className="fixed inset-y-0 right-0 flex max-w-full pl-0 sm:pl-10">
-        <div className="w-screen max-w-4xl bg-slate-50 dark:bg-slate-900 border-l border-border shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
+        <div className="w-screen max-w-4xl bg-card border-l border-border shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out">
           {/* Header Superior del Drawer */}
           <div className="px-4 sm:px-6 py-4 bg-background border-b border-border flex items-center justify-between gap-3 shrink-0">
             <div className="flex items-center gap-3 min-w-0">
@@ -215,7 +215,7 @@ export function InvoiceDrawer({ saleId, open, onClose }: InvoiceDrawerProps) {
                   </h2>
                   <Badge
                     variant="outline"
-                    className="text-[10px] uppercase font-bold tracking-wider bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                    className="text-[10px] uppercase font-bold tracking-wider border-primary/25 bg-primary/10 text-primary"
                   >
                     Estándar DIAN
                   </Badge>
