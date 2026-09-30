@@ -63,7 +63,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
             </div>
             <div className="flex flex-col min-w-0">
               <span className="truncate text-xs font-semibold text-white tracking-tight uppercase">
-                ERP Cilmax
+                Nova ERP
               </span>
               <span className="truncate text-[10px] font-medium text-emerald-400/90 flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

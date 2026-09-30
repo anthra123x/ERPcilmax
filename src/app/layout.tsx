@@ -14,8 +14,11 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Cilmax',
-  description: 'Sistema de gestión de tienda',
+  title: {
+    default: 'Nova ERP — Sistema de Gestión Comercial',
+    template: '%s | Nova ERP',
+  },
+  description: 'Plataforma empresarial de gestión comercial, inventario, facturación y punto de venta.',
 }
 
 export default function RootLayout({
