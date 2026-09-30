@@ -8,7 +8,6 @@ import {
   Share2,
   Copy,
   Check,
-  ExternalLink,
   Receipt,
   Clock,
   User,
@@ -297,17 +296,6 @@ export function InvoiceDrawer({ saleId, open, onClose }: InvoiceDrawerProps) {
                   >
                     {copiedLink ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </Button>
-
-                  <a
-                    href={`/sales/${sale.id}/invoice`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Abrir en pantalla completa"
-                  >
-                    <Button variant="ghost" size="icon-sm" className="h-8 w-8 rounded-xl">
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
-                  </a>
                 </>
               )}
 
