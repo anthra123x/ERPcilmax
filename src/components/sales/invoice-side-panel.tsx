@@ -1,13 +1,12 @@
 'use client'
 
 import React, { useCallback, useEffect, useRef, useState } from 'react'
-import { X, Printer, Download, Share2, Copy, Check, Receipt, DollarSign, Loader2, Maximize2 } from 'lucide-react'
+import { X, Printer, Download, Share2, Copy, Check, DollarSign, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { DianInvoiceView, type DianInvoiceSaleData } from './dian-invoice-view'
-import { InvoiceDrawer } from './invoice-drawer'
 import { getSaleById } from '@/modules/sales/sales.actions'
 import { formatCurrency } from '@/lib/format'
 import { getPaymentMethodLabel, getCreditStatus, getCreditStatusLabel, getCreditStatusColor } from '@/lib/labels'
@@ -60,7 +59,6 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
   const [sale, setSale] = useState<DianInvoiceSaleData | null>(null)
   const [loading, setLoading] = useState(false)
   const [copiedLink, setCopiedLink] = useState(false)
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const [thumbScale, setThumbScale] = useState(1)
   const [thumbHeight, setThumbHeight] = useState<number | null>(null)
   const [thumbOffset, setThumbOffset] = useState(0)
@@ -111,22 +109,17 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
     }
   }, [saleId])
 
-  // Escape cierra primero el drawer abierto y luego el panel completo
+  // Escape cierra el inspector
   useEffect(() => {
     if (!saleId) return
 
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key !== 'Escape') return
-      if (drawerOpen) {
-        setDrawerOpen(false)
-        return
-      }
-      onClose()
+      if (event.key === 'Escape') onClose()
     }
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [saleId, drawerOpen, onClose])
+  }, [saleId, onClose])
 
   /**
    * Fit-to-width del thumbnail: la hoja se renderiza a ancho de papel fijo y
@@ -166,7 +159,7 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
     observer.observe(box)
     observer.observe(sheet)
     return () => observer.disconnect()
-  }, [sale?.id, drawerOpen])
+  }, [sale?.id])
 
   const handleCopyLink = useCallback(() => {
     if (!sale) return
@@ -263,8 +256,6 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
     }
   }, [sale])
 
-  if (!saleId) return null
-
   const isCredit = sale?.paymentMethod === 'CREDITO'
   const totalPaid = (sale?.payments ?? []).reduce((s, p) => s + (Number(p.amount) || 0), 0)
   const pendingBalance = sale ? Math.max(0, sale.total - totalPaid) : 0
@@ -290,232 +281,190 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
   }
 
   return (
-    <>
-      <div
-        ref={panelRef}
-        role="complementary"
-        aria-label={`Detalle de la factura ${sale?.invoiceNumber ?? ''}`.trim()}
-        className="w-full flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 card-shadow xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)] transition-all duration-300"
-      >
-        {/* Encabezado: identidad primero, acciones secundarias en iconos */}
-        <div className="px-3 py-2.5 border-b border-border flex items-center gap-2 shrink-0">
-          <div className="p-1.5 rounded-lg bg-primary/10 text-primary shrink-0">
-            <Receipt className="h-4 w-4" />
-          </div>
+    <div
+      ref={panelRef}
+      role="complementary"
+      aria-hidden={!saleId}
+      aria-label={`Detalle de la factura ${sale?.invoiceNumber ?? ''}`.trim()}
+      className={cn(
+        'w-full flex flex-col overflow-hidden rounded-xl bg-card ring-1 ring-foreground/10 card-shadow xl:sticky xl:top-4 xl:max-h-[calc(100vh-2rem)]',
+        // Entra deslizandose desde la derecha y sale por el mismo lado. Sin
+        // temporizadores: el layout colapsa la columna y estas clases acompanan.
+        'transition-[opacity,transform] duration-300 ease-out motion-reduce:transition-none',
+        saleId ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-6 pointer-events-none',
+      )}
+    >
+      {/*
+          Encabezado sobrio: solo identidad, estado y salida. El cliente y la
+          fecha ya viven en el resumen de abajo, el sello DIAN lo lleva el
+          propio documento y el icono era cromo que no aportaba informacion.
+        */}
+      <div className="px-3 py-2.5 border-b border-border flex items-center gap-2 shrink-0">
+        <h2 className="text-[13px] font-bold text-foreground truncate min-w-0">
+          {loading ? <Skeleton className="h-4 w-24" /> : `Factura #${sale?.invoiceNumber || ''}`}
+        </h2>
+        {sale && (
+          <Badge
+            variant={sale.status === 'COMPLETED' ? 'default' : 'destructive'}
+            className="h-4 px-1.5 py-0 text-[9px] shrink-0"
+          >
+            {sale.status === 'COMPLETED' ? 'Completada' : 'Anulada'}
+          </Badge>
+        )}
+        {creditBadge}
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-1.5 flex-wrap min-w-0">
-              <h2 className="text-[13px] font-bold text-foreground truncate">
-                {loading ? <Skeleton className="h-4 w-24" /> : `Factura #${sale?.invoiceNumber || ''}`}
-              </h2>
-              <Badge
-                variant="outline"
-                className="h-4 px-1.5 py-0 text-[9px] uppercase font-bold tracking-wider border-primary/25 bg-primary/10 text-primary"
-              >
-                Estándar DIAN
-              </Badge>
-              {sale && (
-                <Badge
-                  variant={sale.status === 'COMPLETED' ? 'default' : 'destructive'}
-                  className="h-4 px-1.5 py-0 text-[9px]"
+        <div className="ml-auto flex items-center gap-0.5 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleCopyLink}
+            disabled={!sale}
+            className="h-7 w-7 rounded-lg cursor-pointer"
+            title="Copiar enlace de la factura"
+            aria-label="Copiar enlace de la factura"
+          >
+            {copiedLink ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
+            title="Cerrar panel lateral"
+            aria-label="Cerrar panel lateral"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+
+      {/* Cuerpo desplazable: el capping de alto lo hace el padre flex con min-h-0 */}
+      <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
+        {loading ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-border overflow-hidden">
+              <Skeleton className="h-9 w-full rounded-none" />
+              <div className="grid grid-cols-2 gap-px bg-border">
+                {[...Array(4)].map((_, i) => (
+                  <Skeleton key={i} className="h-11 w-full rounded-none" />
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-center py-10">
+              <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                <p className="text-[11px]">Cargando representación fiscal de la factura...</p>
+              </div>
+            </div>
+          </div>
+        ) : sale ? (
+          <>
+            {/* Resumen: un solo bloque donde el Total manda */}
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              <div className="flex items-baseline justify-between gap-2 px-3 py-2 bg-primary/[0.04] border-b border-border">
+                <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  <DollarSign className="h-3 w-3 text-primary shrink-0" />
+                  Total
+                </span>
+                <span
+                  className="text-base font-bold font-mono tabular-nums text-foreground truncate"
+                  title={totalLabel}
                 >
-                  {sale.status === 'COMPLETED' ? 'Completada' : 'Anulada'}
-                </Badge>
-              )}
-              {creditBadge}
-            </div>
-            <p className="text-[10.5px] text-muted-foreground truncate mt-0.5">
-              {loading
-                ? 'Cargando factura...'
-                : `Cliente: ${clientName} • Fecha: ${new Date(sale?.saleDate || '').toLocaleDateString('es-CO')}`}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={handleCopyLink}
-              disabled={!sale}
-              className="h-7 w-7 rounded-lg cursor-pointer"
-              title="Copiar enlace de la factura"
-              aria-label="Copiar enlace de la factura"
-            >
-              {copiedLink ? <Check className="h-3.5 w-3.5 text-primary" /> : <Copy className="h-3.5 w-3.5" />}
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={() => setDrawerOpen(true)}
-              disabled={!sale}
-              className="h-7 w-7 rounded-lg cursor-pointer"
-              title="Ver factura completa"
-              aria-label="Ver factura completa"
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onClose}
-              className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-              title="Cerrar panel lateral"
-              aria-label="Cerrar panel lateral"
-            >
-              <X className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        </div>
-
-        {/* Cuerpo desplazable: el capping de alto lo hace el padre flex con min-h-0 */}
-        <div className="flex-1 min-h-0 overflow-y-auto p-3 space-y-3">
-          {loading ? (
-            <div className="space-y-3">
-              <div className="rounded-xl border border-border overflow-hidden">
-                <Skeleton className="h-9 w-full rounded-none" />
-                <div className="grid grid-cols-2 gap-px bg-border">
-                  {[...Array(4)].map((_, i) => (
-                    <Skeleton key={i} className="h-11 w-full rounded-none" />
-                  ))}
-                </div>
+                  {totalLabel}
+                </span>
               </div>
-              <div className="flex items-center justify-center py-10">
-                <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                  <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                  <p className="text-[11px]">Cargando representación fiscal de la factura...</p>
-                </div>
+
+              <div className="grid grid-cols-2 gap-px bg-border">
+                <SummaryFact
+                  label="Cliente"
+                  value={clientName}
+                  sub={sale.client?.phone || undefined}
+                  title={clientName}
+                />
+                <SummaryFact
+                  label="Pago"
+                  value={getPaymentMethodLabel(sale.paymentMethod)}
+                  sub={isCredit ? `Pend: ${formatCurrency(pendingBalance)}` : undefined}
+                  subClassName={isCredit ? 'text-amber-600 dark:text-amber-400 font-medium' : undefined}
+                />
+                <SummaryFact
+                  label="Fecha"
+                  value={new Date(sale.saleDate).toLocaleDateString('es-CO')}
+                  sub={sale.user?.name || 'Administración'}
+                />
+                <SummaryFact
+                  label="Ítems"
+                  value={`${sale.items.length} ${sale.items.length === 1 ? 'producto' : 'productos'}`}
+                  sub={`Subtotal ${formatCurrency(sale.subtotal)}`}
+                />
               </div>
             </div>
-          ) : sale ? (
-            <>
-              {/* Resumen: un solo bloque donde el Total manda */}
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                <div className="flex items-baseline justify-between gap-2 px-3 py-2 bg-primary/[0.04] border-b border-border">
-                  <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    <DollarSign className="h-3 w-3 text-primary shrink-0" />
-                    Total
-                  </span>
-                  <span
-                    className="text-base font-bold font-mono tabular-nums text-foreground truncate"
-                    title={totalLabel}
-                  >
-                    {totalLabel}
-                  </span>
-                </div>
 
-                <div className="grid grid-cols-2 gap-px bg-border">
-                  <SummaryFact
-                    label="Cliente"
-                    value={clientName}
-                    sub={sale.client?.phone || undefined}
-                    title={clientName}
-                  />
-                  <SummaryFact
-                    label="Pago"
-                    value={getPaymentMethodLabel(sale.paymentMethod)}
-                    sub={isCredit ? `Pend: ${formatCurrency(pendingBalance)}` : undefined}
-                    subClassName={isCredit ? 'text-amber-600 dark:text-amber-400 font-medium' : undefined}
-                  />
-                  <SummaryFact
-                    label="Fecha"
-                    value={new Date(sale.saleDate).toLocaleDateString('es-CO')}
-                    sub={sale.user?.name || 'Administración'}
-                  />
-                  <SummaryFact
-                    label="Ítems"
-                    value={`${sale.items.length} ${sale.items.length === 1 ? 'producto' : 'productos'}`}
-                    sub={`Subtotal ${formatCurrency(sale.subtotal)}`}
-                  />
-                </div>
-              </div>
-
-              {/* Representación DIAN como thumbnail, con escape hatch al documento completo */}
-              {drawerOpen ? null : (
-                <div className="space-y-1.5">
-                  <span className="block px-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                    Documento fiscal DIAN
-                  </span>
-
-                  <div
-                    ref={thumbBoxRef}
-                    className={cn(
-                      'relative w-full min-h-[200px] overflow-hidden rounded-xl border border-border bg-white transition-opacity duration-300',
-                      thumbHeight ? 'opacity-100' : 'opacity-0',
-                    )}
-                    style={{ height: thumbHeight ?? undefined }}
-                  >
-                    <div
-                      ref={thumbSheetRef}
-                      className="absolute top-0 origin-top-left"
-                      style={{ left: thumbOffset, width: PAPER_WIDTH, transform: `scale(${thumbScale})` }}
-                    >
-                      <div id="dian-invoice-printable">
-                        <DianInvoiceView sale={sale} />
-                      </div>
-                    </div>
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setDrawerOpen(true)}
-                    className="h-6 w-full gap-1 px-1 text-[10.5px] rounded-lg text-muted-foreground hover:text-foreground cursor-pointer"
-                  >
-                    <Maximize2 className="h-3 w-3" />
-                    Ver factura completa
-                  </Button>
-                </div>
+            {/*
+                La representacion DIAN se muestra tal cual, a escala, sin
+                etiquetas autour: el documento ya se identifica solo y cualquier
+                rotulo compite con la jerarquia del resumen.
+              */}
+            <div
+              ref={thumbBoxRef}
+              className={cn(
+                'relative w-full min-h-[200px] overflow-hidden rounded-xl border border-border bg-white transition-opacity duration-300',
+                thumbHeight ? 'opacity-100' : 'opacity-0',
               )}
-            </>
-          ) : null}
-        </div>
-
-        {/* Pie con las acciones sustantivas: siempre visible */}
-        {sale ? (
-          <div className="px-3 py-2 border-t border-border flex items-center gap-1.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePrintInvoice}
-              className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
-              title="Imprimir factura"
+              style={{ height: thumbHeight ?? undefined }}
             >
-              <Printer className="h-3.5 w-3.5" />
-              Imprimir
-            </Button>
-
-            <a href={`/api/sales/${sale.id}/pdf`} target="_blank" rel="noopener noreferrer" className="flex-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
-                title="Descargar PDF"
+              <div
+                ref={thumbSheetRef}
+                className="absolute top-0 origin-top-left"
+                style={{ left: thumbOffset, width: PAPER_WIDTH, transform: `scale(${thumbScale})` }}
               >
-                <Download className="h-3.5 w-3.5" />
-                PDF
-              </Button>
-            </a>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleWhatsAppShare}
-              className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
-              title="Compartir por WhatsApp"
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              WhatsApp
-            </Button>
-          </div>
+                <div id="dian-invoice-printable">
+                  <DianInvoiceView sale={sale} />
+                </div>
+              </div>
+            </div>
+          </>
         ) : null}
       </div>
 
-      {/*
-        El drawer se monta FUERA del panel a propósito: un ancestro con
-        `overflow-hidden` o con la transform de la animación de entrada se
-        convierte en containing block y le truncaría el `position: fixed`.
-      */}
-      <InvoiceDrawer saleId={saleId} open={drawerOpen} onClose={() => setDrawerOpen(false)} />
-    </>
+      {/* Pie con las acciones sustantivas: siempre visible */}
+      {sale ? (
+        <div className="px-3 py-2 border-t border-border flex items-center gap-1.5 shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrintInvoice}
+            className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
+            title="Imprimir factura"
+          >
+            <Printer className="h-3.5 w-3.5" />
+            Imprimir
+          </Button>
+
+          <a href={`/api/sales/${sale.id}/pdf`} target="_blank" rel="noopener noreferrer" className="flex-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
+              title="Descargar PDF"
+            >
+              <Download className="h-3.5 w-3.5" />
+              PDF
+            </Button>
+          </a>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleWhatsAppShare}
+            className="flex-1 h-7 gap-1 px-2 text-[11px] rounded-lg cursor-pointer"
+            title="Compartir por WhatsApp"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+            WhatsApp
+          </Button>
+        </div>
+      ) : null}
+    </div>
   )
 }
