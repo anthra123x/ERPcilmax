@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Loader2, Send, Sparkles, X, ChevronDown, Maximize2, Minimize2 } from 'lucide-react'
+import { AnimatedBotAvatar } from './animated-bot-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
@@ -137,8 +138,8 @@ export function AiFloatingChat() {
       >
         {/* Header */}
         <div className="flex items-center gap-3 border-b border-border/60 bg-muted/40 px-4 py-3 rounded-t-2xl">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-sm shadow-primary/10">
-            <Bot className="h-4 w-4 text-primary" />
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-900 border border-emerald-500/30 shadow-xs">
+            <AnimatedBotAvatar size={24} isThinking={loading} interactive={false} />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold leading-tight">Asistente IA</p>
@@ -254,15 +255,15 @@ export function AiFloatingChat() {
         onClick={() => setOpen((o) => !o)}
         aria-label={open ? 'Cerrar asistente IA' : 'Abrir asistente IA'}
         className={cn(
-          'relative flex h-14 w-14 items-center justify-center rounded-full shadow-lg shadow-primary/25 transition-all duration-300 ease-out',
-          'bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 active:scale-95',
-          open && 'rotate-45',
+          'relative flex h-14 w-14 items-center justify-center rounded-full shadow-xl shadow-emerald-500/25 transition-all duration-300 ease-out cursor-pointer',
+          'bg-slate-900 border-2 border-emerald-500/40 hover:border-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/40 hover:scale-105 active:scale-95',
+          open && 'rotate-90 border-slate-700 bg-slate-800',
         )}
       >
         {open ? (
-          <X className="h-5 w-5 transition-transform duration-200" />
+          <X className="h-5 w-5 text-white transition-transform duration-200" />
         ) : (
-          <Bot className="h-5 w-5 transition-transform duration-200" />
+          <AnimatedBotAvatar size={34} isThinking={loading} />
         )}
         {!open && unread > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground shadow-sm">
@@ -271,7 +272,7 @@ export function AiFloatingChat() {
         )}
         {/* Pulse ring cuando hay IA activa */}
         {status?.enabled && !open && (
-          <span className="absolute inset-0 rounded-full bg-primary/30 animate-ping opacity-75" />
+          <span className="absolute inset-0 rounded-full bg-emerald-400/20 animate-ping opacity-75 pointer-events-none" />
         )}
       </button>
     </div>
@@ -284,8 +285,8 @@ function FloatingMessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={cn('flex gap-2', isUser && 'justify-end')}>
       {!isUser && (
-        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-sm">
-          <Bot className="h-3.5 w-3.5 text-primary" />
+        <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-slate-900 border border-emerald-500/30 shadow-xs">
+          <AnimatedBotAvatar size={18} interactive={false} />
         </div>
       )}
       <div className={cn('max-w-[85%] min-w-0 space-y-1', isUser && 'flex flex-col items-end')}>

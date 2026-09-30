@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Bot, Loader2, Send, Sparkles } from 'lucide-react'
+import { AnimatedBotAvatar } from './animated-bot-avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
@@ -108,8 +109,8 @@ export function AssistantChat() {
       <CardHeader className="border-b border-border/60 bg-muted/30 py-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="rounded-xl bg-primary/10 p-2 shadow-sm shadow-primary/10">
-              <Bot className="h-4 w-4 text-primary" />
+            <div className="rounded-xl bg-slate-900 border border-emerald-500/30 p-1.5 shadow-xs">
+              <AnimatedBotAvatar size={24} isThinking={loading} interactive={false} />
             </div>
             <div>
               <p className="text-sm font-semibold leading-tight">Asistente IA</p>
@@ -131,8 +132,8 @@ export function AssistantChat() {
         <div ref={scrollRef} className="h-[460px] overflow-y-auto space-y-4 p-4">
           {messages.length === 0 && (
             <div className="h-full flex flex-col items-center justify-center text-center gap-5 px-6">
-              <div className="rounded-2xl bg-primary/10 p-3 shadow-sm shadow-primary/10">
-                <Bot className="h-8 w-8 text-primary" />
+              <div className="rounded-2xl bg-slate-900 border border-emerald-500/40 p-4 shadow-lg shadow-emerald-500/10">
+                <AnimatedBotAvatar size={48} isThinking={loading} />
               </div>
               <div className="space-y-1">
                 <p className="text-sm font-semibold">Pregúntale a tu negocio</p>
@@ -211,8 +212,8 @@ function MessageBubble({ message }: { message: ChatMessage }) {
   return (
     <div className={cn('flex gap-2.5', isUser && 'justify-end')}>
       {!isUser && (
-        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 shadow-sm shadow-primary/10">
-          <Bot className="h-4 w-4 text-primary" />
+        <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-slate-900 border border-emerald-500/30 shadow-xs">
+          <AnimatedBotAvatar size={20} interactive={false} />
         </div>
       )}
       <div className={cn('max-w-[80%] min-w-0 space-y-1.5', isUser && 'flex flex-col items-end')}>
