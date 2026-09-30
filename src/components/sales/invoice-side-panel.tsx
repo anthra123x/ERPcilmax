@@ -159,7 +159,11 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
     observer.observe(box)
     observer.observe(sheet)
     return () => observer.disconnect()
-  }, [sale?.id])
+    // `saleId` además de `sale?.id`: el panel vive siempre montado para
+    // sostener la animación de salida, así que reabrir la misma factura no
+    // cambia `sale`. El ancho de la caja sí pasa por 0 al colapsarse y esa
+    // es la señal que vuelve a lanzar la medición.
+  }, [saleId, sale?.id])
 
   const handleCopyLink = useCallback(() => {
     if (!sale) return
@@ -407,10 +411,7 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
               */}
             <div
               ref={thumbBoxRef}
-              className={cn(
-                'relative w-full min-h-[200px] overflow-hidden rounded-xl border border-border bg-white transition-opacity duration-300',
-                thumbHeight ? 'opacity-100' : 'opacity-0',
-              )}
+              className={cn('relative w-full min-h-[200px] overflow-hidden rounded-xl border border-border bg-white')}
               style={{ height: thumbHeight ?? undefined }}
             >
               <div

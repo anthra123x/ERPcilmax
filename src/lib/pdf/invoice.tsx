@@ -1,11 +1,11 @@
 import { Document, Page, View, Text, Image, StyleSheet, renderToBuffer } from '@react-pdf/renderer'
+import type { TextProps } from '@react-pdf/renderer'
 import { getPaymentMethodLabel, getCreditStatus, getCreditStatusLabel } from '@/lib/labels'
 import { formatCurrencyInWords, generateCufe } from '@/lib/format'
 import {
   COLORS,
   FONT,
   LOGO_ASPECT,
-  PdfCompany,
   PdfInvoiceSnapshot,
   PdfSettings,
   formatLongDate,
@@ -45,233 +45,165 @@ export interface InvoiceSale {
   invoice?: PdfInvoiceSnapshot | null
 }
 
+/**
+ * Factura de venta en PDF.
+ *
+ * Mismo criterio que la representación gráfica en HTML: documento de negocio,
+ * no página de producto. Jerarquía emisor → comprador → detalle → totales →
+ * condiciones, resuelta con reglas finas y aire. Sin barras de color, sin
+ * bloques rellenos, sin cajas ni sombras: la jerarquía la sostiene el peso
+ * tipográfico y el espacio en blanco.
+ */
 const styles = StyleSheet.create({
   page: {
     fontFamily: FONT,
     fontSize: 9,
     color: COLORS.slate700,
-    paddingBottom: 66,
+    paddingBottom: 60,
     backgroundColor: COLORS.white,
   },
-  accentBar: { height: 3, width: '100%', backgroundColor: COLORS.slate900 },
-  body: { paddingHorizontal: 36, paddingTop: 24 },
+  body: { paddingHorizontal: 40, paddingTop: 26 },
 
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  brand: { flexDirection: 'row', alignItems: 'center', flexGrow: 1, paddingRight: 12 },
-  logo: { height: 32, width: 32 * LOGO_ASPECT, objectFit: 'contain' },
-  brandText: { marginLeft: 10 },
-  brandName: { fontSize: 16, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  brandKind: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 1.2, marginTop: 3 },
-
-  docBox: { alignItems: 'flex-end' },
-  docLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
-  docNumber: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 },
-  docDate: { fontSize: 8, color: COLORS.slate500, marginTop: 3 },
-
-  contact: {
+  header: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginTop: 16,
-    paddingVertical: 7,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.slate50,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-  },
-  contactItem: { fontSize: 8, color: COLORS.slate600, marginRight: 16, marginBottom: 2 },
-
-  metaRow: { flexDirection: 'row', marginTop: 18, borderTopWidth: 1, borderTopColor: COLORS.slate200, paddingTop: 14 },
-  metaCol: { flexGrow: 1, flexBasis: 0, paddingRight: 16 },
-  metaColRight: { flexGrow: 1, flexBasis: 0, alignItems: 'flex-end' },
-  metaLabel: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2, marginBottom: 4 },
-  metaName: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  metaLine: { fontSize: 8, color: COLORS.slate500, marginTop: 2 },
-  metaValue: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-
-  sectionTitle: {
-    fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
-    color: COLORS.slate400,
-    letterSpacing: 1.2,
-    marginTop: 20,
-    marginBottom: 6,
-  },
-
-  tableHead: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.slate100,
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingBottom: 14,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.slate300,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderRadius: 3,
   },
-  th: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate700, letterSpacing: 0.5 },
-  row: {
-    flexDirection: 'row',
-    paddingVertical: 7,
-    paddingHorizontal: 8,
+  brand: { flexDirection: 'row', alignItems: 'flex-start', flexGrow: 1, paddingRight: 16 },
+  logo: { height: 26, width: 26 * LOGO_ASPECT, objectFit: 'contain', marginRight: 10, marginTop: 2 },
+  brandName: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, letterSpacing: 0.4 },
+  brandLine: { fontSize: 7.5, color: COLORS.slate500, marginTop: 3, lineHeight: 1.45 },
+
+  docBox: { alignItems: 'flex-end' },
+  docLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.4 },
+  docNumber: { fontSize: 19, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 4 },
+  docDate: { fontSize: 7.5, color: COLORS.slate500, marginTop: 4 },
+  docVoid: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, marginTop: 3, letterSpacing: 0.8 },
+
+  metaRow: { flexDirection: 'row', marginTop: 20, gap: 28 },
+  metaCol: { flexGrow: 1, flexBasis: 0 },
+  metaLabel: {
+    fontSize: 6.5,
+    fontFamily: 'Helvetica-Bold',
+    color: COLORS.slate400,
+    letterSpacing: 1.4,
+    paddingBottom: 5,
+    marginBottom: 7,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.slate200,
   },
-  rowAlt: { backgroundColor: COLORS.slate50 },
-  td: { fontSize: 8.5, color: COLORS.slate600 },
-  tdBold: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
-  colDesc: { flexGrow: 4, flexBasis: 0, paddingRight: 8 },
-  colQty: { width: 42, textAlign: 'center' },
-  colMoney: { width: 78, textAlign: 'right' },
+  metaName: { fontSize: 10.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginBottom: 3 },
+  metaLine: { fontSize: 7.5, color: COLORS.slate500, marginTop: 2 },
 
-  totals: { alignItems: 'flex-end', marginTop: 14 },
-  totalsBox: { width: 220 },
+  kv: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 1.5 },
+  kvLabel: { fontSize: 7.5, color: COLORS.slate500 },
+  kvValue: { fontSize: 7.5, color: COLORS.slate800, textAlign: 'right' },
+
+  table: { marginTop: 22 },
+  tableHead: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.slate400,
+    paddingBottom: 5,
+  },
+  th: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1 },
+  row: { flexDirection: 'row', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: COLORS.slate100 },
+  td: { fontSize: 8, color: COLORS.slate600 },
+  tdBold: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  tdMuted: { fontSize: 7, color: COLORS.slate400 },
+  colDesc: { flexGrow: 5, flexBasis: 0, paddingRight: 10 },
+  colQty: { width: 40, textAlign: 'right' },
+  colMoney: { width: 74, textAlign: 'right' },
+  colIva: { width: 34, textAlign: 'right' },
+
+  bottom: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 18 },
+  leftStack: { flexGrow: 1, flexBasis: 0, paddingRight: 24 },
+  wordsLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 1.2 },
+  wordsValue: { fontSize: 8, color: COLORS.slate800, marginTop: 3 },
+  taxLine: { fontSize: 6.5, color: COLORS.slate400, marginTop: 12, lineHeight: 1.5 },
+
+  totals: { width: 224 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2.5 },
-  totalLabel: { fontSize: 8.5, color: COLORS.slate600 },
-  totalValue: { fontSize: 8.5, color: COLORS.slate700 },
-  totalDiscount: { color: COLORS.red600 },
+  totalLabel: { fontSize: 8, color: COLORS.slate500 },
+  totalValue: { fontSize: 8, color: COLORS.slate800 },
   grandRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginTop: 5,
-    paddingVertical: 8,
-    paddingHorizontal: 10,
-    backgroundColor: COLORS.slate900,
-    borderRadius: 3,
+    alignItems: 'flex-end',
+    marginTop: 6,
+    paddingTop: 7,
+    borderTopWidth: 1.5,
+    borderTopColor: COLORS.slate900,
   },
-  grandLabel: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.white },
-  grandValue: { fontSize: 13, fontFamily: 'Helvetica-Bold', color: COLORS.white },
+  grandLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, letterSpacing: 1 },
+  grandValue: { fontSize: 14, fontFamily: 'Helvetica-Bold', color: COLORS.slate900 },
+  currencyNote: { fontSize: 6.5, color: COLORS.slate400, textAlign: 'right', marginTop: 3 },
 
-  creditBox: { flexDirection: 'row', marginTop: 14 },
-  creditItem: {
-    flexGrow: 1,
-    flexBasis: 0,
-    marginRight: 6,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-    backgroundColor: COLORS.slate50,
-  },
-  creditItemLast: {
-    flexGrow: 1,
-    flexBasis: 0,
-    padding: 8,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-    backgroundColor: COLORS.slate50,
-  },
-  creditLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 0.8 },
-  creditValue: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 2 },
-  creditValueGreen: { color: COLORS.emerald700 },
-  creditValueRed: { color: COLORS.red600 },
-
-  badge: {
-    alignSelf: 'flex-start',
-    marginTop: 4,
-    paddingVertical: 2,
-    paddingHorizontal: 6,
-    borderRadius: 12,
+  creditTitle: {
     fontSize: 6.5,
     fontFamily: 'Helvetica-Bold',
+    color: COLORS.slate400,
+    letterSpacing: 1.2,
+    marginTop: 16,
+    marginBottom: 6,
   },
 
-  note: {
-    marginTop: 14,
-    paddingVertical: 6,
-    paddingHorizontal: 8,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: COLORS.slate300,
-    borderRadius: 4,
-  },
-  noteText: { fontSize: 6.5, color: COLORS.slate500, lineHeight: 1.25 },
-
-  dianBox: {
-    marginTop: 6,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    backgroundColor: COLORS.slate50,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-  },
-  dianText: { fontSize: 6.5, color: COLORS.slate600, lineHeight: 1.25 },
-
-  wordsBox: {
-    marginTop: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    backgroundColor: COLORS.slate50,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-  },
-  wordsLabel: { fontSize: 6, fontFamily: 'Helvetica-Bold', color: COLORS.slate400, letterSpacing: 0.8 },
-  wordsValue: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 1 },
-
-  cufeBox: {
-    marginTop: 8,
-    paddingVertical: 5,
-    paddingHorizontal: 8,
-    backgroundColor: COLORS.slate50,
-    borderWidth: 1,
-    borderColor: COLORS.slate200,
-    borderRadius: 4,
-  },
-  cufeLabel: { fontSize: 6, fontFamily: 'Helvetica-Bold', color: COLORS.slate500, letterSpacing: 0.8 },
-  cufeHash: { fontSize: 5.5, color: COLORS.slate700, fontFamily: 'Courier', marginTop: 1 },
+  legal: { marginTop: 20, paddingTop: 10, borderTopWidth: 1, borderTopColor: COLORS.slate300 },
+  legalLine: { fontSize: 6, color: COLORS.slate400, lineHeight: 1.55, marginBottom: 2 },
 
   footer: {
     position: 'absolute',
-    left: 36,
-    right: 36,
+    left: 40,
+    right: 40,
     bottom: 22,
     borderTopWidth: 1,
     borderTopColor: COLORS.slate200,
-    paddingTop: 8,
+    paddingTop: 7,
   },
-  footerBrand: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate700, textAlign: 'center' },
-  footerNote: { marginTop: 2, fontSize: 6.5, color: COLORS.slate400, textAlign: 'center' },
-  footerPage: { marginTop: 2, fontSize: 6.5, color: COLORS.slate400, textAlign: 'center' },
+  footerBrand: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate600, textAlign: 'center' },
+  footerNote: { marginTop: 2, fontSize: 6, color: COLORS.slate400, textAlign: 'center' },
+  footerPage: { marginTop: 2, fontSize: 6, color: COLORS.slate400, textAlign: 'center' },
 })
 
-function ContactStrip({ company }: { company: PdfCompany }) {
-  const location = [company.address, company.city].filter(Boolean).join(', ')
-  const items = [
-    company.nit ? `NIT: ${company.nit}` : null,
-    location || null,
-    company.phone ? `Tel: ${company.phone}` : null,
-    company.email || null,
-  ].filter(Boolean) as string[]
-
-  if (items.length === 0) return null
-
+/** Par etiqueta/valor de una sola línea. */
+function Pair({
+  label,
+  value,
+  labelStyle,
+  valueStyle,
+}: {
+  label: string
+  value: string
+  labelStyle?: TextProps['style']
+  valueStyle?: TextProps['style']
+}) {
   return (
-    <View style={styles.contact}>
-      {items.map((item) => (
-        <Text key={item} style={styles.contactItem}>
-          {item}
-        </Text>
-      ))}
+    <View style={styles.kv}>
+      <Text style={[styles.kvLabel, labelStyle]}>{label}</Text>
+      <Text style={[styles.kvValue, valueStyle]}>{value}</Text>
     </View>
   )
 }
 
 function ItemsTable({ sale, currency }: { sale: InvoiceSale; currency: string }) {
   return (
-    <View>
+    <View style={styles.table}>
       <View style={styles.tableHead}>
-        <Text style={[styles.th, styles.colDesc]}>PRODUCTO</Text>
+        <Text style={[styles.th, styles.colDesc]}>DESCRIPCIÓN</Text>
         <Text style={[styles.th, styles.colQty]}>CANT.</Text>
-        <Text style={[styles.th, styles.colMoney]}>PRECIO UNIT.</Text>
+        <Text style={[styles.th, styles.colMoney]}>V. UNITARIO</Text>
+        <Text style={[styles.th, styles.colIva]}>IVA</Text>
         <Text style={[styles.th, styles.colMoney]}>TOTAL</Text>
       </View>
       {sale.items.map((item, index) => (
-        <View key={`${item.product.name}-${index}`} style={[styles.row, index % 2 === 1 ? styles.rowAlt : {}]}>
+        <View key={`${item.product.name}-${index}`} style={styles.row}>
           <Text style={[styles.tdBold, styles.colDesc]}>{item.product.name}</Text>
-          <Text style={[styles.td, styles.colQty]}>{item.quantity}</Text>
+          <Text style={[styles.td, styles.colQty]}>{Number(item.quantity).toFixed(2)}</Text>
           <Text style={[styles.td, styles.colMoney]}>{money(item.unitPrice, currency)}</Text>
+          <Text style={[styles.tdMuted, styles.colIva]}>19%</Text>
           <Text style={[styles.tdBold, styles.colMoney]}>{money(item.total, currency)}</Text>
         </View>
       ))}
@@ -289,55 +221,38 @@ function CreditSummary({ sale, currency }: { sale: InvoiceSale; currency: string
     payments: sale.payments,
     total: sale.total,
   })
-  const badgeStyle =
-    status === 'PAID'
-      ? { backgroundColor: COLORS.emeraldBg, color: COLORS.emerald700 }
-      : status === 'OVERDUE'
-        ? { backgroundColor: '#fef2f2', color: COLORS.red700 }
-        : { backgroundColor: COLORS.amberBg, color: COLORS.amber700 }
 
   return (
     <View>
-      <Text style={styles.sectionTitle}>RESUMEN DEL CRÉDITO</Text>
-      <View style={styles.creditBox}>
-        <View style={styles.creditItem}>
-          <Text style={styles.creditLabel}>TOTAL DE LA VENTA</Text>
-          <Text style={styles.creditValue}>{money(sale.total, currency)}</Text>
-        </View>
-        <View style={styles.creditItem}>
-          <Text style={styles.creditLabel}>ABONADO</Text>
-          <Text style={[styles.creditValue, styles.creditValueGreen]}>{money(paid, currency)}</Text>
-        </View>
-        <View style={styles.creditItem}>
-          <Text style={styles.creditLabel}>SALDO PENDIENTE</Text>
-          <Text style={[styles.creditValue, balance > 0 ? styles.creditValueRed : styles.creditValueGreen]}>
-            {money(balance, currency)}
-          </Text>
-        </View>
-        <View style={styles.creditItemLast}>
-          <Text style={styles.creditLabel}>VENCIMIENTO</Text>
-          <Text style={{ fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: COLORS.slate900, marginTop: 3 }}>
-            {sale.dueDate ? formatShortDate(sale.dueDate) : 'Sin vencimiento'}
-          </Text>
-          {status && <Text style={[styles.badge, badgeStyle]}>{getCreditStatusLabel(status).toUpperCase()}</Text>}
+      <Text style={styles.creditTitle}>CONDICIONES DEL CRÉDITO</Text>
+      {/* Alineado a la derecha para compartir columna con el bloque de totales. */}
+      <View style={{ alignItems: 'flex-end' }}>
+        <View style={styles.totals}>
+          <Pair label="Total abonado" value={money(paid, currency)} />
+          <Pair label="Saldo pendiente" value={money(balance, currency)} valueStyle={styles.tdBold} />
+          <Pair
+            label="Vencimiento"
+            value={sale.dueDate ? formatShortDate(sale.dueDate) : 'Sin vencimiento'}
+            valueStyle={styles.tdBold}
+          />
+          {status ? <Pair label="Estado" value={getCreditStatusLabel(status)} /> : null}
         </View>
       </View>
 
-      {sale.installments && sale.installments.length > 0 && (
-        <View>
-          <Text style={styles.sectionTitle}>PLAN DE CUOTAS</Text>
+      {sale.installments && sale.installments.length > 0 ? (
+        <View style={styles.table}>
           <View style={styles.tableHead}>
-            <Text style={[styles.th, styles.colDesc]}>VENCIMIENTO</Text>
+            <Text style={[styles.th, styles.colDesc]}>PLAN DE CUOTAS</Text>
             <Text style={[styles.th, styles.colMoney]}>MONTO</Text>
           </View>
           {sale.installments.map((inst, index) => (
-            <View key={index} style={[styles.row, index % 2 === 1 ? styles.rowAlt : {}]}>
+            <View key={index} style={styles.row}>
               <Text style={[styles.td, styles.colDesc]}>{formatLongDate(inst.dueDate)}</Text>
               <Text style={[styles.tdBold, styles.colMoney]}>{money(inst.amount, currency)}</Text>
             </View>
           ))}
         </View>
-      )}
+      ) : null}
     </View>
   )
 }
@@ -359,6 +274,10 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
     sale.client?.phone?.replace(/\D/g, '') || '222222222222',
   )
 
+  const currency = company.currency
+  const location = [company.address, company.city].filter(Boolean).join(', ')
+  const isCancelled = sale.status === 'CANCELLED'
+
   return (
     <Document
       title={`Factura ${sale.invoiceNumber}`}
@@ -367,110 +286,108 @@ export function InvoiceDocument({ sale, settings }: { sale: InvoiceSale; setting
       creator={company.name}
     >
       <Page size="A4" style={styles.page} wrap>
-        <View style={styles.accentBar} />
-
         <View style={styles.body}>
+          {/* 1. Emisor e identificación del documento */}
           <View style={styles.header}>
             <View style={styles.brand}>
               {logo ? <Image style={styles.logo} src={logo} /> : null}
-              <View style={styles.brandText}>
-                <Text style={styles.brandName}>{company.name}</Text>
-                <Text style={styles.brandKind}>FACTURA ELECTRÓNICA DE VENTA</Text>
+              <View>
+                <Text style={styles.brandName}>{company.name.toUpperCase()}</Text>
+                {company.nit ? <Text style={styles.brandLine}>NIT {company.nit} · Régimen ordinario</Text> : null}
+                {location ? <Text style={styles.brandLine}>{location}</Text> : null}
+                {company.phone || company.email ? (
+                  <Text style={styles.brandLine}>{[company.phone, company.email].filter(Boolean).join(' · ')}</Text>
+                ) : null}
               </View>
             </View>
             <View style={styles.docBox}>
-              <Text style={styles.docLabel}>FACTURA N°</Text>
-              <Text style={styles.docNumber}>#{sale.invoiceNumber}</Text>
-              <Text style={styles.docDate}>{formatLongDate(sale.saleDate)}</Text>
-              <Text style={styles.docDate}>{formatTime(sale.saleDate)}</Text>
+              <Text style={styles.docLabel}>FACTURA DE VENTA</Text>
+              <Text style={styles.docNumber}>{sale.invoiceNumber}</Text>
+              <Text style={styles.docDate}>
+                {formatShortDate(sale.saleDate)} · {formatTime(sale.saleDate)}
+              </Text>
+              {isCancelled ? <Text style={styles.docVoid}>DOCUMENTO ANULADO</Text> : null}
             </View>
           </View>
 
-          <ContactStrip company={company} />
-
-          <View style={styles.dianBox}>
-            <Text style={styles.dianText}>
-              Autorización DIAN No. 18764000001234 de 2024-01-15 &bull; Vigencia: 18 meses &bull; Rango: SETP-1 a
-              SETP-10000 &bull; Responsable de IVA &bull; Tipo: 10 (Estándar)
-            </Text>
-          </View>
-
+          {/* 2. Comprador y condiciones de la venta */}
           <View style={styles.metaRow}>
             <View style={styles.metaCol}>
-              <Text style={styles.metaLabel}>CLIENTE / ADQUIRIENTE</Text>
+              <Text style={styles.metaLabel}>FACTURAR A</Text>
               {sale.client ? (
                 <View>
-                  <Text style={styles.metaName}>{sale.client.name}</Text>
+                  <Text style={styles.metaName}>{sale.client.name.toUpperCase()}</Text>
                   {sale.client.phone ? <Text style={styles.metaLine}>CC/NIT: {sale.client.phone}</Text> : null}
-                  {sale.client.email ? <Text style={styles.metaLine}>Email: {sale.client.email}</Text> : null}
-                  {sale.client.address ? <Text style={styles.metaLine}>Dir: {sale.client.address}</Text> : null}
+                  {sale.client.address ? <Text style={styles.metaLine}>Dirección: {sale.client.address}</Text> : null}
+                  {sale.client.email ? <Text style={styles.metaLine}>Correo: {sale.client.email}</Text> : null}
                 </View>
               ) : (
                 <View>
                   <Text style={styles.metaName}>CONSUMIDOR FINAL</Text>
-                  <Text style={styles.metaLine}>NIT: 222222222222</Text>
+                  <Text style={styles.metaLine}>Identificación: 222222222222</Text>
                 </View>
               )}
             </View>
-            <View style={styles.metaColRight}>
-              <Text style={styles.metaLabel}>MÉTODO Y FORMA DE PAGO</Text>
-              <Text style={styles.metaValue}>{getPaymentMethodLabel(sale.paymentMethod)}</Text>
-              <Text style={styles.metaLine}>Forma: {isCredit ? '2 - Crédito' : '1 - Contado'}</Text>
-              {sale.user?.name ? <Text style={styles.metaLine}>Atendido por: {sale.user.name}</Text> : null}
-              <Text style={styles.metaLine}>Estado: {sale.status === 'CANCELLED' ? 'Anulada' : 'Completada'}</Text>
+
+            <View style={styles.metaCol}>
+              <Text style={styles.metaLabel}>CONDICIONES</Text>
+              <Pair
+                label="Fecha de emisión"
+                value={`${formatShortDate(sale.saleDate)} · ${formatTime(sale.saleDate)}`}
+              />
+              {isCredit && sale.dueDate ? (
+                <Pair label="Fecha de vencimiento" value={formatShortDate(sale.dueDate)} />
+              ) : null}
+              <Pair
+                label="Forma de pago"
+                value={`${isCredit ? 'Crédito' : 'Contado'} · ${getPaymentMethodLabel(sale.paymentMethod)}`}
+              />
+              {sale.user?.name ? <Pair label="Atendió" value={sale.user.name} /> : null}
             </View>
           </View>
 
-          <Text style={styles.sectionTitle}>DETALLE DE PRODUCTOS Y SERVICIOS</Text>
-          <ItemsTable sale={sale} currency={company.currency} />
+          {/* 3. Detalle de la venta */}
+          <ItemsTable sale={sale} currency={currency} />
 
-          <View style={styles.totals}>
-            <View style={styles.totalsBox}>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Subtotal Bruto</Text>
-                <Text style={styles.totalValue}>{money(sale.subtotal, company.currency)}</Text>
-              </View>
-              {sale.discount > 0 && (
-                <View style={styles.totalRow}>
-                  <Text style={[styles.totalLabel, styles.totalDiscount]}>Descuento Comercial</Text>
-                  <Text style={[styles.totalValue, styles.totalDiscount]}>
-                    -{money(sale.discount, company.currency)}
-                  </Text>
-                </View>
-              )}
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Base Gravable (19%)</Text>
-                <Text style={styles.totalValue}>{money(baseGravable, company.currency)}</Text>
-              </View>
-              <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>IVA (19.00%)</Text>
-                <Text style={styles.totalValue}>{money(valorIva, company.currency)}</Text>
-              </View>
+          {/* 4. Totales y valor en letras */}
+          <View style={styles.bottom}>
+            <View style={styles.leftStack}>
+              <Text style={styles.wordsLabel}>VALOR EN LETRAS</Text>
+              <Text style={styles.wordsValue}>Son {formatCurrencyInWords(sale.total)}</Text>
+              <Text style={styles.taxLine}>
+                IVA 19.00% · Base gravable {money(baseGravable, currency)} · Impuesto {money(valorIva, currency)}
+              </Text>
+            </View>
+
+            <View style={styles.totals}>
+              <Pair label="Subtotal" value={money(sale.subtotal, currency)} />
+              {sale.discount > 0 ? <Pair label="(-) Descuento" value={`-${money(sale.discount, currency)}`} /> : null}
+              <Pair label="IVA (19.00%)" value={money(valorIva, currency)} />
               <View style={styles.grandRow}>
-                <Text style={styles.grandLabel}>TOTAL FACTURA</Text>
-                <Text style={styles.grandValue}>{money(sale.total, company.currency)}</Text>
+                <Text style={styles.grandLabel}>TOTAL</Text>
+                <Text style={styles.grandValue}>{money(sale.total, currency)}</Text>
               </View>
+              <Text style={styles.currencyNote}>Moneda: {currency}</Text>
             </View>
           </View>
 
-          <View style={styles.wordsBox}>
-            <Text style={styles.wordsLabel}>VALOR EN LETRAS:</Text>
-            <Text style={styles.wordsValue}>SON: {formatCurrencyInWords(sale.total)}</Text>
-          </View>
+          {isCredit ? <CreditSummary sale={sale} currency={currency} /> : null}
 
-          {isCredit && <CreditSummary sale={sale} currency={company.currency} />}
-
-          <View style={styles.cufeBox}>
-            <Text style={styles.cufeLabel}>CUFE (Código Único de Factura Electrónica - SHA-384):</Text>
-            <Text style={styles.cufeHash}>{cufe}</Text>
-          </View>
-
-          <View style={styles.note}>
-            <Text style={styles.noteText}>
-              Título Valor: Esta factura de venta se asimila en sus efectos a la letra de cambio de conformidad con el
-              Art. 774 del Código de Comercio. El comprador declara haber recibido real y materialmente las mercancías o
-              servicios descritos. Documento generado el {formatLongDate(generatedAt)} a las {formatTime(generatedAt)}.
+          {/* 5. Pie fiscal: lo que exige la norma, en el menor espacio posible */}
+          <View style={styles.legal}>
+            <Text style={styles.legalLine}>
+              <Text style={{ fontFamily: 'Helvetica-Bold' }}>CUFE </Text>
+              {cufe}
             </Text>
+            <Text style={styles.legalLine}>
+              Documento electrónico de venta. Resolución DIAN No. 18764000001234 del 15/01/2024, rango SETP-1 a
+              SETP-10000. Emitido el {formatLongDate(sale.saleDate)} a las {formatTime(sale.saleDate)} (America/Bogotá).
+            </Text>
+            <Text style={styles.legalLine}>
+              Esta factura de venta se asimila en sus efectos a la letra de cambio según el Art. 774 del Código de
+              Comercio. El comprador declara recibir a entera satisfacción los bienes o servicios descritos.
+            </Text>
+            <Text style={styles.legalLine}>Documento generado el {formatLongDate(generatedAt)}.</Text>
           </View>
         </View>
 
