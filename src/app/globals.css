@@ -59,25 +59,25 @@
 }
 
 :root {
-  --background: oklch(0.976 0.009 70);
-  --foreground: oklch(0.205 0.018 40);
-  --card: oklch(0.995 0.003 70);
-  --card-foreground: oklch(0.205 0.018 40);
-  --popover: oklch(0.995 0.003 70);
-  --popover-foreground: oklch(0.205 0.018 40);
-  --primary: oklch(0.55 0.14 184);
-  --primary-foreground: oklch(0.985 0.003 70);
-  --secondary: oklch(0.95 0.012 70);
-  --secondary-foreground: oklch(0.26 0.02 40);
-  --muted: oklch(0.95 0.012 70);
-  --muted-foreground: oklch(0.53 0.02 40);
-  --accent: oklch(0.94 0.03 180);
-  --accent-foreground: oklch(0.3 0.08 185);
+  --background: oklch(0.985 0.003 250);
+  --foreground: oklch(0.15 0.01 260);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.15 0.01 260);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.15 0.01 260);
+  --primary: oklch(0.58 0.17 155);
+  --primary-foreground: oklch(0.99 0.002 155);
+  --secondary: oklch(0.955 0.005 250);
+  --secondary-foreground: oklch(0.22 0.015 260);
+  --muted: oklch(0.955 0.005 250);
+  --muted-foreground: oklch(0.48 0.015 250);
+  --accent: oklch(0.95 0.03 155);
+  --accent-foreground: oklch(0.25 0.08 155);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.895 0.014 70);
-  --input: oklch(0.895 0.014 70);
-  --ring: oklch(0.55 0.14 184 / 0.3);
-  --chart-1: oklch(0.55 0.14 184);
+  --border: oklch(0.90 0.008 250);
+  --input: oklch(0.90 0.008 250);
+  --ring: oklch(0.58 0.17 155 / 0.35);
+  --chart-1: oklch(0.58 0.17 155);
   --chart-2: oklch(0.78 0.16 80);
   --chart-3: oklch(0.62 0.12 190);
   --chart-4: oklch(0.83 0.15 90);
@@ -85,13 +85,13 @@
   --radius: 0.75rem;
   --sidebar: oklch(0.12 0.015 255);
   --sidebar-foreground: oklch(0.95 0.005 250);
-  --sidebar-primary: oklch(0.72 0.14 182);
+  --sidebar-primary: oklch(0.70 0.17 155);
   --sidebar-primary-foreground: oklch(0.12 0.02 260);
   --sidebar-accent: oklch(0.20 0.02 255);
   --sidebar-accent-foreground: oklch(0.98 0.005 250);
   --sidebar-border: oklch(1 0 0 / 0.08);
-  --sidebar-ring: oklch(0.72 0.14 182 / 0.4);
-  --success: oklch(0.55 0.18 145);
+  --sidebar-ring: oklch(0.70 0.17 155 / 0.4);
+  --success: oklch(0.58 0.18 145);
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.7 0.16 65);
   --warning-foreground: oklch(0.205 0 0);
@@ -102,37 +102,37 @@
 }
 
 .dark {
-  --background: oklch(0.12 0.02 260);
+  --background: oklch(0.11 0.015 255);
   --foreground: oklch(0.985 0.005 250);
-  --card: oklch(0.16 0.02 260);
+  --card: oklch(0.15 0.015 255);
   --card-foreground: oklch(0.985 0.005 250);
-  --popover: oklch(0.16 0.02 260);
+  --popover: oklch(0.15 0.015 255);
   --popover-foreground: oklch(0.985 0.005 250);
-  --primary: oklch(0.72 0.14 182);
+  --primary: oklch(0.70 0.17 155);
   --primary-foreground: oklch(0.12 0.02 260);
-  --secondary: oklch(0.22 0.02 260);
+  --secondary: oklch(0.20 0.015 255);
   --secondary-foreground: oklch(0.985 0.005 250);
-  --muted: oklch(0.20 0.02 260);
-  --muted-foreground: oklch(0.72 0.015 250);
-  --accent: oklch(0.26 0.04 182);
-  --accent-foreground: oklch(0.94 0.02 182);
+  --muted: oklch(0.18 0.015 255);
+  --muted-foreground: oklch(0.70 0.015 250);
+  --accent: oklch(0.22 0.04 155);
+  --accent-foreground: oklch(0.92 0.03 155);
   --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 0.1);
+  --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.72 0.14 182 / 0.35);
-  --chart-1: oklch(0.72 0.14 182);
+  --ring: oklch(0.70 0.17 155 / 0.35);
+  --chart-1: oklch(0.70 0.17 155);
   --chart-2: oklch(0.82 0.15 85);
   --chart-3: oklch(0.65 0.11 195);
   --chart-4: oklch(0.85 0.14 90);
   --chart-5: oklch(0.55 0.1 200);
   --sidebar: oklch(0.09 0.02 260);
   --sidebar-foreground: oklch(0.985 0.005 250);
-  --sidebar-primary: oklch(0.72 0.14 182);
+  --sidebar-primary: oklch(0.70 0.17 155);
   --sidebar-primary-foreground: oklch(0.12 0.02 260);
-  --sidebar-accent: oklch(0.22 0.04 182);
+  --sidebar-accent: oklch(0.20 0.02 255);
   --sidebar-accent-foreground: oklch(0.985 0.005 250);
   --sidebar-border: oklch(1 0 0 / 0.08);
-  --sidebar-ring: oklch(0.72 0.14 182 / 0.4);
+  --sidebar-ring: oklch(0.70 0.17 155 / 0.4);
   --gold: oklch(0.82 0.15 85);
   --gold-foreground: oklch(0.2 0.04 60);
 }
@@ -375,4 +375,165 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+}
+
+/* ==========================================================================
+   ANIMATED BOT AVATAR - ULTRA FLUID 60FPS GPU KEYFRAMES
+   ========================================================================== */
+
+@keyframes bot-float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  30% {
+    transform: translateY(-2.5px) rotate(-1.5deg);
+  }
+  70% {
+    transform: translateY(1.5px) rotate(1deg);
+  }
+}
+
+@keyframes bot-antenna-sway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-8deg);
+  }
+  65% {
+    transform: rotate(9deg);
+  }
+  85% {
+    transform: rotate(-3deg);
+  }
+}
+
+@keyframes bot-antenna-glow {
+  0%, 100% {
+    opacity: 0.8;
+    filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.7));
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 7px rgba(52, 211, 153, 1));
+  }
+}
+
+/* Ojo izquierdo: parpadeo doble y natural */
+@keyframes bot-left-eye {
+  0%, 34%, 40%, 46%, 66%, 72%, 80%, 100% {
+    transform: scaleY(1);
+  }
+  37% {
+    transform: scaleY(0.08); /* Primer parpadeo */
+  }
+  43% {
+    transform: scaleY(0.08); /* Doble parpadeo rápido */
+  }
+  69% {
+    transform: scaleY(0.08); /* Parpadeo casual */
+  }
+}
+
+/* Ojo derecho: parpadeo sincronizado + GUIÑO Y MUECA */
+@keyframes bot-right-eye {
+  0%, 34%, 40%, 46%, 66%, 72%, 80%, 100% {
+    transform: scaleY(1) rotate(0deg);
+  }
+  37% {
+    transform: scaleY(0.08);
+  }
+  43% {
+    transform: scaleY(0.08);
+  }
+  69% {
+    transform: scaleY(0.08);
+  }
+  85%, 93% {
+    transform: scaleY(0.18) scaleX(1.25) rotate(-12deg); /* ¡MUECA! Guiño pícaro */
+  }
+}
+
+/* Movimiento de mirada (mirar a los lados) */
+@keyframes bot-eye-look {
+  0%, 20%, 58%, 78%, 100% {
+    transform: translate(0, 0);
+  }
+  24%, 32% {
+    transform: translate(-1.8px, -0.4px); /* Curioso a la izquierda */
+  }
+  62%, 70% {
+    transform: translate(1.8px, 0.4px); /* Curioso a la derecha */
+  }
+  85%, 93% {
+    transform: translate(0px, -0.6px); /* Directo al frente durante el guiño */
+  }
+}
+
+/* Boca interactiva: sonríe y se anima */
+@keyframes bot-mouth-anim {
+  0%, 22%, 58%, 78%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  25%, 32% {
+    transform: scaleX(0.85) translateX(-0.8px);
+    opacity: 0.9;
+  }
+  85%, 93% {
+    transform: scale(1.3) translateY(-0.6px);
+    opacity: 1;
+  }
+}
+
+/* Mejillas con rubor suave que se iluminan al sonreír */
+@keyframes bot-cheeks-anim {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.9);
+  }
+  85%, 93% {
+    opacity: 0.85;
+    transform: scale(1.25);
+  }
+}
+
+.animate-bot-float {
+  animation: bot-float 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transform-origin: center;
+}
+
+.animate-bot-antenna {
+  animation: bot-antenna-sway 4.8s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+  transform-origin: 32px 14px;
+}
+
+.animate-bot-antenna-glow {
+  animation: bot-antenna-glow 2.4s ease-in-out infinite;
+  transform-origin: 32px 6px;
+}
+
+.animate-bot-eye-left {
+  animation: bot-left-eye 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: 24px 34px;
+}
+
+.animate-bot-eye-right {
+  animation: bot-right-eye 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: 40px 34px;
+}
+
+.animate-bot-look {
+  animation: bot-eye-look 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
+}
+
+.animate-bot-mouth {
+  animation: bot-mouth-anim 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: 32px 45px;
+}
+
+.animate-bot-cheeks {
+  animation: bot-cheeks-anim 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  transform-origin: center;
 }
