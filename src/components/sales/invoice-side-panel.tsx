@@ -405,14 +405,19 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
             </div>
 
             {/*
-                La representacion DIAN se muestra tal cual, a escala, sin
-                etiquetas autour: el documento ya se identifica solo y cualquier
-                rotulo compite con la jerarquia del resumen.
+                Miniatura fiel del documento: la hoja se compone al ancho real
+                de papel y se escala al ancho del panel, de modo que reproduce
+                exactamente la maqueta que sale por impresora y en el PDF.
+
+                La caja se monta siempre (aunque aun no haya medicion) porque el
+                ResizeObserver necesita medirla para resolver el alto; mientras
+                tanto se superpone un esqueleto para que nunca se vea un hueco
+                blanco sin explicar.
               */}
             <div
               ref={thumbBoxRef}
-              className={cn('relative w-full min-h-[200px] overflow-hidden rounded-xl border border-border bg-white')}
-              style={{ height: thumbHeight ?? undefined }}
+              className="relative w-full overflow-hidden rounded-xl border border-border bg-white"
+              style={{ height: thumbHeight ?? 280 }}
             >
               <div
                 ref={thumbSheetRef}
@@ -423,6 +428,12 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
                   <DianInvoiceView sale={sale} />
                 </div>
               </div>
+
+              {thumbHeight === null ? (
+                <div className="absolute inset-0 bg-muted/40">
+                  <Skeleton className="h-full w-full rounded-xl" />
+                </div>
+              ) : null}
             </div>
           </>
         ) : null}
