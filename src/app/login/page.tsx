@@ -105,9 +105,10 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Luces ambientales tenues */}
-      <div className="absolute -top-40 -left-40 w-[480px] h-[480px] bg-emerald-500/10 rounded-full blur-[140px] pointer-events-none" />
-      <div className="absolute -bottom-40 -right-40 w-[480px] h-[480px] bg-blue-500/10 rounded-full blur-[140px] pointer-events-none" />
+      {/* Luces ambientales dinámicas flotantes con movimiento orgánico (Luz verde/esmeralda móvil) */}
+      <div className="absolute -top-32 -left-32 w-[540px] h-[540px] bg-emerald-500/20 dark:bg-emerald-500/15 rounded-full blur-[130px] pointer-events-none animate-ambient-glow-1" />
+      <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] bg-teal-500/20 dark:bg-emerald-400/12 rounded-full blur-[140px] pointer-events-none animate-ambient-glow-2" />
+      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[440px] h-[440px] bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none animate-ambient-shine" />
 
       {/* Contenedor principal */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-5 py-8 sm:px-8 lg:px-12 flex flex-col justify-between min-h-dvh lg:justify-center">
