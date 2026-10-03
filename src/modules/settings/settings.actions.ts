@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { requireAuth } from '@/modules/auth/auth.actions'
+import { requireAdmin, requireAuth } from '@/modules/auth/auth.actions'
 import { z } from 'zod'
 import { tryCatch } from '@/lib/errors'
 import { getString } from '@/lib/form-data'
@@ -10,16 +10,19 @@ import { success, failure } from '@/types'
 import { getOrCreateSettings, updateSettings } from './settings.service'
 
 const UpdateSettingsSchema = z.object({
-  companyName: z.string().min(1, 'Nombre de empresa requerido'),
+  companyName: z.string().min(1, 'Razón social o nombre comercial requerido'),
   companyNit: z.string().optional().default(''),
   companyAddress: z.string().optional().default(''),
   companyCity: z.string().optional().default(''),
   companyPhone: z.string().optional().default(''),
   companyEmail: z.string().email('Email inválido').optional().or(z.literal('')),
-  currency: z.enum(['COP', 'USD', 'EUR']).default('COP'),
-  invoicePrefix: z.string().min(1, 'Prefijo requerido').default('CIL-'),
+  currency: z.enum(['COP', 'USD', 'EUR', 'MXN', 'PEN', 'CLP', 'ARS']).default('COP'),
+  invoicePrefix: z.string().min(1, 'Prefijo de facturación requerido').default('FAC-'),
   invoiceFooter: z.string().optional().default(''),
   lowStockThreshold: z.coerce.number().int().min(0).default(5),
+  nextInvoiceNumber: z.coerce.number().int().min(1).default(1),
+  nextWebOrderNumber: z.coerce.number().int().min(1).default(1000),
+  webPendingExpiryHours: z.coerce.number().int().min(1).max(720).default(24),
 })
 
 export async function getSystemSettings() {
@@ -28,7 +31,7 @@ export async function getSystemSettings() {
 }
 
 export async function updateSystemSettings(formData: FormData): Promise<ActionResult> {
-  await requireAuth()
+  await requireAdmin()
 
   const raw = {
     companyName: getString(formData, 'companyName') || '',
@@ -38,9 +41,12 @@ export async function updateSystemSettings(formData: FormData): Promise<ActionRe
     companyPhone: getString(formData, 'companyPhone'),
     companyEmail: getString(formData, 'companyEmail'),
     currency: getString(formData, 'currency') || 'COP',
-    invoicePrefix: getString(formData, 'invoicePrefix') || 'CIL-',
+    invoicePrefix: getString(formData, 'invoicePrefix') || 'FAC-',
     invoiceFooter: getString(formData, 'invoiceFooter'),
     lowStockThreshold: Number(getString(formData, 'lowStockThreshold') || 5),
+    nextInvoiceNumber: Number(getString(formData, 'nextInvoiceNumber') || 1),
+    nextWebOrderNumber: Number(getString(formData, 'nextWebOrderNumber') || 1000),
+    webPendingExpiryHours: Number(getString(formData, 'webPendingExpiryHours') || 24),
   }
 
   const parsed = UpdateSettingsSchema.safeParse(raw)
@@ -63,6 +69,9 @@ export async function updateSystemSettings(formData: FormData): Promise<ActionRe
         invoicePrefix: data.invoicePrefix,
         invoiceFooter: data.invoiceFooter || null,
         lowStockThreshold: data.lowStockThreshold,
+        nextInvoiceNumber: data.nextInvoiceNumber,
+        nextWebOrderNumber: data.nextWebOrderNumber,
+        webPendingExpiryHours: data.webPendingExpiryHours,
       }),
     { context: 'updateSystemSettings' },
   )

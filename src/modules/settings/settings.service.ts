@@ -17,6 +17,9 @@ export type SettingsData = {
   invoicePrefix: string
   invoiceFooter: string | null
   lowStockThreshold: number
+  nextInvoiceNumber?: number
+  nextWebOrderNumber?: number
+  webPendingExpiryHours?: number
 }
 
 export async function updateSettings(data: Partial<SettingsData>) {
