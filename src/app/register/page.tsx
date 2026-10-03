@@ -210,34 +210,35 @@ export default function RegisterPage() {
         }}
       />
 
-      {/* Luces ambientales dinámicas flotantes con movimiento orgánico (Luz verde/esmeralda móvil) */}
-      <div className="absolute -top-32 -left-32 w-[540px] h-[540px] bg-emerald-500/20 dark:bg-emerald-500/15 rounded-full blur-[130px] pointer-events-none animate-ambient-glow-1" />
-      <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] bg-teal-500/20 dark:bg-emerald-400/12 rounded-full blur-[140px] pointer-events-none animate-ambient-glow-2" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] bg-emerald-600/10 rounded-full blur-[160px] pointer-events-none animate-ambient-shine" />
+      {/* Luces ambientales dinámicas flotantes con movimiento visible de un punto a otro (Glow verde esmeralda y cian) */}
+      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[90px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
+      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[100px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
+      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
 
-      {/* Contenedor Principal (Sin Header superior rígido) */}
+      {/* Contenedor Principal (Sin Header o barra superior de pantalla completa) */}
       <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col gap-6">
-        {/* Barra Integrada Flotante de Marca y Enlace a Login */}
-        <div className="flex items-center justify-between px-2 sm:px-1">
-          <NovaLogo size="md" subtitle="Alta y Configuración de Negocio" />
-
-          <Link
-            href="/login"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-card/80 border border-border/80 hover:border-emerald-500/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-200 shadow-2xs backdrop-blur-md cursor-pointer group"
-          >
-            <span>¿Ya tienes cuenta?</span>
-            <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center">
-              Iniciar Sesión &rarr;
-            </span>
-          </Link>
-        </div>
-
         {/* Grid de 2 Columnas: Formulario Guiado + Vista Previa en Vivo */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {/* ======================================================== */}
           {/* COLUMNA IZQUIERDA: Formulario Guiado con Transiciones     */}
           {/* ======================================================== */}
           <div className="lg:col-span-7 space-y-6">
+            {/* Cabecera integrada dentro del flujo (sin header de pantalla completa) */}
+            <div className="flex items-center justify-between px-1">
+              <NovaLogo size="md" subtitle="Alta y Configuración de Negocio" />
+
+              <Link
+                href="/login"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/85 border border-border/80 hover:border-emerald-500/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-200 shadow-2xs backdrop-blur-md cursor-pointer group"
+              >
+                <span>¿Ya tienes cuenta?</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center">
+                  Iniciar Sesión &rarr;
+                </span>
+              </Link>
+            </div>
+
             {/* Stepper / Indicador de Pasos Dinámico */}
             <div className="p-3.5 rounded-2xl bg-card/70 border border-border/70 backdrop-blur-md shadow-xs">
               <div className="flex items-center justify-between relative">

@@ -594,76 +594,101 @@
 }
 
 /* ============================================================ */
-/* ILUMINACIÓN AMBIENTAL DINÁMICA FLOTANTE (Glow verde y azul)   */
+/* ILUMINACIÓN AMBIENTAL DINÁMICA FLOTANTE (Glow verde esmeralda móvil) */
 /* ============================================================ */
 @keyframes ambient-glow-drift-1 {
   0% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
   }
   25% {
-    transform: translate(120px, 80px) scale(1.25);
-    opacity: 0.38;
+    transform: translate3d(240px, 110px, 0) scale(1.35);
+    opacity: 0.75;
   }
   50% {
-    transform: translate(60px, 190px) scale(0.9);
-    opacity: 0.28;
+    transform: translate3d(120px, 240px, 0) scale(0.95);
+    opacity: 0.55;
   }
   75% {
-    transform: translate(-100px, 110px) scale(1.15);
-    opacity: 0.34;
+    transform: translate3d(-160px, 130px, 0) scale(1.2);
+    opacity: 0.7;
   }
   100% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.22;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.45;
   }
 }
 
 @keyframes ambient-glow-drift-2 {
   0% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.18;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.4;
   }
   30% {
-    transform: translate(-140px, -90px) scale(1.2);
-    opacity: 0.32;
+    transform: translate3d(-260px, -140px, 0) scale(1.3);
+    opacity: 0.7;
   }
   60% {
-    transform: translate(90px, -130px) scale(0.85);
-    opacity: 0.22;
+    transform: translate3d(150px, -180px, 0) scale(0.9);
+    opacity: 0.45;
   }
   85% {
-    transform: translate(40px, 60px) scale(1.1);
-    opacity: 0.28;
+    transform: translate3d(80px, 90px, 0) scale(1.2);
+    opacity: 0.65;
   }
   100% {
-    transform: translate(0px, 0px) scale(1);
-    opacity: 0.18;
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.4;
+  }
+}
+
+@keyframes ambient-orb-wander {
+  0% {
+    transform: translate3d(-15vw, 5vh, 0) scale(1);
+    opacity: 0.35;
+  }
+  33% {
+    transform: translate3d(30vw, -10vh, 0) scale(1.35);
+    opacity: 0.65;
+  }
+  66% {
+    transform: translate3d(15vw, 25vh, 0) scale(1.1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translate3d(-15vw, 5vh, 0) scale(1);
+    opacity: 0.35;
   }
 }
 
 @keyframes ambient-pulse-shine {
   0%, 100% {
     transform: scale(1);
-    opacity: 0.15;
+    opacity: 0.25;
   }
   50% {
-    transform: scale(1.3);
-    opacity: 0.35;
+    transform: scale(1.35);
+    opacity: 0.55;
   }
 }
 
 .animate-ambient-glow-1 {
-  animation: ambient-glow-drift-1 16s ease-in-out infinite;
+  animation: ambient-glow-drift-1 9s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
 .animate-ambient-glow-2 {
-  animation: ambient-glow-drift-2 20s ease-in-out infinite;
+  animation: ambient-glow-drift-2 11s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+.animate-ambient-wander {
+  animation: ambient-orb-wander 13s ease-in-out infinite;
   will-change: transform, opacity;
 }
 
 .animate-ambient-shine {
-  animation: ambient-pulse-shine 12s ease-in-out infinite;
+  animation: ambient-pulse-shine 7s ease-in-out infinite;
   will-change: transform, opacity;
 }
+

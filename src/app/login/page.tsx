@@ -105,10 +105,12 @@ export default function LoginPage() {
         }}
       />
 
-      {/* Luces ambientales dinámicas flotantes con movimiento orgánico (Luz verde/esmeralda móvil) */}
-      <div className="absolute -top-32 -left-32 w-[540px] h-[540px] bg-emerald-500/20 dark:bg-emerald-500/15 rounded-full blur-[130px] pointer-events-none animate-ambient-glow-1" />
-      <div className="absolute -bottom-36 -right-36 w-[580px] h-[580px] bg-teal-500/20 dark:bg-emerald-400/12 rounded-full blur-[140px] pointer-events-none animate-ambient-glow-2" />
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[440px] h-[440px] bg-emerald-600/10 rounded-full blur-[150px] pointer-events-none animate-ambient-shine" />
+      {/* Luces ambientales dinámicas flotantes con movimiento visible de un punto a otro (Glow verde esmeralda y cian) */}
+      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[90px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
+      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[100px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
+      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
+
 
       {/* Contenedor principal */}
       <div className="relative z-10 w-full max-w-7xl mx-auto px-5 py-8 sm:px-8 lg:px-12 flex flex-col justify-between min-h-dvh lg:justify-center">
