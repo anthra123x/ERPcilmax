@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -43,6 +43,7 @@ import {
   TrendingUp,
   Package,
   HandCoins,
+  Zap,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -101,6 +102,92 @@ const SAMPLE_SECTOR_ITEMS: Record<BusinessSector, { name: string; sku: string; p
   },
 }
 
+// Métricas dinámicas por sector para las categorías flotantes
+const SECTOR_METRICS: Record<
+  BusinessSector,
+  {
+    salesAmount: string
+    salesChange: string
+    salesNote: string
+    catalogSync: string
+    catalogDetail: string
+    portfolioAmount: string
+    portfolioDetail: string
+  }
+> = {
+  retail_general: {
+    salesAmount: '$18.450.000',
+    salesChange: '+12.4% vs ayer',
+    salesNote: '142 tickets hoy',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Tienda física y web',
+    portfolioAmount: '$7.850.000',
+    portfolioDetail: 'Control de crédito',
+  },
+  technology_repair: {
+    salesAmount: '$24.680.000',
+    salesChange: '+18.2% vs ayer',
+    salesNote: '18 órdenes de taller',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Seriales & Repuestos',
+    portfolioAmount: '$9.200.000',
+    portfolioDetail: 'Garantías y abonos',
+  },
+  fashion_apparel: {
+    salesAmount: '$15.320.000',
+    salesChange: '+14.5% vs ayer',
+    salesNote: '45 prendas facturadas',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Matriz Tallas & Color',
+    portfolioAmount: '$6.400.000',
+    portfolioDetail: 'Plan separé activo',
+  },
+  grocery_supermarket: {
+    salesAmount: '$31.890.000',
+    salesChange: '+9.8% vs ayer',
+    salesNote: '380 clientes en caja',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Lotes & Vencimiento',
+    portfolioAmount: '$4.150.000',
+    portfolioDetail: 'Crédito institucional',
+  },
+  hardware_construction: {
+    salesAmount: '$27.450.000',
+    salesChange: '+16.1% vs ayer',
+    salesNote: '82 despachos de obra',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Granel & Medidas',
+    portfolioAmount: '$14.200.000',
+    portfolioDetail: 'Línea constructores',
+  },
+  pharmacy_health: {
+    salesAmount: '$19.780.000',
+    salesChange: '+11.2% vs ayer',
+    salesNote: '110 despachos de salud',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Reg. INVIMA & Lotes',
+    portfolioAmount: '$5.680.000',
+    portfolioDetail: 'Convenios y prepagos',
+  },
+  services_workshop: {
+    salesAmount: '$16.900.000',
+    salesChange: '+15.7% vs ayer',
+    salesNote: '24 servicios activos',
+    catalogSync: '100% Sincronizado',
+    catalogDetail: 'Mano de obra & Kits',
+    portfolioAmount: '$8.750.000',
+    portfolioDetail: 'Anticipos recibidos',
+  },
+}
+
+const LIVE_ACTIVITY_EVENTS = [
+  { text: 'Venta #04910 cobrada en caja principal ($420.000 COP)', time: 'hace 3s' },
+  { text: 'Inventario sincronizado automáticamente con la tienda web', time: 'hace 12s' },
+  { text: 'Factura electrónica validada con firma digital', time: 'hace 24s' },
+  { text: 'Abono de cartera registrado por $150.000 COP', time: 'hace 38s' },
+  { text: 'Turno de caja cerrado con arqueo exacto sin descuadre', time: 'hace 52s' },
+]
+
 const MAX_LOGO_BYTES = 4 * 1024 * 1024
 
 export default function RegisterPage() {
@@ -109,6 +196,7 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [logoLoading, setLogoLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+  const [activeEventIndex, setActiveEventIndex] = useState(0)
   const logoInputRef = useRef<HTMLInputElement>(null)
 
   // Form State
@@ -123,6 +211,14 @@ export default function RegisterPage() {
   const [companyCity, setCompanyCity] = useState('')
   const [companyPhone, setCompanyPhone] = useState('')
   const [currency, setCurrency] = useState('COP')
+
+  // Rotador de eventos en vivo para dinamismo del showcase
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveEventIndex((prev) => (prev + 1) % LIVE_ACTIVITY_EVENTS.length)
+    }, 3800)
+    return () => clearInterval(timer)
+  }, [])
 
   // Password Security Strength calculation
   const passwordStrength = useMemo(() => {
@@ -256,9 +352,11 @@ export default function RegisterPage() {
   const activeSectorInfo = SECTOR_INFO[sector]
   const sampleItem = SAMPLE_SECTOR_ITEMS[sector] || SAMPLE_SECTOR_ITEMS.retail_general
   const ActiveSectorIcon = SECTOR_ICONS[sector] || Store
+  const dynamicMetrics = SECTOR_METRICS[sector] || SECTOR_METRICS.retail_general
+  const activeEvent = LIVE_ACTIVITY_EVENTS[activeEventIndex]
 
   return (
-    <div className="relative min-h-dvh w-full flex items-center justify-center bg-[#f4f5f7] dark:bg-background text-foreground overflow-hidden font-sans">
+    <div className="relative min-h-dvh w-full flex items-center justify-center bg-[#f4f5f7] dark:bg-background text-foreground overflow-hidden font-sans py-8 px-4 sm:px-6 lg:px-8">
       {/* Trama sutil de micropuntos de precisión */}
       <div
         className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none"
@@ -274,10 +372,10 @@ export default function RegisterPage() {
       <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
 
-      {/* Contenedor Principal Flotante (Idéntica armonía que en el login) */}
-      <div className="relative z-10 w-full max-w-7xl mx-auto px-5 py-8 sm:px-8 lg:px-12 flex flex-col justify-between min-h-dvh lg:justify-center">
+      {/* Contenedor Principal Centrado (Composición flotante con márgenes cómodos alrededor, sin estirarse a toda la pantalla) */}
+      <div className="relative z-10 w-full max-w-5xl xl:max-w-6xl mx-auto flex flex-col items-center justify-center my-auto">
         {/* Header móvil */}
-        <div className="flex lg:hidden items-center justify-between py-4 mb-4">
+        <div className="flex lg:hidden w-full items-center justify-between py-2 mb-4">
           <NovaLogo size="sm" />
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card border border-border/80 text-[11px] text-muted-foreground shadow-2xs">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
@@ -285,11 +383,11 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-14 xl:gap-20 items-center my-auto w-full">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 xl:gap-14 items-center w-full">
           {/* ======================================================== */}
           {/* LADO IZQUIERDO: Visuales ERP con Categorías Flotantes      */}
           {/* ======================================================== */}
-          <div className="hidden lg:flex lg:col-span-7 flex-col space-y-6 w-full max-w-xl xl:max-w-2xl mr-auto animate-fade-in">
+          <div className="hidden lg:flex lg:col-span-7 flex-col space-y-5 w-full max-w-xl mr-auto animate-fade-in">
             {/* Header / Logo oficial y estado de la plataforma */}
             <div className="flex items-center justify-between">
               <NovaLogo size="md" subtitle="Plataforma de Gestión Comercial" />
@@ -306,7 +404,7 @@ export default function RegisterPage() {
             </div>
 
             {/* Titular */}
-            <div className="space-y-1.5 pt-2">
+            <div className="space-y-1">
               <h1 className="text-2xl xl:text-3xl font-bold tracking-tight text-foreground leading-tight">
                 El sistema moderno para operar cualquier negocio
               </h1>
@@ -315,27 +413,46 @@ export default function RegisterPage() {
               </p>
             </div>
 
-            {/* Tarjetas de demostración visual estilo SaaS (Categorías Flotantes Dinámicas) */}
-            <div className="space-y-3.5 pt-1 w-full">
+            {/* Micro-Ticker Dinámico de Actividad en Tiempo Real */}
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-card/80 border border-border/80 shadow-2xs backdrop-blur-xs w-fit text-[11px]">
+              <Zap className="h-3.5 w-3.5 text-amber-500 fill-amber-500/20 shrink-0" />
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">En vivo:</span>
+              <span className="text-muted-foreground truncate max-w-[280px] sm:max-w-[340px] transition-all duration-300">
+                {activeEvent.text}
+              </span>
+              <span className="text-[10px] text-muted-foreground/60 font-mono shrink-0 ml-1">
+                {activeEvent.time}
+              </span>
+            </div>
+
+            {/* Tarjetas de demostración visual estilo SaaS (Categorías Flotantes con Dinamismo) */}
+            <div className="space-y-3 pt-0.5 w-full">
               {/* Tarjeta 1 Flotante: Venta POS Adaptativa según tu Sector y Nombre */}
-              <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs transition-all hover:shadow-md hover:scale-[1.01] duration-300">
+              <div className="p-4 rounded-2xl bg-card border border-border/80 shadow-xs transition-all hover:shadow-md hover:border-emerald-500/30 hover:scale-[1.01] duration-300 animate-float-ticket">
                 <div className="flex items-center justify-between pb-2.5 border-b border-border/60">
                   <div className="flex items-center gap-2.5">
-                    <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center text-foreground font-bold">
+                    <div className="h-8 w-8 rounded-xl bg-muted flex items-center justify-center text-foreground font-bold shrink-0 overflow-hidden ring-1 ring-border/50">
                       {logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={logoUrl} alt="Logo" className="h-full w-full object-cover rounded-xl" />
+                        <img src={logoUrl} alt="Logo" className="h-full w-full object-cover" />
                       ) : (
                         <Receipt className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
                       )}
                     </div>
                     <div>
-                      <div className="text-xs font-bold text-foreground">
-                        {companyName.trim() || 'Venta Mostrador #04910'}
+                      <div className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                        <span className="truncate max-w-[240px]">
+                          {companyName.trim() || 'Venta Mostrador #04910'}
+                        </span>
+                        {companyName.trim() && (
+                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                        )}
                       </div>
                       <div className="text-[10px] text-muted-foreground font-mono flex items-center gap-1.5">
                         <ActiveSectorIcon className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-                        <span>{slogan.trim() || activeSectorInfo.title}</span>
+                        <span className="truncate max-w-[220px]">
+                          {slogan.trim() || activeSectorInfo.title}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -352,7 +469,9 @@ export default function RegisterPage() {
                   </div>
                   <div className="flex justify-between text-muted-foreground text-[11px]">
                     <span dangerouslySetInnerHTML={{ __html: sampleItem.detail }} />
-                    <span className="font-mono">Margen: +{activeSectorInfo.suggestedMargin}%</span>
+                    <span className="font-mono text-emerald-600 dark:text-emerald-400 font-semibold">
+                      Margen: +{activeSectorInfo.suggestedMargin}%
+                    </span>
                   </div>
                 </div>
 
@@ -364,40 +483,76 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              {/* Fila de 3 Micro-Tarjetas Flotantes */}
+              {/* Fila de 3 Micro-Tarjetas Flotantes Dinámicas con Animación Orgánica */}
               <div className="grid grid-cols-3 gap-3 w-full">
-                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:scale-[1.02] transition-all duration-300">
-                  <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                    <TrendingUp className="h-4 w-4 shrink-0" />
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Ventas Hoy
-                    </span>
+                {/* Categoría Flotante 1: Ventas Hoy */}
+                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:border-emerald-500/40 hover:scale-[1.02] transition-all duration-300 animate-float-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                      <TrendingUp className="h-4 w-4 shrink-0" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        Ventas Hoy
+                      </span>
+                    </div>
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
                   </div>
-                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">$18.450.000</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5 font-mono">+12.4% vs ayer</div>
+                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">
+                    {dynamicMetrics.salesAmount}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 font-mono truncate">
+                    {dynamicMetrics.salesChange}
+                  </div>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+                {/* Categoría Flotante 2: Catálogo */}
+                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:border-blue-500/40 hover:scale-[1.02] transition-all duration-300 animate-float-2">
                   <div className="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
                     <Package className="h-4 w-4 shrink-0" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       Catálogo
                     </span>
                   </div>
-                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">100% Sincronizado</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Tienda física y web</div>
+                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">
+                    {dynamicMetrics.catalogSync}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {dynamicMetrics.catalogDetail}
+                  </div>
                 </div>
 
-                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:scale-[1.02] transition-all duration-300">
+                {/* Categoría Flotante 3: Cartera POS */}
+                <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs hover:shadow-md hover:border-amber-500/40 hover:scale-[1.02] transition-all duration-300 animate-float-3">
                   <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
                     <HandCoins className="h-4 w-4 shrink-0" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       Cartera POS
                     </span>
                   </div>
-                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">$7.850.000</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Control de crédito</div>
+                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">
+                    {dynamicMetrics.portfolioAmount}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5 truncate">
+                    {dynamicMetrics.portfolioDetail}
+                  </div>
                 </div>
+              </div>
+
+              {/* Pastillas flotantes dinámicas de funcionalidades */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                {[
+                  '✦ POS Táctil',
+                  '✦ Factura DIAN',
+                  '✦ Inventario Cloud',
+                  '✦ Cartera & Créditos',
+                  '✦ Catálogo Web',
+                ].map((tag) => (
+                  <span
+                    key={tag}
+                    className="px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-card/70 border border-border/70 text-muted-foreground hover:text-foreground hover:border-emerald-500/40 hover:bg-emerald-500/5 transition-all duration-200 cursor-default"
+                  >
+                    {tag}
+                  </span>
+                ))}
               </div>
             </div>
           </div>
@@ -406,9 +561,9 @@ export default function RegisterPage() {
           {/* LADO DERECHO: Tarjeta Flotante de Registro (SaaS Card)    */}
           {/* ======================================================== */}
           <div className="w-full lg:col-span-5 flex justify-center lg:justify-end ml-auto">
-            <div className="w-full max-w-[440px] sm:max-w-[460px] p-7 sm:p-9 rounded-3xl bg-card border border-border/80 shadow-xl transition-all">
+            <div className="w-full max-w-[420px] p-6 sm:p-7 rounded-3xl bg-card border border-border/80 shadow-xl transition-all">
               {/* Stepper Sutil Integrado en la Tarjeta */}
-              <div className="flex items-center justify-between pb-4 mb-5 border-b border-border/60">
+              <div className="flex items-center justify-between pb-3.5 mb-4 border-b border-border/60">
                 <div className="space-y-0.5">
                   <div className="inline-flex items-center gap-1.5 text-[11px] font-mono font-semibold text-emerald-600 dark:text-emerald-400">
                     <span>Paso {step} de 3</span>
@@ -436,6 +591,7 @@ export default function RegisterPage() {
                         if (s < step) setStep(s as 1 | 2 | 3)
                       }}
                       disabled={s > step}
+                      title={`Ir al paso ${s}`}
                       className={`h-2 rounded-full transition-all duration-300 ${
                         s === step
                           ? 'w-6 bg-emerald-500'
@@ -452,8 +608,8 @@ export default function RegisterPage() {
               {/* PASO 1: CUENTA DE ADMINISTRADOR                          */}
               {/* ======================================================== */}
               {step === 1 && (
-                <form onSubmit={handleNextStep} className="space-y-4 animate-in fade-in-50 duration-200">
-                  <div className="space-y-1.5">
+                <form onSubmit={handleNextStep} className="space-y-3.5 animate-in fade-in-50 duration-200">
+                  <div className="space-y-1">
                     <Label htmlFor="ownerName" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                       <User className="h-3.5 w-3.5 text-muted-foreground" />
                       Nombre Completo *
@@ -469,7 +625,7 @@ export default function RegisterPage() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label htmlFor="email" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5 text-muted-foreground" />
                       Correo Electrónico *
@@ -486,7 +642,7 @@ export default function RegisterPage() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="password" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                         <Lock className="h-3.5 w-3.5 text-muted-foreground" />
@@ -550,17 +706,17 @@ export default function RegisterPage() {
               {/* PASO 2: IDENTIDAD & MARCA                                */}
               {/* ======================================================== */}
               {step === 2 && (
-                <form onSubmit={handleNextStep} className="space-y-4 animate-in fade-in-50 duration-200">
+                <form onSubmit={handleNextStep} className="space-y-3.5 animate-in fade-in-50 duration-200">
                   {/* Uploader de Logotipo */}
-                  <div className="p-3 rounded-2xl bg-muted/30 border border-border/70 flex items-center gap-3.5">
-                    <div className="h-12 w-12 rounded-xl bg-card border border-border/80 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10 shadow-2xs">
+                  <div className="p-2.5 rounded-2xl bg-muted/30 border border-border/70 flex items-center gap-3">
+                    <div className="h-11 w-11 rounded-xl bg-card border border-border/80 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-border/60 shadow-2xs">
                       {logoLoading ? (
                         <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
                       ) : logoUrl ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={logoUrl} alt="Logo" className="h-full w-full object-cover" />
                       ) : (
-                        <Building2 className="h-6 w-6 text-muted-foreground/60" />
+                        <Building2 className="h-5 w-5 text-muted-foreground/60" />
                       )}
                     </div>
 
@@ -607,7 +763,7 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label htmlFor="companyName" className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                       <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                       Nombre del Negocio / Razón Social *
@@ -623,7 +779,7 @@ export default function RegisterPage() {
                     />
                   </div>
 
-                  <div className="space-y-1.5">
+                  <div className="space-y-1">
                     <Label htmlFor="slogan" className="text-xs font-semibold text-foreground">
                       Lema Comercial (Opcional)
                     </Label>
@@ -636,8 +792,8 @@ export default function RegisterPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
                       <Label htmlFor="companyCity" className="text-xs font-semibold text-foreground flex items-center gap-1">
                         <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
                         Ciudad
@@ -651,7 +807,7 @@ export default function RegisterPage() {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="companyPhone" className="text-xs font-semibold text-foreground flex items-center gap-1">
                         <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                         Teléfono
@@ -691,12 +847,12 @@ export default function RegisterPage() {
               {/* PASO 3: SECTOR COMERCIAL & OPERACIÓN                     */}
               {/* ======================================================== */}
               {step === 3 && (
-                <form onSubmit={handleCompleteRegistration} className="space-y-4 animate-in fade-in-50 duration-200">
-                  <div className="space-y-1.5">
+                <form onSubmit={handleCompleteRegistration} className="space-y-3.5 animate-in fade-in-50 duration-200">
+                  <div className="space-y-1">
                     <Label className="text-xs font-semibold text-foreground">
                       Selecciona tu Sector Comercial *
                     </Label>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[220px] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
                       {(Object.keys(SECTOR_INFO) as BusinessSector[]).map((secKey) => {
                         const info = SECTOR_INFO[secKey]
                         const Icon = SECTOR_ICONS[secKey] || Store
@@ -707,7 +863,7 @@ export default function RegisterPage() {
                             key={secKey}
                             type="button"
                             onClick={() => setSector(secKey)}
-                            className={`p-2.5 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1 ${
+                            className={`p-2 rounded-xl border text-left transition-all cursor-pointer flex flex-col justify-between gap-1 ${
                               isSelected
                                 ? 'border-emerald-500 bg-emerald-500/10 ring-1 ring-emerald-500/40 text-foreground scale-[1.01]'
                                 : 'border-border/80 hover:border-emerald-500/40 bg-card text-muted-foreground'
@@ -728,8 +884,8 @@ export default function RegisterPage() {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1.5">
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div className="space-y-1">
                       <Label htmlFor="companyNit" className="text-xs font-semibold text-foreground flex items-center gap-1">
                         <FileText className="h-3.5 w-3.5 text-muted-foreground" />
                         NIT / RUT
@@ -743,7 +899,7 @@ export default function RegisterPage() {
                       />
                     </div>
 
-                    <div className="space-y-1.5">
+                    <div className="space-y-1">
                       <Label htmlFor="currency" className="text-xs font-semibold text-foreground">
                         Moneda
                       </Label>
@@ -797,7 +953,7 @@ export default function RegisterPage() {
               )}
 
               {/* Nota de Seguridad & Acceso */}
-              <div className="pt-4 mt-4 border-t border-border/60 text-center space-y-2">
+              <div className="pt-3.5 mt-3.5 border-t border-border/60 text-center space-y-2">
                 <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                   Acceso seguro y cifrado de extremo a extremo
@@ -819,8 +975,8 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Footer */}
-        <div className="py-4 text-center text-[11px] text-muted-foreground/70">
+        {/* Footer centrado justo debajo del bloque, sin forzarse al fondo de la pantalla */}
+        <div className="mt-8 text-center text-[11px] text-muted-foreground/60">
           <p>Nova ERP &bull; Plataforma multi-negocio &bull; Todos los derechos reservados</p>
         </div>
       </div>
