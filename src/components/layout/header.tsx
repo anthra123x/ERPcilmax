@@ -12,7 +12,7 @@ import {
   PackageSearch,
   Loader2,
   ArrowRight,
-  ChevronRight,
+  Settings,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,7 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { NotificationsDropdown } from '@/components/layout/notifications-dropdown'
 import { globalSearch } from '@/modules/search/search.actions'
 import { formatCurrency } from '@/lib/format'
@@ -53,20 +53,8 @@ interface SearchResults {
 
 const EMPTY_RESULTS: SearchResults = { products: [], clients: [], sales: [] }
 
-const ROUTE_BREADCRUMBS: Record<string, { section: string; title: string }> = {
-  '/dashboard': { section: 'Dashboard', title: 'Resumen' },
-  '/sales': { section: 'Comercial', title: 'Ventas (POS)' },
-  '/web': { section: 'E-Commerce', title: 'Tienda Online' },
-  '/inventory': { section: 'Operaciones', title: 'Inventario' },
-  '/clients': { section: 'Clientes', title: 'Directorio' },
-  '/credits': { section: 'Finanzas', title: 'Cartera & Créditos' },
-  '/admin': { section: 'Sistema', title: 'Configuración' },
-  '/profile': { section: 'Cuenta', title: 'Mi Perfil' },
-}
-
 export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter()
-  const pathname = usePathname()
 
   function handleLogout() {
     router.push('/auth/logout')
@@ -80,13 +68,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const hasResults = results.products.length > 0 || results.clients.length > 0 || results.sales.length > 0
-
-  // Breadcrumbs match
-  const matchedRoute = ROUTE_BREADCRUMBS[pathname] ||
-    Object.entries(ROUTE_BREADCRUMBS).find(([prefix]) => prefix !== '/' && pathname.startsWith(prefix))?.[1] || {
-      section: 'Nova ERP',
-      title: 'Plataforma',
-    }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -167,9 +148,9 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const userInitial = user.name ? user.name.charAt(0).toUpperCase() : 'A'
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-border/70 bg-card/80 backdrop-blur-md px-4 lg:px-7 sticky top-0 z-30 shadow-2xs">
-      {/* Lado Izquierdo: Menú móvil y Breadcrumbs estilo 'Dashboard > Overview' */}
-      <div className="flex items-center gap-3">
+    <header className="flex h-16 items-center justify-between border-b border-border/80 bg-background/80 backdrop-blur-md px-4 lg:px-6 sticky top-0 z-30 shadow-xs">
+      {/* Lado Izquierdo: Menú móvil y Barra de búsqueda global */}
+      <div className="flex items-center gap-2.5 sm:gap-3 flex-1 max-w-xl min-w-0">
         <Button
           variant="ghost"
           size="icon"
@@ -179,24 +160,13 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        <div className="flex items-center gap-1.5 text-xs font-medium">
-          <span className="text-muted-foreground/80 hover:text-foreground transition-colors">
-            {matchedRoute.section}
-          </span>
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0" />
-          <span className="font-semibold text-foreground tracking-tight">{matchedRoute.title}</span>
-        </div>
-      </div>
-
-      {/* Lado Derecho: Buscador Pill, Notificaciones, Estado de Seguridad y Perfil */}
-      <div className="flex items-center gap-2 sm:gap-3">
         {/* Barra de búsqueda estilo Pill con atajo rápido */}
-        <div ref={searchBoxRef} className="relative w-48 sm:w-64 lg:w-72">
+        <div ref={searchBoxRef} className="relative w-full max-w-xs sm:max-w-md">
           <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
           <Input
             id="global-search"
             type="search"
-            placeholder="Buscar..."
+            placeholder="Buscar productos, clientes o facturas..."
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -214,7 +184,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
           {/* Menú flotante de resultados globales */}
           {open && query.trim().length >= 2 && (
-            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 z-50 rounded-2xl border border-border/80 bg-popover/98 backdrop-blur-xl text-popover-foreground shadow-2xl overflow-hidden animate-fade-in">
+            <div className="absolute left-0 top-full mt-2 w-80 sm:w-96 z-50 rounded-2xl border border-border/80 bg-popover/98 backdrop-blur-xl text-popover-foreground shadow-2xl overflow-hidden animate-fade-in">
               {searching ? (
                 <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -319,14 +289,21 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             </div>
           )}
         </div>
+      </div>
 
+      {/* Lado Derecho: Notificaciones y Perfil de Usuario */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         {/* Campana de Notificaciones */}
         <NotificationsDropdown />
 
         {/* Avatar Dropdown en el Header */}
         <DropdownMenu>
-          <DropdownMenuTrigger className="flex items-center cursor-pointer rounded-full outline-none">
-            <div className="h-8 w-8 rounded-full bg-gray-950 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-xs ring-2 ring-gray-900/10 hover:ring-gray-900/20 transition-all">
+          <DropdownMenuTrigger className="flex items-center gap-2.5 cursor-pointer rounded-full p-1 pl-2.5 pr-1 hover:bg-muted/70 transition-all duration-150 outline-none">
+            <div className="text-right hidden sm:block">
+              <div className="text-xs font-semibold text-foreground leading-tight">{user.name}</div>
+              <div className="text-[10px] text-muted-foreground/80 font-normal">Administrador</div>
+            </div>
+            <div className="h-8 w-8 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-xs ring-2 ring-slate-900/10">
               {userInitial}
             </div>
           </DropdownMenuTrigger>
@@ -346,6 +323,13 @@ export function Header({ user, onMenuClick }: HeaderProps) {
             >
               <User className="mr-2 h-4 w-4" />
               <span>Mi Perfil</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => router.push('/admin')}
+              className="cursor-pointer rounded-xl px-2.5 py-2 text-xs"
+            >
+              <Settings className="mr-2 h-4 w-4" />
+              <span>Configuración</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-1" />
             <DropdownMenuItem
