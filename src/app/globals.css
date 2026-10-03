@@ -59,38 +59,38 @@
 }
 
 :root {
-  --background: oklch(0.985 0.003 250);
+  --background: oklch(0.975 0.002 250);
   --foreground: oklch(0.15 0.01 260);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.15 0.01 260);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.15 0.01 260);
-  --primary: oklch(0.58 0.17 155);
+  --primary: oklch(0.2 0.01 260);
   --primary-foreground: oklch(0.99 0.002 155);
   --secondary: oklch(0.955 0.005 250);
   --secondary-foreground: oklch(0.22 0.015 260);
   --muted: oklch(0.955 0.005 250);
   --muted-foreground: oklch(0.48 0.015 250);
-  --accent: oklch(0.95 0.03 155);
-  --accent-foreground: oklch(0.25 0.08 155);
+  --accent: oklch(0.95 0.01 250);
+  --accent-foreground: oklch(0.15 0.01 260);
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.90 0.008 250);
-  --input: oklch(0.90 0.008 250);
-  --ring: oklch(0.58 0.17 155 / 0.35);
-  --chart-1: oklch(0.58 0.17 155);
-  --chart-2: oklch(0.78 0.16 80);
+  --border: oklch(0.91 0.006 250);
+  --input: oklch(0.91 0.006 250);
+  --ring: oklch(0.2 0.01 260 / 0.25);
+  --chart-1: oklch(0.2 0.01 260);
+  --chart-2: oklch(0.58 0.17 155);
   --chart-3: oklch(0.62 0.12 190);
   --chart-4: oklch(0.83 0.15 90);
   --chart-5: oklch(0.45 0.1 200);
-  --radius: 0.75rem;
-  --sidebar: oklch(0.12 0.015 255);
-  --sidebar-foreground: oklch(0.95 0.005 250);
-  --sidebar-primary: oklch(0.70 0.17 155);
-  --sidebar-primary-foreground: oklch(0.12 0.02 260);
-  --sidebar-accent: oklch(0.20 0.02 255);
-  --sidebar-accent-foreground: oklch(0.98 0.005 250);
-  --sidebar-border: oklch(1 0 0 / 0.08);
-  --sidebar-ring: oklch(0.70 0.17 155 / 0.4);
+  --radius: 0.85rem;
+  --sidebar: oklch(0.978 0.002 250);
+  --sidebar-foreground: oklch(0.22 0.015 260);
+  --sidebar-primary: oklch(0.18 0.01 260);
+  --sidebar-primary-foreground: oklch(0.99 0.002 155);
+  --sidebar-accent: oklch(0.94 0.004 250);
+  --sidebar-accent-foreground: oklch(0.12 0.02 260);
+  --sidebar-border: oklch(0.91 0.006 250);
+  --sidebar-ring: oklch(0.2 0.01 260 / 0.2);
   --success: oklch(0.58 0.18 145);
   --success-foreground: oklch(0.985 0 0);
   --warning: oklch(0.7 0.16 65);
@@ -108,31 +108,31 @@
   --card-foreground: oklch(0.985 0.005 250);
   --popover: oklch(0.15 0.015 255);
   --popover-foreground: oklch(0.985 0.005 250);
-  --primary: oklch(0.70 0.17 155);
+  --primary: oklch(0.7 0.17 155);
   --primary-foreground: oklch(0.12 0.02 260);
-  --secondary: oklch(0.20 0.015 255);
+  --secondary: oklch(0.2 0.015 255);
   --secondary-foreground: oklch(0.985 0.005 250);
   --muted: oklch(0.18 0.015 255);
-  --muted-foreground: oklch(0.70 0.015 250);
+  --muted-foreground: oklch(0.7 0.015 250);
   --accent: oklch(0.22 0.04 155);
   --accent-foreground: oklch(0.92 0.03 155);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 0.08);
   --input: oklch(1 0 0 / 0.12);
-  --ring: oklch(0.70 0.17 155 / 0.35);
-  --chart-1: oklch(0.70 0.17 155);
+  --ring: oklch(0.7 0.17 155 / 0.35);
+  --chart-1: oklch(0.7 0.17 155);
   --chart-2: oklch(0.82 0.15 85);
   --chart-3: oklch(0.65 0.11 195);
   --chart-4: oklch(0.85 0.14 90);
   --chart-5: oklch(0.55 0.1 200);
   --sidebar: oklch(0.09 0.02 260);
   --sidebar-foreground: oklch(0.985 0.005 250);
-  --sidebar-primary: oklch(0.70 0.17 155);
+  --sidebar-primary: oklch(0.7 0.17 155);
   --sidebar-primary-foreground: oklch(0.12 0.02 260);
-  --sidebar-accent: oklch(0.20 0.02 255);
+  --sidebar-accent: oklch(0.2 0.02 255);
   --sidebar-accent-foreground: oklch(0.985 0.005 250);
   --sidebar-border: oklch(1 0 0 / 0.08);
-  --sidebar-ring: oklch(0.70 0.17 155 / 0.4);
+  --sidebar-ring: oklch(0.7 0.17 155 / 0.4);
   --gold: oklch(0.82 0.15 85);
   --gold-foreground: oklch(0.2 0.04 60);
 }
@@ -281,8 +281,12 @@
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slide-in-left {
@@ -297,18 +301,35 @@
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-8px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 @keyframes float-reverse {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(8px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(8px);
+  }
 }
 
 @keyframes pulse-slow {
-  0%, 100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.08); }
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.08);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -382,7 +403,8 @@
    ========================================================================== */
 
 @keyframes bot-float {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0px) rotate(0deg);
   }
   30% {
@@ -394,7 +416,8 @@
 }
 
 @keyframes bot-antenna-sway {
-  0%, 100% {
+  0%,
+  100% {
     transform: rotate(0deg);
   }
   25% {
@@ -409,7 +432,8 @@
 }
 
 @keyframes bot-antenna-glow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.8;
     filter: drop-shadow(0 0 2px rgba(52, 211, 153, 0.7));
   }
@@ -421,7 +445,14 @@
 
 /* Ojo izquierdo: parpadeo doble y natural */
 @keyframes bot-left-eye {
-  0%, 34%, 40%, 46%, 66%, 72%, 80%, 100% {
+  0%,
+  34%,
+  40%,
+  46%,
+  66%,
+  72%,
+  80%,
+  100% {
     transform: scaleY(1);
   }
   37% {
@@ -437,7 +468,14 @@
 
 /* Ojo derecho: parpadeo sincronizado + GUIÑO Y MUECA */
 @keyframes bot-right-eye {
-  0%, 34%, 40%, 46%, 66%, 72%, 80%, 100% {
+  0%,
+  34%,
+  40%,
+  46%,
+  66%,
+  72%,
+  80%,
+  100% {
     transform: scaleY(1) rotate(0deg);
   }
   37% {
@@ -449,38 +487,52 @@
   69% {
     transform: scaleY(0.08);
   }
-  85%, 93% {
+  85%,
+  93% {
     transform: scaleY(0.18) scaleX(1.25) rotate(-12deg); /* ¡MUECA! Guiño pícaro */
   }
 }
 
 /* Movimiento de mirada (mirar a los lados) */
 @keyframes bot-eye-look {
-  0%, 20%, 58%, 78%, 100% {
+  0%,
+  20%,
+  58%,
+  78%,
+  100% {
     transform: translate(0, 0);
   }
-  24%, 32% {
+  24%,
+  32% {
     transform: translate(-1.8px, -0.4px); /* Curioso a la izquierda */
   }
-  62%, 70% {
+  62%,
+  70% {
     transform: translate(1.8px, 0.4px); /* Curioso a la derecha */
   }
-  85%, 93% {
+  85%,
+  93% {
     transform: translate(0px, -0.6px); /* Directo al frente durante el guiño */
   }
 }
 
 /* Boca interactiva: sonríe y se anima */
 @keyframes bot-mouth-anim {
-  0%, 22%, 58%, 78%, 100% {
+  0%,
+  22%,
+  58%,
+  78%,
+  100% {
     transform: scale(1);
     opacity: 0.85;
   }
-  25%, 32% {
+  25%,
+  32% {
     transform: scaleX(0.85) translateX(-0.8px);
     opacity: 0.9;
   }
-  85%, 93% {
+  85%,
+  93% {
     transform: scale(1.3) translateY(-0.6px);
     opacity: 1;
   }
@@ -488,11 +540,14 @@
 
 /* Mejillas con rubor suave que se iluminan al sonreír */
 @keyframes bot-cheeks-anim {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     opacity: 0.25;
     transform: scale(0.9);
   }
-  85%, 93% {
+  85%,
+  93% {
     opacity: 0.85;
     transform: scale(1.25);
   }
