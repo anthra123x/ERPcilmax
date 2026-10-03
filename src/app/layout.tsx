@@ -27,7 +27,14 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="es" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="es" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var r=localStorage.getItem('nova_erp_user_preferences');if(r){var p=JSON.parse(r);if(p.theme==='dark'||(p.theme==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.classList.add('dark');}if(p.tableDensity==='compact'){document.documentElement.classList.add('compact-density');}}}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col">
         {process.env.NODE_ENV === 'development' && (
           <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />

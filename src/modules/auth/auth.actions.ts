@@ -49,6 +49,7 @@ export async function getCurrentUser() {
         id: true,
         email: true,
         name: true,
+        createdAt: true,
       },
     })
 
@@ -122,6 +123,53 @@ export async function updateProfileName(name: string) {
 
     revalidatePath('/profile')
     return { success: 'Perfil actualizado' }
+  } catch (_error) {
+    return { error: 'Error al actualizar el perfil' }
+  }
+}
+
+export async function updateUserProfile(data: {
+  name: string
+  phone?: string
+  roleTitle?: string
+}) {
+  await requireAuth()
+
+  const trimmedName = data.name?.trim()
+  if (!trimmedName) {
+    return { error: 'El nombre es obligatorio' }
+  }
+
+  try {
+    const client = await createSupabaseServerAction()
+
+    const {
+      data: { user },
+    } = await client.auth.getUser()
+
+    if (!user?.email) {
+      return { error: 'Sesión no válida' }
+    }
+
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { name: trimmedName },
+    })
+
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { supabaseAdmin } = await import('@/lib/supabase-server')
+      await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: {
+          ...(user.user_metadata || {}),
+          name: trimmedName,
+          phone: data.phone?.trim() || null,
+          roleTitle: data.roleTitle?.trim() || 'Administrador',
+        },
+      })
+    }
+
+    revalidatePath('/profile')
+    return { success: 'Perfil actualizado exitosamente' }
   } catch (_error) {
     return { error: 'Error al actualizar el perfil' }
   }

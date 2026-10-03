@@ -6,6 +6,13 @@ import { Header } from './header'
 import { AiFloatingChat } from '@/components/assistant/ai-floating-chat'
 import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts'
 import { cn } from '@/lib/utils'
+import {
+  getUserPreferences,
+  applyTheme,
+  applyTableDensity,
+  PREFERENCES_CHANGED_EVENT,
+  type UserPreferences,
+} from '@/lib/user-preferences'
 
 interface DashboardLayoutProps {
   children: React.ReactNode
@@ -36,6 +43,21 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Sincronizar preferencias visuales del usuario (tema y densidad)
+  useEffect(() => {
+    const prefs = getUserPreferences()
+    applyTheme(prefs.theme)
+    applyTableDensity(prefs.tableDensity)
+
+    const handler = (e: CustomEvent<UserPreferences>) => {
+      if (e.detail?.theme) applyTheme(e.detail.theme)
+      if (e.detail?.tableDensity) applyTableDensity(e.detail.tableDensity)
+    }
+
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
   }, [])
 
   const toggleCollapse = () => {

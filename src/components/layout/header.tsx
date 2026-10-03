@@ -25,10 +25,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { NotificationsDropdown } from '@/components/layout/notifications-dropdown'
 import { globalSearch } from '@/modules/search/search.actions'
 import { formatCurrency } from '@/lib/format'
+import {
+  getUserPreferences,
+  PREFERENCES_CHANGED_EVENT,
+  ACCENT_PALETTES,
+  type AccentColor,
+  type UserPreferences,
+} from '@/lib/user-preferences'
 
 interface HeaderProps {
   user: {
@@ -55,6 +62,7 @@ const EMPTY_RESULTS: SearchResults = { products: [], clients: [], sales: [] }
 
 export function Header({ user, onMenuClick }: HeaderProps) {
   const router = useRouter()
+  const pathname = usePathname()
 
   function handleLogout() {
     router.push('/auth/logout')
@@ -64,10 +72,36 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   const [results, setResults] = useState<SearchResults>(EMPTY_RESULTS)
   const [open, setOpen] = useState(false)
   const [searching, setSearching] = useState(false)
-  const searchBoxRef = useRef<HTMLDivElement>(null)
+  const [accent, setAccent] = useState<AccentColor>('emerald')
+  const [roleTitle, setRoleTitle] = useState('Administrador')
+
+  const searchBoxRef = useRef<HTMLFormElement>(null)
+  const searchInputRef = useRef<HTMLInputElement>(null)
   const debounceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const hasResults = results.products.length > 0 || results.clients.length > 0 || results.sales.length > 0
+
+  // Cerrar y limpiar búsqueda al cambiar de ruta
+  useEffect(() => {
+    setOpen(false)
+    setQuery('')
+    setResults(EMPTY_RESULTS)
+  }, [pathname])
+
+  // Cargar y escuchar preferencias del usuario (color de avatar y título de rol)
+  useEffect(() => {
+    const prefs = getUserPreferences()
+    setAccent(prefs.accentColor || 'emerald')
+    if (prefs.roleTitle) setRoleTitle(prefs.roleTitle)
+
+    const handler = (e: CustomEvent<UserPreferences>) => {
+      if (e.detail?.accentColor) setAccent(e.detail.accentColor)
+      if (e.detail?.roleTitle) setRoleTitle(e.detail.roleTitle)
+    }
+
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
+  }, [])
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -88,6 +122,14 @@ export function Header({ user, onMenuClick }: HeaderProps) {
   function handleSearchChange(value: string) {
     setQuery(value)
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
+
+    // Protección anti-autofill: Solo abrir resultados si el usuario está enfocado activamente en el input
+    const isInputFocused =
+      typeof document !== 'undefined' && document.activeElement === searchInputRef.current
+    if (!isInputFocused) {
+      setOpen(false)
+      return
+    }
 
     if (value.trim().length < 2) {
       setResults(EMPTY_RESULTS)
@@ -160,12 +202,33 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <Menu className="h-5 w-5" />
         </Button>
 
-        {/* Barra de búsqueda estilo Pill con atajo rápido */}
-        <div ref={searchBoxRef} className="relative w-full max-w-xs sm:max-w-md">
-          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
+        {/* Barra de búsqueda estilo Pill con atajo rápido y protección anti-autofill */}
+        <form
+          role="search"
+          onSubmit={(e) => {
+            e.preventDefault()
+            if (query.trim().length >= 2) {
+              handleKeyDown({ key: 'Enter', preventDefault: () => {} } as React.KeyboardEvent<HTMLInputElement>)
+            }
+          }}
+          autoComplete="off"
+          ref={searchBoxRef}
+          className="relative w-full max-w-xs sm:max-w-md"
+        >
+          <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70 pointer-events-none" />
           <Input
-            id="global-search"
+            ref={searchInputRef}
+            id="nova-global-search-input"
+            name="nova_global_search_input"
             type="search"
+            autoComplete="off"
+            autoCorrect="off"
+            autoCapitalize="off"
+            spellCheck={false}
+            data-lpignore="true"
+            data-1p-ignore="true"
+            data-form-type="other"
+            data-bwignore="true"
             placeholder="Buscar productos, clientes o facturas..."
             value={query}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -288,7 +351,7 @@ export function Header({ user, onMenuClick }: HeaderProps) {
               </button>
             </div>
           )}
-        </div>
+        </form>
       </div>
 
       {/* Lado Derecho: Notificaciones y Perfil de Usuario */}
@@ -301,9 +364,13 @@ export function Header({ user, onMenuClick }: HeaderProps) {
           <DropdownMenuTrigger className="flex items-center gap-2.5 cursor-pointer rounded-full p-1 pl-2.5 pr-1 hover:bg-muted/70 transition-all duration-150 outline-none">
             <div className="text-right hidden sm:block">
               <div className="text-xs font-semibold text-foreground leading-tight">{user.name}</div>
-              <div className="text-[10px] text-muted-foreground/80 font-normal">Administrador</div>
+              <div className="text-[10px] text-muted-foreground/80 font-normal">{roleTitle}</div>
             </div>
-            <div className="h-8 w-8 rounded-full bg-slate-950 text-white flex items-center justify-center shrink-0 shadow-xs font-bold text-xs ring-2 ring-slate-900/10">
+            <div
+              className={`h-8 w-8 rounded-full flex items-center justify-center shrink-0 shadow-xs font-bold text-xs ring-2 ring-border/40 transition-colors ${
+                ACCENT_PALETTES[accent]?.avatarClass || 'bg-slate-950 text-white'
+              }`}
+            >
               {userInitial}
             </div>
           </DropdownMenuTrigger>

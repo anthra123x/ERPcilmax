@@ -9,6 +9,11 @@ import { Textarea } from '@/components/ui/textarea'
 import { chatWithAssistant, getAssistantStatus } from '@/modules/ai/ai.actions'
 import type { AssistantStatus, AssistantToolName } from '@/modules/ai/ai.types'
 import { cn } from '@/lib/utils'
+import {
+  getUserPreferences,
+  PREFERENCES_CHANGED_EVENT,
+  type UserPreferences,
+} from '@/lib/user-preferences'
 
 interface ChatMessage {
   role: 'user' | 'assistant'
@@ -57,8 +62,24 @@ export function AiFloatingChat() {
   const [loading, setLoading] = useState(false)
   const [status, setStatus] = useState<AssistantStatus | null>(null)
   const [unread, setUnread] = useState(0)
+  const [enabled, setEnabled] = useState(true)
   const scrollRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Escuchar preferencia de visibilidad del Asistente IA
+  useEffect(() => {
+    const prefs = getUserPreferences()
+    setEnabled(prefs.showAiAssistant !== false)
+
+    const handler = (e: CustomEvent<UserPreferences>) => {
+      if (e.detail?.showAiAssistant !== undefined) {
+        setEnabled(e.detail.showAiAssistant)
+      }
+    }
+
+    window.addEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
+    return () => window.removeEventListener(PREFERENCES_CHANGED_EVENT, handler as EventListener)
+  }, [])
 
   useEffect(() => {
     getAssistantStatus()
@@ -123,6 +144,8 @@ export function AiFloatingChat() {
 
   const chatHeight = expanded ? 'h-[600px]' : 'h-[460px]'
   const chatWidth = expanded ? 'w-[calc(100vw-2rem)] max-w-[480px]' : 'w-[calc(100vw-2rem)] max-w-[380px]'
+
+  if (!enabled) return null
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
