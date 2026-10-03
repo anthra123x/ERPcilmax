@@ -42,6 +42,11 @@ export interface BusinessWorkflowConfig {
   defaultProfitMargin: number
   barcodeContinuousScan: boolean
   requireAdjustmentReason: boolean
+
+  // Identidad Visual & Marca
+  companyName?: string
+  logoUrl?: string | null
+  brandColor?: string
 }
 
 export const WORKFLOW_STORAGE_KEY = 'nova_business_workflow_config'
@@ -71,6 +76,10 @@ export const DEFAULT_BUSINESS_WORKFLOW: BusinessWorkflowConfig = {
   defaultProfitMargin: 35,
   barcodeContinuousScan: true,
   requireAdjustmentReason: true,
+
+  companyName: 'Nova ERP',
+  logoUrl: null,
+  brandColor: '#10b981',
 }
 
 export const SECTOR_INFO: Record<

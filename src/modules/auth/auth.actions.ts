@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { parseError } from '@/lib/errors'
 import { randomBytes } from 'node:crypto'
+import type { BusinessSector } from '@/lib/business-workflow'
 
 export async function ensureUserExists(email: string, name: string) {
   try {
@@ -340,3 +341,131 @@ export async function createUserByAdmin(formData: FormData) {
     return { error: 'Error al crear usuario' }
   }
 }
+
+export interface RegisterCompanyInput {
+  name: string
+  email: string
+  password: string
+  companyName: string
+  sector?: BusinessSector
+  slogan?: string
+  logoUrl?: string | null
+  companyNit?: string
+  companyCity?: string
+  companyPhone?: string
+  currency?: string
+}
+
+export async function registerCompanyAndOwnerAction(data: RegisterCompanyInput) {
+  const {
+    name,
+    email,
+    password,
+    companyName,
+    sector = 'retail_general',
+    slogan,
+    logoUrl,
+    companyNit,
+    companyCity,
+    companyPhone,
+    currency = 'COP',
+  } = data
+
+  const trimmedEmail = email?.trim().toLowerCase()
+  const trimmedName = name?.trim()
+  const trimmedCompany = companyName?.trim()
+
+  if (!trimmedEmail || !trimmedName || !trimmedCompany) {
+    return { error: 'Nombre, correo y nombre comercial son obligatorios' }
+  }
+
+  if (!password || password.length < 6) {
+    return { error: 'La contraseña debe tener al menos 6 caracteres' }
+  }
+
+  try {
+    // 1. Registrar o actualizar en la base de datos local
+    await prisma.user.upsert({
+      where: { email: trimmedEmail },
+      update: { name: trimmedName },
+      create: { email: trimmedEmail, name: trimmedName },
+    })
+
+    // 2. Crear usuario en Supabase Auth
+    if (process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      const { supabaseAdmin } = await import('@/lib/supabase-server')
+      const { error: sbError } = await supabaseAdmin.auth.admin.createUser({
+        email: trimmedEmail,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          name: trimmedName,
+          companyName: trimmedCompany,
+          roleTitle: 'Administrador Propietario',
+        },
+      })
+      if (sbError && !sbError.message.toLowerCase().includes('already registered')) {
+        return { error: sbError.message }
+      }
+    } else {
+      const { error: signUpError } = await supabase.auth.signUp({
+        email: trimmedEmail,
+        password,
+        options: {
+          data: {
+            name: trimmedName,
+            companyName: trimmedCompany,
+            roleTitle: 'Administrador Propietario',
+          },
+        },
+      })
+      if (signUpError && !signUpError.message.toLowerCase().includes('already registered')) {
+        return { error: signUpError.message }
+      }
+    }
+
+    // 3. Inicializar parámetros comerciales en SystemSettings
+    const { updateSettings } = await import('@/modules/settings/settings.service')
+    const { SECTOR_INFO } = await import('@/lib/business-workflow')
+    const sectorInfo = SECTOR_INFO[sector] || SECTOR_INFO.retail_general
+
+    await updateSettings({
+      companyName: trimmedCompany,
+      companyNit: companyNit || null,
+      companyAddress: null,
+      companyCity: companyCity || null,
+      companyPhone: companyPhone || null,
+      companyEmail: trimmedEmail,
+      currency: currency || 'COP',
+      invoicePrefix: 'FAC-',
+      invoiceFooter: sectorInfo.defaultFooter,
+    })
+
+    // 4. Inicializar flujos de trabajo en StoreSetting
+    const { updateBusinessWorkflowConfig } = await import('@/modules/settings/settings.service')
+    await updateBusinessWorkflowConfig({
+      sector,
+      slogan: slogan || sectorInfo.description,
+      logoUrl: logoUrl || null,
+      defaultProfitMargin: sectorInfo.suggestedMargin,
+      allowCreditSales: true,
+      requireClientOnSale: false,
+      allowNegativeStock: false,
+      allowCashierDiscounts: true,
+      barcodeContinuousScan: true,
+    })
+
+    revalidatePath('/admin')
+    revalidatePath('/sales/new')
+    revalidatePath('/dashboard')
+
+    return {
+      success: true,
+      email: trimmedEmail,
+    }
+  } catch (error) {
+    console.error('registerCompanyAndOwnerAction error:', error)
+    return { error: error instanceof Error ? error.message : 'Error al registrar la empresa' }
+  }
+}
+

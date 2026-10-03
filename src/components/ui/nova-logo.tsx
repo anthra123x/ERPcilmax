@@ -7,9 +7,19 @@ interface NovaLogoProps {
   showWordmark?: boolean
   wordmarkClassName?: string
   subtitle?: string
+  logoUrl?: string | null
+  businessName?: string
 }
 
-export function NovaLogo({ className, size = 'md', showWordmark = true, wordmarkClassName, subtitle }: NovaLogoProps) {
+export function NovaLogo({
+  className,
+  size = 'md',
+  showWordmark = true,
+  wordmarkClassName,
+  subtitle,
+  logoUrl,
+  businessName,
+}: NovaLogoProps) {
   const sizeClasses = {
     sm: 'h-7 w-7 rounded-lg text-[13px]',
     md: 'h-9 w-9 rounded-xl text-base',
@@ -26,31 +36,37 @@ export function NovaLogo({ className, size = 'md', showWordmark = true, wordmark
 
   return (
     <div className={cn('inline-flex items-center gap-3 select-none', className)}>
-      {/* Icon Badge: Modern dark rounded square with geometric stylized N */}
+      {/* Icon Badge: Modern dark rounded square with geometric stylized N or custom company logo */}
       <div
         className={cn(
-          'relative flex shrink-0 items-center justify-center bg-gray-950 text-white font-bold shadow-xs transition-transform duration-200 ring-1 ring-white/10',
+          'relative flex shrink-0 items-center justify-center bg-gray-950 text-white font-bold shadow-xs transition-transform duration-200 ring-1 ring-white/10 overflow-hidden',
           sizeClasses[size],
         )}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className={cn('text-white stroke-[2.2]', iconSizes[size])}
-        >
-          {/* Stylized geometric N with modern node accent */}
-          <path d="M5 19V5L15 19V5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
-          <circle cx="19" cy="5" r="2.2" fill="#10b981" />
-        </svg>
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={logoUrl} alt={businessName || 'Logo de la empresa'} className="h-full w-full object-cover" />
+        ) : (
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+            className={cn('text-white stroke-[2.2]', iconSizes[size])}
+          >
+            <path d="M5 19V5L15 19V5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+            <circle cx="19" cy="5" r="2.2" fill="#10b981" />
+          </svg>
+        )}
       </div>
 
       {/* Wordmark */}
       {showWordmark && (
         <div className="flex flex-col min-w-0 leading-tight">
           <div className={cn('flex items-center gap-1.5 font-bold tracking-tight text-foreground', wordmarkClassName)}>
-            <span className="text-base font-extrabold tracking-tight">Nova</span>
-            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-gray-950 text-white dark:bg-white dark:text-gray-950 tracking-wider">
+            <span className="text-base font-extrabold tracking-tight truncate max-w-[200px]">
+              {businessName || 'Nova'}
+            </span>
+            <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded-md bg-gray-950 text-white dark:bg-white dark:text-gray-950 tracking-wider shrink-0">
               ERP
             </span>
           </div>

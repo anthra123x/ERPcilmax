@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -413,6 +414,19 @@ export default function LoginPage() {
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       Acceso seguro y cifrado de extremo a extremo
                     </p>
+                  </div>
+
+                  {/* Registro de nueva empresa */}
+                  <div className="pt-3 border-t border-border/60 text-center space-y-1">
+                    <p className="text-[11px] text-muted-foreground">
+                      ¿Aún no tienes cuenta para tu negocio?
+                    </p>
+                    <Link
+                      href="/register"
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-primary transition-colors underline underline-offset-4 cursor-pointer"
+                    >
+                      Registrar mi empresa y comenzar &rarr;
+                    </Link>
                   </div>
                 </div>
               )}

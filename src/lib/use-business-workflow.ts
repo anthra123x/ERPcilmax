@@ -26,5 +26,5 @@ export function useBusinessWorkflow() {
     getBusinessWorkflow,
     () => DEFAULT_BUSINESS_WORKFLOW,
   )
-  return { workflow, isLoaded: true }
+  return { workflow, config: workflow, isLoaded: true }
 }

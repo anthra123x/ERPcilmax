@@ -49,7 +49,9 @@ import {
   Save,
   Clock,
   Check,
+  Upload,
 } from 'lucide-react'
+import { NovaLogo } from '@/components/ui/nova-logo'
 import { toast } from 'sonner'
 import { getUsers, deleteUser, createUserByAdmin } from '@/modules/auth/auth.actions'
 import {
@@ -136,8 +138,9 @@ export default function AdminPage() {
   const [isPendingSave, startSaveTransition] = useTransition()
   const [wsConnected, setWsConnected] = useState(false)
 
-  // Flujos de trabajo independientes del negocio
+  // Flujos de trabajo e identidad visual del negocio
   const [workflow, setWorkflow] = useState<BusinessWorkflowConfig>(() => getBusinessWorkflow())
+  const [logoUploading, setLogoUploading] = useState(false)
 
   // 1. Carga inicial y Suscripción WebSocket en Tiempo Real con Supabase
   useEffect(() => {
@@ -205,7 +208,56 @@ export default function AdminPage() {
     }
   }, [])
 
-  // 2. Guardar Ajustes del Sistema y Flujos de Trabajo
+  // 2. Carga y compresión de logotipo del negocio
+  function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('La imagen no debe superar los 5MB')
+      return
+    }
+
+    setLogoUploading(true)
+    const reader = new FileReader()
+    reader.onload = (event) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const MAX_DIM = 400
+        let width = img.width
+        let height = img.height
+
+        if (width > height) {
+          if (width > MAX_DIM) {
+            height = Math.round((height * MAX_DIM) / width)
+            width = MAX_DIM
+          }
+        } else {
+          if (height > MAX_DIM) {
+            width = Math.round((width * MAX_DIM) / height)
+            height = MAX_DIM
+          }
+        }
+
+        canvas.width = width
+        canvas.height = height
+        const ctx = canvas.getContext('2d')
+        ctx?.drawImage(img, 0, 0, width, height)
+        const compressedDataUrl = canvas.toDataURL('image/webp', 0.85)
+
+        const updated = { ...workflow, logoUrl: compressedDataUrl, companyName: settings.companyName }
+        setWorkflow(updated)
+        saveBusinessWorkflow(updated)
+        setLogoUploading(false)
+        toast.success('Logotipo cargado y optimizado en memoria. Guarda los cambios para confirmar.')
+      }
+      img.src = event.target?.result as string
+    }
+    reader.readAsDataURL(file)
+  }
+
+  // 3. Guardar Ajustes del Sistema y Flujos de Trabajo
   async function handleSaveAll(e?: React.FormEvent) {
     if (e) e.preventDefault()
 
@@ -225,13 +277,19 @@ export default function AdminPage() {
       formData.append('nextWebOrderNumber', String(settings.nextWebOrderNumber ?? 1000))
       formData.append('webPendingExpiryHours', String(settings.webPendingExpiryHours ?? 24))
 
+      const workflowToSave: BusinessWorkflowConfig = {
+        ...workflow,
+        companyName: settings.companyName || workflow.companyName,
+      }
+
       const [result, workflowResult] = await Promise.all([
         updateSystemSettings(formData),
-        saveBusinessWorkflowAction(workflow),
+        saveBusinessWorkflowAction(workflowToSave),
       ])
 
       if (result.success && workflowResult.success) {
-        saveBusinessWorkflow(workflow)
+        saveBusinessWorkflow(workflowToSave)
+        setWorkflow(workflowToSave)
 
         toast.success('Configuración y flujos de trabajo guardados exitosamente')
         const updated = await getSystemSettings()
@@ -249,7 +307,7 @@ export default function AdminPage() {
           await supabase.channel('system-settings-realtime').send({
             type: 'broadcast',
             event: 'workflow-updated',
-            payload: workflow,
+            payload: workflowToSave,
           })
         }
       } else {
@@ -513,7 +571,86 @@ export default function AdminPage() {
             </CardContent>
           </Card>
 
-          {/* 2. Datos Comerciales, Legales y Fiscales */}
+          {/* 2. Identidad Visual y Logotipo del Negocio */}
+          <Card className="rounded-3xl border-border/70 bg-card shadow-xs">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-bold flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                Identidad Visual y Logotipo del Negocio
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Personaliza la imagen gráfica de tu empresa. El logotipo se reflejará automáticamente en la barra lateral, recibos de venta POS y comprobantes electrónicos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-2xl bg-muted/30 border border-border/70 gap-4">
+                <div className="flex items-center gap-4">
+                  <NovaLogo
+                    size="lg"
+                    logoUrl={workflow.logoUrl}
+                    businessName={settings.companyName || 'Nova'}
+                    subtitle={workflow.slogan || 'Marca activa'}
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-foreground">
+                      {workflow.logoUrl ? 'Logotipo de empresa personalizado' : 'Isotipo estándar de Nova'}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {workflow.logoUrl
+                        ? 'Optimizado para comprobantes, encabezados y pantallas'
+                        : 'Sube tu logo para reemplazar el icono estándar por el de tu negocio'}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2.5">
+                  <div className="relative">
+                    <input
+                      type="file"
+                      id="companyLogoAdminInput"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={handleLogoUpload}
+                      className="sr-only"
+                      disabled={logoUploading}
+                    />
+                    <Label
+                      htmlFor="companyLogoAdminInput"
+                      className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-card border border-border/80 hover:bg-muted text-xs font-semibold text-foreground cursor-pointer shadow-2xs transition-colors"
+                    >
+                      {logoUploading ? (
+                        <>
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Optimizando...
+                        </>
+                      ) : (
+                        <>
+                          <Upload className="h-3.5 w-3.5 text-primary" /> Cambiar logotipo
+                        </>
+                      )}
+                    </Label>
+                  </div>
+
+                  {workflow.logoUrl && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        const updated = { ...workflow, logoUrl: null }
+                        setWorkflow(updated)
+                        saveBusinessWorkflow(updated)
+                        toast.info('Logotipo restablecido al icono estándar. Guarda los cambios para confirmar.')
+                      }}
+                      className="rounded-xl text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer h-9 px-3"
+                    >
+                      <Trash2 className="h-3.5 w-3.5 mr-1" /> Quitar logo
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* 3. Datos Comerciales, Legales y Fiscales */}
           <Card className="rounded-3xl border-border/70 bg-card shadow-xs">
             <CardHeader className="pb-4">
               <CardTitle className="text-base font-bold flex items-center gap-2">

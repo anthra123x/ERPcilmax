@@ -13,10 +13,10 @@ import {
   Settings,
   Keyboard,
   PanelLeftClose,
-  PanelLeftOpen,
   X,
 } from 'lucide-react'
 import { NovaLogo } from '@/components/ui/nova-logo'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 // Módulos principales de navegación
 const navigation = [
@@ -40,6 +40,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
+  const { config: workflow } = useBusinessWorkflow()
 
   function isActive(href: string) {
     if (href === '/dashboard') return pathname === '/dashboard'
@@ -58,59 +59,77 @@ export function Sidebar({ collapsed = false, onToggleCollapse, onMobileClose }: 
       <div
         className={cn(
           'flex h-16 items-center border-b border-sidebar-border/40 shrink-0 transition-all duration-200',
-          collapsed ? 'justify-center px-2' : 'justify-between px-3.5',
+          collapsed ? 'justify-center px-1' : 'justify-between px-3.5',
         )}
       >
         {!collapsed ? (
           <div className="flex items-center gap-2.5 min-w-0">
-            <NovaLogo size="sm" showWordmark={false} />
+            <NovaLogo
+              size="sm"
+              showWordmark={false}
+              logoUrl={workflow.logoUrl}
+              businessName={workflow.companyName}
+            />
             <div className="flex flex-col min-w-0">
-              <span className="truncate text-xs font-bold text-white tracking-tight uppercase">Nova ERP</span>
+              <span className="truncate text-xs font-bold text-white tracking-tight uppercase">
+                {workflow.companyName || 'Nova ERP'}
+              </span>
               <span className="truncate text-[10px] font-medium text-emerald-400/90 flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Sistema Activo
+                {workflow.slogan ? workflow.slogan : 'Sistema Activo'}
               </span>
             </div>
           </div>
-        ) : null}
-
-        <div className="flex items-center gap-1">
-          {/* Botón de cerrar en móvil */}
-          {onMobileClose && (
+        ) : (
+          <div className="relative group">
             <button
               type="button"
-              onClick={onMobileClose}
-              title="Cerrar menú"
-              aria-label="Cerrar menú"
-              className="lg:hidden flex items-center justify-center h-8 w-8 rounded-lg text-sidebar-foreground/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              onClick={onToggleCollapse}
+              title="Expandir barra lateral"
+              className="flex items-center justify-center h-10 w-10 rounded-xl hover:bg-white/10 transition-all cursor-pointer"
             >
-              <X className="h-4 w-4" />
+              <NovaLogo
+                size="sm"
+                showWordmark={false}
+                logoUrl={workflow.logoUrl}
+                businessName={workflow.companyName}
+              />
             </button>
-          )}
+            <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+              {workflow.companyName || 'Nova ERP'} &bull; Click para expandir
+            </div>
+          </div>
+        )}
 
-          {/* Botón de contraer / expandir en escritorio */}
-          {onToggleCollapse && (
-            <div className={cn('relative group', collapsed && 'flex justify-center w-full')}>
+        {!collapsed && (
+          <div className="flex items-center gap-1">
+            {/* Botón de cerrar en móvil */}
+            {onMobileClose && (
+              <button
+                type="button"
+                onClick={onMobileClose}
+                title="Cerrar menú"
+                aria-label="Cerrar menú"
+                className="lg:hidden flex items-center justify-center h-8 w-8 rounded-lg text-sidebar-foreground/60 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+
+            {/* Botón de contraer en escritorio */}
+            {onToggleCollapse && (
               <button
                 type="button"
                 onClick={onToggleCollapse}
-                title={collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral'}
-                aria-label="Alternar barra lateral"
-                className={cn(
-                  'hidden lg:flex items-center justify-center rounded-lg text-sidebar-foreground/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer',
-                  collapsed ? 'h-10 w-10' : 'h-7 w-7',
-                )}
+                title="Contraer barra lateral"
+                aria-label="Contraer barra lateral"
+                className="hidden lg:flex items-center justify-center h-7 w-7 rounded-lg text-sidebar-foreground/60 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
               >
-                {collapsed ? <PanelLeftOpen className="h-5 w-5" /> : <PanelLeftClose className="h-4 w-4" />}
+                <PanelLeftClose className="h-4 w-4" />
               </button>
-              {collapsed && (
-                <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-md bg-slate-900 text-white text-xs font-medium whitespace-nowrap shadow-xl border border-white/10 z-50 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                  Expandir menú
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Navegación de módulos principales */}
