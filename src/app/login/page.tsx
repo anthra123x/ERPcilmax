@@ -327,7 +327,7 @@ export default function LoginPage() {
                         Correo electrónico
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none z-10" />
                         <Input
                           id="email"
                           name="email"
@@ -359,7 +359,7 @@ export default function LoginPage() {
                         </button>
                       </div>
                       <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
+                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none z-10" />
                         <Input
                           id="password"
                           name="password"
@@ -375,7 +375,7 @@ export default function LoginPage() {
                           onClick={() => setShowPassword((prev) => !prev)}
                           tabIndex={-1}
                           title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-0.5"
+                          className="absolute right-3.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors cursor-pointer p-0.5 z-10"
                         >
                           {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
@@ -411,25 +411,25 @@ export default function LoginPage() {
                     </Button>
                   </form>
 
-                  {/* Nota de Seguridad */}
-                  <div className="pt-1 text-center">
+                  {/* Nota de Seguridad & Registro */}
+                  <div className="pt-2 text-center space-y-3">
                     <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
                       <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                       Acceso seguro y cifrado de extremo a extremo
                     </p>
-                  </div>
 
-                  {/* Registro de nueva empresa */}
-                  <div className="pt-3 border-t border-border/60 text-center space-y-1">
-                    <p className="text-[11px] text-muted-foreground">
-                      ¿Aún no tienes cuenta para tu negocio?
-                    </p>
-                    <Link
-                      href="/register"
-                      className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-primary transition-colors underline underline-offset-4 cursor-pointer"
-                    >
-                      Registrar mi empresa y comenzar &rarr;
-                    </Link>
+                    <div className="pt-3 border-t border-border/60">
+                      <p className="text-xs text-muted-foreground">
+                        ¿Aún no tienes cuenta?{' '}
+                        <Link
+                          href="/register"
+                          className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors inline-flex items-center gap-1 group cursor-pointer"
+                        >
+                          <span>Registrar mi empresa</span>
+                          <span className="group-hover:translate-x-0.5 transition-transform" aria-hidden="true">&rarr;</span>
+                        </Link>
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

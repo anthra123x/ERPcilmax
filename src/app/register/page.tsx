@@ -674,7 +674,7 @@ export default function RegisterPage() {
                         onClick={() => setShowPassword((prev) => !prev)}
                         tabIndex={-1}
                         title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer z-10"
                       >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                       </button>
@@ -953,23 +953,22 @@ export default function RegisterPage() {
               )}
 
               {/* Nota de Seguridad & Acceso */}
-              <div className="pt-3.5 mt-3.5 border-t border-border/60 text-center space-y-2">
+              <div className="pt-3 mt-3 border-t border-border/60 text-center space-y-2.5">
                 <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 font-medium">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
                   Acceso seguro y cifrado de extremo a extremo
                 </p>
 
-                <div>
-                  <p className="text-[11px] text-muted-foreground">
-                    ¿Ya tienes cuenta para tu negocio?
-                  </p>
+                <p className="text-xs text-muted-foreground">
+                  ¿Ya tienes cuenta registrada?{' '}
                   <Link
                     href="/login"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-primary transition-colors underline underline-offset-4 cursor-pointer mt-0.5"
+                    className="font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-500 dark:hover:text-emerald-300 transition-colors inline-flex items-center gap-1 group cursor-pointer"
                   >
-                    Iniciar Sesión con mi cuenta &rarr;
+                    <span>Iniciar sesión</span>
+                    <span className="group-hover:translate-x-0.5 transition-transform" aria-hidden="true">&rarr;</span>
                   </Link>
-                </div>
+                </p>
               </div>
             </div>
           </div>

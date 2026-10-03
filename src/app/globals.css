@@ -99,9 +99,11 @@
   --info-foreground: oklch(0.985 0 0);
   --gold: oklch(0.78 0.16 80);
   --gold-foreground: oklch(0.205 0.03 60);
+  --autofill-bg: oklch(0.96 0.005 250);
 }
 
 .dark {
+  color-scheme: dark;
   --background: oklch(0.11 0.015 255);
   --foreground: oklch(0.985 0.005 250);
   --card: oklch(0.15 0.015 255);
@@ -135,6 +137,7 @@
   --sidebar-ring: oklch(0.7 0.17 155 / 0.4);
   --gold: oklch(0.82 0.15 85);
   --gold-foreground: oklch(0.2 0.04 60);
+  --autofill-bg: oklch(0.18 0.015 255);
 }
 
 @layer base {
@@ -156,6 +159,28 @@
 
   ::selection {
     @apply bg-primary/15 text-primary;
+  }
+
+  /* Prevenir sombreado color hueso/amarillo del autocompletado del navegador */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  textarea:-webkit-autofill:active,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus,
+  select:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
+    box-shadow: 0 0 0 1000px var(--autofill-bg) inset !important;
+    -webkit-text-fill-color: var(--foreground) !important;
+    color: var(--foreground) !important;
+    caret-color: var(--foreground) !important;
+    border-radius: inherit !important;
+    transition: background-color 50000s ease-in-out 0s, color 50000s ease-in-out 0s;
   }
 
   ::-webkit-scrollbar {
