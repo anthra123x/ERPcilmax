@@ -59,7 +59,9 @@ export function AssistantChat() {
   const scrollRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    getAssistantStatus().then(setStatus).catch(() => setStatus(null))
+    getAssistantStatus()
+      .then(setStatus)
+      .catch(() => setStatus(null))
   }, [])
 
   useEffect(() => {
@@ -191,7 +193,12 @@ export function AssistantChat() {
               className="resize-none"
               disabled={loading}
             />
-            <Button size="icon" onClick={() => send(input)} disabled={loading || !input.trim()} aria-label="Enviar mensaje">
+            <Button
+              size="icon"
+              onClick={() => send(input)}
+              disabled={loading || !input.trim()}
+              aria-label="Enviar mensaje"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -228,7 +235,7 @@ function MessageBubble({ message }: { message: ChatMessage }) {
         {!isUser && message.meta && (message.meta.mode || message.meta.toolsUsed?.length) && (
           <div className="flex flex-wrap items-center gap-1.5 px-1">
             <Badge variant="outline" className="text-[10px] px-1.5 py-0 font-normal text-muted-foreground">
-              {message.meta.mode === 'mock' ? 'Simulación' : message.meta.agentModel ?? 'IA'}
+              {message.meta.mode === 'mock' ? 'Simulación' : (message.meta.agentModel ?? 'IA')}
             </Badge>
             {message.meta.toolsUsed?.map((tool) => (
               <Badge key={tool} variant="secondary" className="text-[10px] px-1.5 py-0 font-normal">

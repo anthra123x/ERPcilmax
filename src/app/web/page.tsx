@@ -23,7 +23,7 @@ export default async function WebOverviewPage() {
     <div className="page-container py-6 space-y-6">
       <PageHeader
         title="Tienda online"
-        description="Gestión de la tienda que ven tus clientes en cilmax.com.co"
+        description="Gestión del catálogo, pedidos y reseñas de la tienda online"
         actions={
           <Link href="/web/products">
             <Button>

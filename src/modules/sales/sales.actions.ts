@@ -12,8 +12,7 @@ import type { Prisma } from '@prisma/client'
 
 type SaleWithItems = Prisma.SaleGetPayload<{ include: { items: true } }>
 
-export async function createSale(
-  data: {
+export async function createSale(data: {
   clientId?: string | null
   items: Array<{ productId: string; quantity: number; unitPrice?: number }>
   discount?: number
@@ -50,16 +49,8 @@ export async function createSale(
 
   return safeServerAction(async () => {
     const result = await prisma.$transaction(async (tx) => {
-      const {
-        items,
-        clientId,
-        discount,
-        paymentMethod,
-        initialPayment,
-        initialPaymentMethod,
-        dueDate,
-        installments,
-      } = validatedFields.data
+      const { items, clientId, discount, paymentMethod, initialPayment, initialPaymentMethod, dueDate, installments } =
+        validatedFields.data
 
       // Validate stock for all items
       const productIds = items.map((i) => i.productId)

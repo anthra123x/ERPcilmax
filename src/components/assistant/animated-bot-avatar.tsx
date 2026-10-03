@@ -21,7 +21,7 @@ export function AnimatedBotAvatar({
       className={cn(
         'relative inline-flex items-center justify-center shrink-0 select-none transition-transform duration-300',
         interactive && 'hover:scale-110 active:scale-95 group',
-        className
+        className,
       )}
       style={{ width: size, height: size }}
       aria-label="Asistente IA"
@@ -46,12 +46,7 @@ export function AnimatedBotAvatar({
               strokeLinecap="round"
               className="text-emerald-400/80 dark:text-emerald-400"
             />
-            <circle
-              cx="32"
-              cy="6"
-              r="3.5"
-              className="fill-emerald-400 animate-bot-antenna-glow"
-            />
+            <circle cx="32" cy="6" r="3.5" className="fill-emerald-400 animate-bot-antenna-glow" />
           </g>
 
           {/* Pernos / Orejas metálicas laterales */}
@@ -96,31 +91,13 @@ export function AnimatedBotAvatar({
           />
 
           {/* Brillo especular superior del visor */}
-          <path
-            d="M 19 21.5 Q 32 24.5 45 21.5"
-            stroke="white"
-            strokeWidth="1.2"
-            strokeLinecap="round"
-            opacity="0.28"
-          />
+          <path d="M 19 21.5 Q 32 24.5 45 21.5" stroke="white" strokeWidth="1.2" strokeLinecap="round" opacity="0.28" />
 
           {/* Grupo de Expresión Facial (Mirada, Parpadeos y Muecas) */}
           <g className="animate-bot-look">
             {/* Mejillas sonrojadas que se iluminan al sonreír */}
-            <ellipse
-              cx="20"
-              cy="39"
-              rx="2.4"
-              ry="1.3"
-              className="fill-emerald-400 animate-bot-cheeks"
-            />
-            <ellipse
-              cx="44"
-              cy="39"
-              rx="2.4"
-              ry="1.3"
-              className="fill-emerald-400 animate-bot-cheeks"
-            />
+            <ellipse cx="20" cy="39" rx="2.4" ry="1.3" className="fill-emerald-400 animate-bot-cheeks" />
+            <ellipse cx="44" cy="39" rx="2.4" ry="1.3" className="fill-emerald-400 animate-bot-cheeks" />
 
             {/* Ojo Izquierdo: Parpadeo natural fluido + doble parpadeo */}
             <g className="animate-bot-eye-left">

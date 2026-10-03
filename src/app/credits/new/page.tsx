@@ -3,17 +3,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import {
-  ShoppingCart,
-  Plus,
-  Minus,
-  Trash2,
-  Search,
-  ArrowLeft,
-  Loader2,
-  UserPlus,
-  CheckCircle2,
-} from 'lucide-react'
+import { ShoppingCart, Plus, Minus, Trash2, Search, ArrowLeft, Loader2, UserPlus, CheckCircle2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -228,9 +218,7 @@ export default function NewCreditSalePage() {
   }
 
   function updateUnitPrice(productId: string, value: number) {
-    setCart((prev) =>
-      prev.map((item) => (item.productId === productId ? { ...item, unitPrice: value } : item)),
-    )
+    setCart((prev) => prev.map((item) => (item.productId === productId ? { ...item, unitPrice: value } : item)))
   }
 
   function removeFromCart(productId: string) {
@@ -569,27 +557,17 @@ export default function NewCreditSalePage() {
                               min="0"
                               step="100"
                               value={item.unitPrice}
-                              onChange={(e) =>
-                                updateUnitPrice(item.productId, Number(e.target.value) || 0)
-                              }
+                              onChange={(e) => updateUnitPrice(item.productId, Number(e.target.value) || 0)}
                               className="w-28 ml-auto text-right"
                             />
                           </TableCell>
                           <TableCell className="text-center">
                             <div className="flex items-center justify-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => updateQuantity(item.productId, -1)}
-                              >
+                              <Button variant="ghost" size="icon-sm" onClick={() => updateQuantity(item.productId, -1)}>
                                 <Minus className="h-3 w-3" />
                               </Button>
                               <span className="w-8 text-center text-sm">{item.quantity}</span>
-                              <Button
-                                variant="ghost"
-                                size="icon-sm"
-                                onClick={() => updateQuantity(item.productId, 1)}
-                              >
+                              <Button variant="ghost" size="icon-sm" onClick={() => updateQuantity(item.productId, 1)}>
                                 <Plus className="h-3 w-3" />
                               </Button>
                             </div>
@@ -663,12 +641,7 @@ export default function NewCreditSalePage() {
                 </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-medium">Fecha de vencimiento (opcional)</label>
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    disabled={saving}
-                  />
+                  <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} disabled={saving} />
                 </div>
               </div>
 
@@ -760,12 +733,7 @@ export default function NewCreditSalePage() {
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleSubmit}
-                disabled={saving || cart.length === 0}
-              >
+              <Button className="w-full" size="lg" onClick={handleSubmit} disabled={saving || cart.length === 0}>
                 {saving ? 'Procesando...' : 'Registrar Venta a Crédito'}
               </Button>
             </CardContent>

@@ -169,9 +169,7 @@ describe('getCatalogProductByHandle', () => {
 
 describe('getCatalogCategories', () => {
   it('returns visible categories only', async () => {
-    prismaMocks.productCategory.findMany.mockResolvedValue([
-      { id: 'c1', name: 'Hogar', slug: 'hogar', color: '#fff' },
-    ])
+    prismaMocks.productCategory.findMany.mockResolvedValue([{ id: 'c1', name: 'Hogar', slug: 'hogar', color: '#fff' }])
 
     const result = await getCatalogCategories()
 
@@ -189,7 +187,15 @@ describe('getProductReviews / createProductReview', () => {
 
   it('lists approved reviews newest first', async () => {
     prismaMocks.productReview.findMany.mockResolvedValue([
-      { id: 'r1', productId: 'p1', name: 'Ana', email: null, rating: 5, comment: 'genial', createdAt: new Date('2026-01-01T00:00:00Z') },
+      {
+        id: 'r1',
+        productId: 'p1',
+        name: 'Ana',
+        email: null,
+        rating: 5,
+        comment: 'genial',
+        createdAt: new Date('2026-01-01T00:00:00Z'),
+      },
     ])
 
     const result = await getProductReviews('p1')
@@ -204,7 +210,13 @@ describe('getProductReviews / createProductReview', () => {
   it('creates a review for an existing product', async () => {
     prismaMocks.product.findFirst.mockResolvedValue({ id: 'p1', webVisible: true })
     prismaMocks.productReview.create.mockResolvedValue({
-      id: 'r1', productId: 'p1', name: 'Ana', email: null, rating: 5, comment: 'genial', createdAt: new Date('2026-01-01T00:00:00Z'),
+      id: 'r1',
+      productId: 'p1',
+      name: 'Ana',
+      email: null,
+      rating: 5,
+      comment: 'genial',
+      createdAt: new Date('2026-01-01T00:00:00Z'),
     })
 
     const result = await createProductReview({ productId: 'p1', name: 'Ana', rating: 5, comment: 'genial' })
@@ -310,7 +322,11 @@ describe('createWebOrder', () => {
   it('rejects orders referencing unavailable products', async () => {
     prismaMocks.product.findMany.mockResolvedValue([])
     await expect(
-      createWebOrder({ customerName: 'Ana', customerPhone: '3001234567', items: [{ productId: 'ghost', quantity: 1 }] }),
+      createWebOrder({
+        customerName: 'Ana',
+        customerPhone: '3001234567',
+        items: [{ productId: 'ghost', quantity: 1 }],
+      }),
     ).rejects.toThrow('ya no está disponible')
     expect(prismaMockData.transaction.webOrder.create).not.toHaveBeenCalled()
   })
@@ -341,8 +357,8 @@ describe('cancelExpiredWebOrders', () => {
     await cancelExpiredWebOrders()
     const after = Date.now()
 
-    const cutoff = (prismaMocks.webOrder.updateMany.mock.calls[0][0] as { where: { createdAt: { lt: Date } } }).where.createdAt
-      .lt
+    const cutoff = (prismaMocks.webOrder.updateMany.mock.calls[0][0] as { where: { createdAt: { lt: Date } } }).where
+      .createdAt.lt
     expect(cutoff.getTime()).toBeGreaterThanOrEqual(before - 2 * 3600_000)
     expect(cutoff.getTime()).toBeLessThanOrEqual(after - 2 * 3600_000)
   })

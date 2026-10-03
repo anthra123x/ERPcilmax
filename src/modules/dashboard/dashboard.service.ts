@@ -168,9 +168,7 @@ export async function getDashboardOverviewService(): Promise<DashboardOverview> 
       },
     }),
     // 10. Productos con stock bajo (críticos)
-    prisma.$queryRaw<
-      Array<{ id: string; name: string; stock: number; lowStockThreshold: number; salePrice: number }>
-    >`
+    prisma.$queryRaw<Array<{ id: string; name: string; stock: number; lowStockThreshold: number; salePrice: number }>>`
       SELECT id, name, stock, "lowStockThreshold", "salePrice"
       FROM products
       WHERE "deletedAt" IS NULL

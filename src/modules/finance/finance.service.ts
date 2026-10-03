@@ -12,7 +12,15 @@
  * ─────────────────────────────────────────────────────────────────────────────
  */
 
-export { getWeekPeriod, getOrCreateActivePeriod, getPeriodById, getClosedPeriods, getPeriodTotals, getPeriodSummary, closeCurrentPeriod } from './finance-budget.service'
+export {
+  getWeekPeriod,
+  getOrCreateActivePeriod,
+  getPeriodById,
+  getClosedPeriods,
+  getPeriodTotals,
+  getPeriodSummary,
+  closeCurrentPeriod,
+} from './finance-budget.service'
 export type { PeriodSummary } from './finance-budget.service'
 
 export { getDailySummary } from './finance-daily.service'

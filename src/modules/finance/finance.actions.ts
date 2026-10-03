@@ -188,10 +188,7 @@ export async function getFinanceSummaryAction(dateStr?: string) {
   return await getFinanceSummary(dateStr)
 }
 
-export async function getBusinessFinanceReportAction(
-  kind: 'day' | 'week' | 'month',
-  dateStr?: string,
-) {
+export async function getBusinessFinanceReportAction(kind: 'day' | 'week' | 'month', dateStr?: string) {
   await requireAuth()
   return await getBusinessFinanceReport(kind, dateStr)
 }

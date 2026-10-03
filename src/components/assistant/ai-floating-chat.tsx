@@ -61,7 +61,9 @@ export function AiFloatingChat() {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
-    getAssistantStatus().then(setStatus).catch(() => setStatus(null))
+    getAssistantStatus()
+      .then(setStatus)
+      .catch(() => setStatus(null))
   }, [])
 
   useEffect(() => {
@@ -120,9 +122,7 @@ export function AiFloatingChat() {
   }
 
   const chatHeight = expanded ? 'h-[600px]' : 'h-[460px]'
-  const chatWidth = expanded
-    ? 'w-[calc(100vw-2rem)] max-w-[480px]'
-    : 'w-[calc(100vw-2rem)] max-w-[380px]'
+  const chatWidth = expanded ? 'w-[calc(100vw-2rem)] max-w-[480px]' : 'w-[calc(100vw-2rem)] max-w-[380px]'
 
   return (
     <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end gap-3">
@@ -132,7 +132,9 @@ export function AiFloatingChat() {
           'flex max-h-[calc(100dvh-7rem)] flex-col rounded-2xl border border-border/60 bg-background shadow-2xl shadow-black/20 transition-all duration-300 ease-out',
           chatHeight,
           chatWidth,
-          open ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 translate-y-4 pointer-events-none scale-95',
+          open
+            ? 'opacity-100 translate-y-0 pointer-events-auto'
+            : 'opacity-0 translate-y-4 pointer-events-none scale-95',
         )}
         aria-hidden={!open}
       >
@@ -172,10 +174,7 @@ export function AiFloatingChat() {
         </div>
 
         {/* Mensajes */}
-        <div
-          ref={scrollRef}
-          className="min-h-0 flex-1 overflow-y-auto space-y-3.5 p-4 transition-all duration-300"
-        >
+        <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto space-y-3.5 p-4 transition-all duration-300">
           {messages.length === 0 && (
             <div className="flex h-full flex-col items-center justify-center text-center gap-4 px-4">
               <div className="rounded-2xl bg-primary/10 p-3 shadow-sm shadow-primary/10">
@@ -293,9 +292,7 @@ function FloatingMessageBubble({ message }: { message: ChatMessage }) {
         <div
           className={cn(
             'rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words leading-relaxed',
-            isUser
-              ? 'rounded-tr-none bg-primary text-primary-foreground'
-              : 'rounded-tl-none bg-muted text-foreground',
+            isUser ? 'rounded-tr-none bg-primary text-primary-foreground' : 'rounded-tl-none bg-muted text-foreground',
           )}
         >
           {message.content}
@@ -303,7 +300,7 @@ function FloatingMessageBubble({ message }: { message: ChatMessage }) {
         {!isUser && message.meta && (message.meta.mode || message.meta.toolsUsed?.length) && (
           <div className="flex flex-wrap items-center gap-1 px-1">
             <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-normal text-muted-foreground">
-              {message.meta.mode === 'mock' ? 'Simulación' : message.meta.agentModel ?? 'IA'}
+              {message.meta.mode === 'mock' ? 'Simulación' : (message.meta.agentModel ?? 'IA')}
             </Badge>
             {message.meta.toolsUsed?.map((tool) => (
               <Badge key={tool} variant="secondary" className="text-[9px] px-1.5 py-0 h-4 font-normal">

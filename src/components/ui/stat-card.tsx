@@ -26,7 +26,13 @@ const colorMap = {
 
 export function StatCard({ title, value, change, icon: Icon, color = 'default', className, href }: StatCardProps) {
   const content = (
-    <Card className={cn('stat-card transition-all duration-200 card-shadow hover:card-shadow-warm-md active:scale-[0.98]', href && 'cursor-pointer', className)}>
+    <Card
+      className={cn(
+        'stat-card transition-all duration-200 card-shadow hover:card-shadow-warm-md active:scale-[0.98]',
+        href && 'cursor-pointer',
+        className,
+      )}
+    >
       <CardContent className="p-5">
         <div className="flex items-start justify-between">
           <div className="space-y-1.5">

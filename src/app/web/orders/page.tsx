@@ -49,7 +49,10 @@ export default async function WebOrdersPage({
 
   return (
     <div className="page-container py-6 space-y-6">
-      <PageHeader title="Pedidos web" description="Pedidos recibidos de la tienda. Confirma y reserva stock, o conviértelos en venta POS." />
+      <PageHeader
+        title="Pedidos web"
+        description="Pedidos recibidos de la tienda. Confirma y reserva stock, o conviértelos en venta POS."
+      />
 
       <Card>
         <CardContent className="p-4 space-y-4">

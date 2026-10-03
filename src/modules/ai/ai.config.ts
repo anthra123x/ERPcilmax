@@ -38,9 +38,7 @@ export function normalizeAgentKeys(raw: string | null | undefined): AiAgentKey[]
     if (typeof record.key !== 'string' || record.key.trim().length < 8) continue
 
     const model =
-      typeof record.model === 'string' && record.model.trim()
-        ? record.model.trim()
-        : getDefaultModel(record.provider)
+      typeof record.model === 'string' && record.model.trim() ? record.model.trim() : getDefaultModel(record.provider)
 
     const baseUrl =
       typeof record.baseUrl === 'string' && record.baseUrl.trim()

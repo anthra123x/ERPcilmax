@@ -15,12 +15,16 @@ export interface AssistantHistoryItem {
 }
 
 function parseAssistantDecision(text: string): { text?: string; tool?: string; args?: Record<string, unknown> } | null {
-  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/, '').trim()
+  const cleaned = text
+    .replace(/^```(?:json)?\s*/i, '')
+    .replace(/```\s*$/, '')
+    .trim()
   if (!cleaned) return null
 
   try {
     const parsed = JSON.parse(cleaned)
-    if (parsed && typeof parsed === 'object') return parsed as { text?: string; tool?: string; args?: Record<string, unknown> }
+    if (parsed && typeof parsed === 'object')
+      return parsed as { text?: string; tool?: string; args?: Record<string, unknown> }
   } catch {
     // no es JSON puro, intentamos extraer el primer objeto
   }

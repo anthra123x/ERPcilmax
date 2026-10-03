@@ -49,9 +49,12 @@ function timeAgo(date: Date) {
 function getEntityRoute(entityType: string | null, entityId: string | null): string | null {
   if (!entityType || !entityId) return null
   switch (entityType) {
-    case 'budget_period':
-    case 'saving_goal':
-      return '/assistant'
+    case 'product':
+      return `/inventory/${entityId}`
+    case 'order':
+      return '/web/orders'
+    case 'sale':
+      return `/sales/${entityId}`
     default:
       return null
   }

@@ -23,7 +23,7 @@ import {
   ShieldCheck,
   Package,
   Receipt,
-  Sparkles,
+  HandCoins,
 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -61,7 +61,7 @@ export default function LoginPage() {
       if (data.user) {
         try {
           await ensureUserExists(data.user.email || '', data.user.user_metadata?.name || data.user.email || '')
-        } catch (_ensureError) {
+        } catch {
           // Continuar normalmente
         }
       }
@@ -213,14 +213,14 @@ export default function LoginPage() {
                 </div>
 
                 <div className="p-3 rounded-2xl bg-card border border-border/80 shadow-2xs">
-                  <div className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
-                    <Sparkles className="h-4 w-4 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-amber-600 dark:text-amber-400">
+                    <HandCoins className="h-4 w-4 shrink-0" />
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                      Asistente IA
+                      Cartera POS
                     </span>
                   </div>
-                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">Analítica en Vivo</div>
-                  <div className="text-[10px] text-muted-foreground mt-0.5">Diagnóstico activo</div>
+                  <div className="text-sm font-extrabold font-mono text-foreground mt-1.5">$7.850.000</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">Control de crédito</div>
                 </div>
               </div>
             </div>

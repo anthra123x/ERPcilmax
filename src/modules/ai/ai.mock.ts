@@ -10,7 +10,7 @@ function normalize(text: string): string {
 
 interface IntentMatch {
   tools: AssistantToolName[]
-  args?: ({ tool: AssistantToolName; args: Record<string, unknown> })[] | null
+  args?: { tool: AssistantToolName; args: Record<string, unknown> }[] | null
 }
 
 function detectSalesPeriod(text: string): string {
@@ -44,7 +44,11 @@ export function detectIntent(message: string): IntentMatch | null {
     }
   }
 
-  if (/(reporte ejecutivo|informe ejecutivo|balance ejecutivo|resumen directivo|informe global|reporte general)/.test(text)) {
+  if (
+    /(reporte ejecutivo|informe ejecutivo|balance ejecutivo|resumen directivo|informe global|reporte general)/.test(
+      text,
+    )
+  ) {
     return { tools: ['generate_executive_report'], args: [{ tool: 'generate_executive_report', args: {} }] }
   }
 
@@ -69,7 +73,10 @@ export function detectIntent(message: string): IntentMatch | null {
 
   // 2. Control operativo: Búsquedas de productos
   if (/(busca.*product|buscar.*product|encuentra.*product|stock de|precio de|cuanto vale|cuanto cuesta)/.test(text)) {
-    const term = extractSearchTerm(text, /(?:busca|buscar|encuentra|stock de|precio de|cuanto vale|cuanto cuesta)(?:\s+el|\s+la|\s+los|\s+las|\s+producto)?\s+([a-zA-Z0-9\s]+)/i)
+    const term = extractSearchTerm(
+      text,
+      /(?:busca|buscar|encuentra|stock de|precio de|cuanto vale|cuanto cuesta)(?:\s+el|\s+la|\s+los|\s+las|\s+producto)?\s+([a-zA-Z0-9\s]+)/i,
+    )
     return {
       tools: ['search_products'],
       args: [{ tool: 'search_products', args: { query: term || text } }],
@@ -78,7 +85,10 @@ export function detectIntent(message: string): IntentMatch | null {
 
   // 3. Control operativo: Búsqueda de clientes
   if (/(busca.*client|buscar.*client|telefono de|datos de|deuda de cliente)/.test(text)) {
-    const term = extractSearchTerm(text, /(?:busca|buscar|telefono de|datos de|deuda de cliente)(?:\s+al|\s+a|\s+el|\s+cliente)?\s+([a-zA-Z0-9\s]+)/i)
+    const term = extractSearchTerm(
+      text,
+      /(?:busca|buscar|telefono de|datos de|deuda de cliente)(?:\s+al|\s+a|\s+el|\s+cliente)?\s+([a-zA-Z0-9\s]+)/i,
+    )
     return {
       tools: ['search_clients'],
       args: [{ tool: 'search_clients', args: { query: term || text } }],
@@ -112,7 +122,10 @@ export function detectIntent(message: string): IntentMatch | null {
 
   // 5. Consultas rápidas estándar
   if (/(ventas|ingresos|recaudo|factur|vendidos?|ganan)/.test(text)) {
-    return { tools: ['get_sales_summary'], args: [{ tool: 'get_sales_summary', args: { period: detectSalesPeriod(text) } }] }
+    return {
+      tools: ['get_sales_summary'],
+      args: [{ tool: 'get_sales_summary', args: { period: detectSalesPeriod(text) } }],
+    }
   }
   if (/(stock|inventar|existencia|agotad|productos?)/.test(text)) {
     return { tools: ['get_inventory_status'], args: [{ tool: 'get_inventory_status', args: {} }] }

@@ -139,8 +139,7 @@ export default async function CreditDetailPage({ params }: CreditDetailPageProps
                 notes: p.notes,
                 user: p.user,
               })) ?? [],
-            installments:
-              sale.installments?.map((i) => ({ id: i.id, amount: i.amount, dueDate: i.dueDate })) ?? [],
+            installments: sale.installments?.map((i) => ({ id: i.id, amount: i.amount, dueDate: i.dueDate })) ?? [],
           }}
         />
       )}

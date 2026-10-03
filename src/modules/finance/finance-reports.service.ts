@@ -251,7 +251,14 @@ export async function getBusinessFinanceReport(
   const byDay = Array.from(dayMap.entries())
     .map(([date, d]) => {
       const grossP = d.sales - d.cogs
-      return { date, sales: d.sales, cogs: d.cogs, grossProfit: grossP, expenses: d.expenses, netProfit: grossP - d.expenses }
+      return {
+        date,
+        sales: d.sales,
+        cogs: d.cogs,
+        grossProfit: grossP,
+        expenses: d.expenses,
+        netProfit: grossP - d.expenses,
+      }
     })
     .filter((d) => d.sales !== 0 || d.expenses !== 0)
 
@@ -259,8 +266,10 @@ export async function getBusinessFinanceReport(
   const paymentMethodMap = new Map<PaymentMethod, { method: PaymentMethod; total: number; count: number }>()
   for (const s of sales) {
     const existing = paymentMethodMap.get(s.paymentMethod)
-    if (existing) { existing.total += s.total; existing.count += 1 }
-    else paymentMethodMap.set(s.paymentMethod, { method: s.paymentMethod, total: s.total, count: 1 })
+    if (existing) {
+      existing.total += s.total
+      existing.count += 1
+    } else paymentMethodMap.set(s.paymentMethod, { method: s.paymentMethod, total: s.total, count: 1 })
   }
   const paymentMethods = Array.from(paymentMethodMap.values()).sort((a, b) => b.total - a.total)
 
@@ -301,9 +310,21 @@ export async function getBusinessFinanceReport(
     endDate,
     sales: { count: sales.length, total: salesTotal, cogs, grossProfit, grossMargin },
     expenses: { total: expensesTotal, count: expenses.length, byCategory: expenseByCategory },
-    summary: { netProfit: grossProfit - expensesTotal, balance: cashIn - expensesTotal, cashIn, cashOut: expensesTotal },
+    summary: {
+      netProfit: grossProfit - expensesTotal,
+      balance: cashIn - expensesTotal,
+      cashIn,
+      cashOut: expensesTotal,
+    },
     byDay,
     paymentMethods,
-    credit: { sold: creditSold, collected: creditCollected, pending: creditPending, overdue: creditOverdue, overdueCount: creditOverdueCount, count: creditSales.length },
+    credit: {
+      sold: creditSold,
+      collected: creditCollected,
+      pending: creditPending,
+      overdue: creditOverdue,
+      overdueCount: creditOverdueCount,
+      count: creditSales.length,
+    },
   }
 }

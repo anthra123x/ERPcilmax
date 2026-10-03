@@ -1,6 +1,16 @@
 import { prisma } from '@/lib/prisma'
 import { NotFoundError, ValidationError } from '@/lib/errors'
-import type { WebCategory, WebContactInput, WebOrderInput, WebProduct, WebProductReview, WebRating, WebReviewInput, WebSettings, WebVariant } from './web.types'
+import type {
+  WebCategory,
+  WebContactInput,
+  WebOrderInput,
+  WebProduct,
+  WebProductReview,
+  WebRating,
+  WebReviewInput,
+  WebSettings,
+  WebVariant,
+} from './web.types'
 import { DEFAULT_WEB_SETTINGS } from './web.types'
 
 // ─────────────────────────────────────────────────────────────
@@ -108,9 +118,7 @@ export async function getCatalogProducts(options?: {
   const ids = products.map((p) => p.id)
   const ratings = await ratingByProductIds(ids)
 
-  return products
-    .map((p) => toWebProduct(p, ratings.get(p.id) ?? null))
-    .filter((p): p is WebProduct => p !== null)
+  return products.map((p) => toWebProduct(p, ratings.get(p.id) ?? null)).filter((p): p is WebProduct => p !== null)
 }
 
 export async function getCatalogProductByHandle(handle: string): Promise<WebProduct | null> {
@@ -233,7 +241,9 @@ export async function createWebOrder(input: WebOrderInput) {
     // El stock se descuenta al CONFIRMAR, pero un pedido no puede pedir más
     // unidades de las disponibles hoy (evita sobre-reservar en la práctica).
     if (product.stock < item.quantity) {
-      throw new ValidationError(`Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`)
+      throw new ValidationError(
+        `Stock insuficiente para "${product.name}": disponible ${product.stock}, solicitado ${item.quantity}`,
+      )
     }
     const total = Math.round(product.salePrice) * item.quantity
     return {
@@ -308,7 +318,8 @@ export async function getWebSettings(): Promise<WebSettings> {
     }
     if (row.key === 'theme' && typeof row.value === 'object' && row.value !== null) {
       const value = row.value as Record<string, unknown>
-      settings.theme.primaryColor = typeof value.primaryColor === 'string' ? value.primaryColor : settings.theme.primaryColor
+      settings.theme.primaryColor =
+        typeof value.primaryColor === 'string' ? value.primaryColor : settings.theme.primaryColor
       settings.theme.goldColor = typeof value.goldColor === 'string' ? value.goldColor : settings.theme.goldColor
     }
   }

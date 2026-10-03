@@ -166,16 +166,17 @@ export async function getCreditSales(
     const filteredIds = filtered.slice((page - 1) * take, page * take).map((s) => s.id)
 
     // 3. Traer los datos completos solo de la página actual.
-    const sales = filteredIds.length > 0
-      ? await prisma.sale.findMany({
-          where: { id: { in: filteredIds } },
-          orderBy: { saleDate: 'desc' },
-          include: {
-            client: { select: { id: true, name: true, phone: true } },
-            payments: { select: { amount: true } },
-          },
-        })
-      : []
+    const sales =
+      filteredIds.length > 0
+        ? await prisma.sale.findMany({
+            where: { id: { in: filteredIds } },
+            orderBy: { saleDate: 'desc' },
+            include: {
+              client: { select: { id: true, name: true, phone: true } },
+              payments: { select: { amount: true } },
+            },
+          })
+        : []
 
     const rows = sales.map((s) => ({ ...s, creditStatus: getCreditStatus(s) }))
 
@@ -227,10 +228,7 @@ export async function getCreditSummary() {
 
   const sold = sales.reduce((sum, s) => sum + s.total, 0)
   const collected = sales.reduce((sum, s) => sum + s.payments.reduce((p, x) => p + x.amount, 0), 0)
-  const pending = sales.reduce(
-    (sum, s) => sum + (s.total - s.payments.reduce((p, x) => p + x.amount, 0)),
-    0,
-  )
+  const pending = sales.reduce((sum, s) => sum + (s.total - s.payments.reduce((p, x) => p + x.amount, 0)), 0)
 
   let overdueAmount = 0
   let overdueCount = 0

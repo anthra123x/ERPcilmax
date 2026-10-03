@@ -1,12 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AiProviderError } from './ai.types'
 import type { AiAgentKey, AiProviderId } from './ai.types'
-import {
-  completeWithRotation,
-  getAgentId,
-  isAgentOnCooldown,
-  resetAiRotationState,
-} from './ai.rotation'
+import { completeWithRotation, getAgentId, isAgentOnCooldown, resetAiRotationState } from './ai.rotation'
 
 function makeAgent(provider: AiProviderId, model = 'test-model'): AiAgentKey {
   return { provider, key: `fake-key-${provider}-123456`, model }

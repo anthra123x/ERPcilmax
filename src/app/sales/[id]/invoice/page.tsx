@@ -16,7 +16,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
   if (!sale) notFound()
 
-  const companyName = sale.invoice?.companyName || 'Cilmax S.A.S.'
+  const companyName = sale.invoice?.companyName || 'Nova ERP'
   const currency = sale.invoice?.currency || 'COP'
   const totalFormatted = formatCurrency(sale.total, currency)
 

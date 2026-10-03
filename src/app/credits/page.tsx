@@ -145,7 +145,9 @@ export default async function CreditsPage({
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex items-center justify-end gap-2">
-                            {status !== 'PAID' && <RegistrarAbonoDialog saleId={s.id} invoiceNumber={s.invoiceNumber} saldo={saldo} />}
+                            {status !== 'PAID' && (
+                              <RegistrarAbonoDialog saleId={s.id} invoiceNumber={s.invoiceNumber} saldo={saldo} />
+                            )}
                             <Link href={`/credits/${s.id}`}>
                               <Button variant="outline" size="icon-sm">
                                 <Eye className="h-4 w-4" />

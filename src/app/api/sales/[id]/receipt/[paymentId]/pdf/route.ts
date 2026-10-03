@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPdfSettings, renderReceiptPdf } from '@/lib/pdf'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string; paymentId: string }> },
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string; paymentId: string }> }) {
   const { id, paymentId } = await params
 
   const sale = await prisma.sale.findUnique({

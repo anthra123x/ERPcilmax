@@ -25,7 +25,11 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
     args: { period: 'today | 7d | 30d | this_month | this_year' },
   },
   { name: 'get_inventory_status', description: 'Inventario: totales, stock bajo, agotados y valor.', args: {} },
-  { name: 'get_web_orders_status', description: 'Pedidos de la tienda online por estado y pendientes más antiguos.', args: {} },
+  {
+    name: 'get_web_orders_status',
+    description: 'Pedidos de la tienda online por estado y pendientes más antiguos.',
+    args: {},
+  },
   { name: 'get_recent_sales', description: 'Últimas ventas registradas.', args: { limit: 'número (por defecto 5)' } },
   { name: 'get_client_summary', description: 'Clientes: totales, nuevos del mes y mayores compradores.', args: {} },
   { name: 'get_pending_credit', description: 'Créditos pendientes de cobro.', args: {} },
@@ -33,17 +37,20 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   { name: 'get_finance_summary', description: 'Ingresos vs gastos del mes actual.', args: {} },
   {
     name: 'generate_executive_report',
-    description: 'Genera un informe ejecutivo integral y consolidado del negocio (ventas, margen estimado, tienda web, valorización de inventario y cartera de crédito).',
+    description:
+      'Genera un informe ejecutivo integral y consolidado del negocio (ventas, margen estimado, tienda web, valorización de inventario y cartera de crédito).',
     args: {},
   },
   {
     name: 'generate_sales_report',
-    description: 'Genera un reporte detallado de ventas por período con métodos de pago, ticket promedio y rentabilidad.',
+    description:
+      'Genera un reporte detallado de ventas por período con métodos de pago, ticket promedio y rentabilidad.',
     args: { period: 'today | 7d | 30d | this_month | this_year' },
   },
   {
     name: 'generate_inventory_report',
-    description: 'Genera un reporte de inventario completo con valorización al costo y venta, margen proyectado, productos agotados y lista de compras para reposición.',
+    description:
+      'Genera un reporte de inventario completo con valorización al costo y venta, margen proyectado, productos agotados y lista de compras para reposición.',
     args: {},
   },
   {
@@ -58,13 +65,19 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   },
   {
     name: 'search_products',
-    description: 'Busca productos en el catálogo por nombre, código de barras o categoría con existencias, costos y precios.',
+    description:
+      'Busca productos en el catálogo por nombre, código de barras o categoría con existencias, costos y precios.',
     args: { query: 'texto a buscar' },
   },
   {
     name: 'adjust_product_stock',
-    description: 'Ajusta el inventario de un producto en el sistema (ingreso, egreso o ajuste físico) registrando el movimiento de stock.',
-    args: { productId: 'id o nombre del producto', quantityChange: 'número entero positivo o negativo', reason: 'motivo' },
+    description:
+      'Ajusta el inventario de un producto en el sistema (ingreso, egreso o ajuste físico) registrando el movimiento de stock.',
+    args: {
+      productId: 'id o nombre del producto',
+      quantityChange: 'número entero positivo o negativo',
+      reason: 'motivo',
+    },
   },
   {
     name: 'search_clients',
@@ -73,7 +86,8 @@ export const ASSISTANT_TOOLS: AssistantToolDefinition[] = [
   },
   {
     name: 'manage_web_order',
-    description: 'Consulta o actualiza el estado de un pedido de la tienda online (confirmar o cancelar con reserva/liberación de stock).',
+    description:
+      'Consulta o actualiza el estado de un pedido de la tienda online (confirmar o cancelar con reserva/liberación de stock).',
     args: { referenceOrId: 'código ORD-XXXX o ID', newStatus: 'CONFIRMED | CANCELLED (opcional)' },
   },
 ]
@@ -162,9 +176,7 @@ async function inventoryStatusTool(): Promise<AssistantToolResult> {
     },
   })
 
-  const lowStock = products
-    .filter((p) => p.stock <= p.lowStockThreshold)
-    .sort((a, b) => a.stock - b.stock)
+  const lowStock = products.filter((p) => p.stock <= p.lowStockThreshold).sort((a, b) => a.stock - b.stock)
 
   const data = {
     products: products.length,
@@ -374,7 +386,10 @@ async function pendingCreditTool(): Promise<AssistantToolResult> {
   return {
     name: 'get_pending_credit',
     data,
-    summary: summarize('get_pending_credit', `${formatCurrency(outstandingTotal)} pendientes en ${sales.length} ventas a crédito`),
+    summary: summarize(
+      'get_pending_credit',
+      `${formatCurrency(outstandingTotal)} pendientes en ${sales.length} ventas a crédito`,
+    ),
     executedAt: new Date().toISOString(),
   }
 }
@@ -437,7 +452,10 @@ async function financeSummaryTool(): Promise<AssistantToolResult> {
   return {
     name: 'get_finance_summary',
     data,
-    summary: summarize('get_finance_summary', `Ingresos ${formatCurrency(income)} · gastos ${formatCurrency(outgoings)} · saldo ${formatCurrency(income - outgoings)}`),
+    summary: summarize(
+      'get_finance_summary',
+      `Ingresos ${formatCurrency(income)} · gastos ${formatCurrency(outgoings)} · saldo ${formatCurrency(income - outgoings)}`,
+    ),
     executedAt: new Date().toISOString(),
   }
 }
@@ -875,7 +893,8 @@ async function searchProductsTool(args: Record<string, unknown>): Promise<Assist
 
 async function adjustProductStockTool(args: Record<string, unknown>): Promise<AssistantToolResult> {
   const search = typeof args.productId === 'string' ? args.productId.trim() : ''
-  const quantityChange = typeof args.quantityChange === 'number' ? args.quantityChange : parseInt(String(args.quantityChange || 0), 10)
+  const quantityChange =
+    typeof args.quantityChange === 'number' ? args.quantityChange : parseInt(String(args.quantityChange || 0), 10)
   const reason = typeof args.reason === 'string' ? args.reason.trim() : 'Ajuste realizado desde Asistente IA'
 
   if (!search) {
@@ -894,13 +913,19 @@ async function adjustProductStockTool(args: Record<string, unknown>): Promise<As
   })
 
   if (!product) {
-    throw new AiProviderError('bad_request', `No se encontró ningún producto con el identificador o nombre "${search}".`)
+    throw new AiProviderError(
+      'bad_request',
+      `No se encontró ningún producto con el identificador o nombre "${search}".`,
+    )
   }
 
   const previousStock = product.stock
   const newStock = previousStock + quantityChange
   if (newStock < 0) {
-    throw new AiProviderError('bad_request', `No puedes dejar el stock en negativo. Stock actual: ${previousStock}, intentaste restar: ${Math.abs(quantityChange)}.`)
+    throw new AiProviderError(
+      'bad_request',
+      `No puedes dejar el stock en negativo. Stock actual: ${previousStock}, intentaste restar: ${Math.abs(quantityChange)}.`,
+    )
   }
 
   const movementType = quantityChange > 0 ? 'IN' : 'OUT'
@@ -957,10 +982,7 @@ async function searchClientsTool(args: Record<string, unknown>): Promise<Assista
   const clients = await prisma.client.findMany({
     where: {
       deletedAt: null,
-      OR: [
-        { name: { contains: query, mode: 'insensitive' } },
-        { phone: { contains: query, mode: 'insensitive' } },
-      ],
+      OR: [{ name: { contains: query, mode: 'insensitive' } }, { phone: { contains: query, mode: 'insensitive' } }],
     },
     select: {
       id: true,
@@ -1069,7 +1091,10 @@ async function manageWebOrderTool(args: Record<string, unknown>): Promise<Assist
     return {
       name: 'manage_web_order',
       data,
-      summary: summarize('manage_web_order', `Pedido ${data.reference} (${data.statusLabel}): ${order.customerName} - Total ${formatCurrency(order.total)}`),
+      summary: summarize(
+        'manage_web_order',
+        `Pedido ${data.reference} (${data.statusLabel}): ${order.customerName} - Total ${formatCurrency(order.total)}`,
+      ),
       executedAt: new Date().toISOString(),
     }
   }
@@ -1077,7 +1102,10 @@ async function manageWebOrderTool(args: Record<string, unknown>): Promise<Assist
   // Si se solicita cambio de estado (CONFIRMED o CANCELLED)
   if (newStatus === 'CONFIRMED') {
     if (order.status !== 'PENDING') {
-      throw new AiProviderError('bad_request', `El pedido ya está en estado ${order.status}, solo se puede confirmar si está PENDING.`)
+      throw new AiProviderError(
+        'bad_request',
+        `El pedido ya está en estado ${order.status}, solo se puede confirmar si está PENDING.`,
+      )
     }
 
     // Transacción: reservar stock y confirmar
@@ -1108,7 +1136,10 @@ async function manageWebOrderTool(args: Record<string, unknown>): Promise<Assist
     return {
       name: 'manage_web_order',
       data: { id: order.id, reference: order.reference, previousStatus: 'PENDING', newStatus: 'CONFIRMED' },
-      summary: summarize('manage_web_order', `Pedido ${order.reference ?? order.id} CONFIRMADO con éxito. El stock de sus productos ha sido reservado.`),
+      summary: summarize(
+        'manage_web_order',
+        `Pedido ${order.reference ?? order.id} CONFIRMADO con éxito. El stock de sus productos ha sido reservado.`,
+      ),
       executedAt: new Date().toISOString(),
     }
   }
@@ -1148,12 +1179,18 @@ async function manageWebOrderTool(args: Record<string, unknown>): Promise<Assist
     return {
       name: 'manage_web_order',
       data: { id: order.id, reference: order.reference, previousStatus: order.status, newStatus: 'CANCELLED' },
-      summary: summarize('manage_web_order', `Pedido ${order.reference ?? order.id} CANCELADO. Stock restaurado si estaba reservado.`),
+      summary: summarize(
+        'manage_web_order',
+        `Pedido ${order.reference ?? order.id} CANCELADO. Stock restaurado si estaba reservado.`,
+      ),
       executedAt: new Date().toISOString(),
     }
   }
 
-  throw new AiProviderError('bad_request', `Estado no permitido: "${newStatus}". Opciones válidas: CONFIRMED o CANCELLED.`)
+  throw new AiProviderError(
+    'bad_request',
+    `Estado no permitido: "${newStatus}". Opciones válidas: CONFIRMED o CANCELLED.`,
+  )
 }
 
 const EXECUTORS: Record<AssistantToolName, (args: Record<string, unknown>) => Promise<AssistantToolResult>> = {
@@ -1239,16 +1276,16 @@ export function formatToolResultText(result: AssistantToolResult): string {
   switch (result.name) {
     case 'get_business_snapshot': {
       const snapshot = result.data
-      return businessSnapshotToText(
-        snapshot as unknown as Parameters<typeof businessSnapshotToText>[0],
-      )
+      return businessSnapshotToText(snapshot as unknown as Parameters<typeof businessSnapshotToText>[0])
     }
     case 'get_sales_summary': {
       const lines = [
         `Ventas ${String(data.periodLabel)}: ${data.count} ventas por ${formatCurrency(Number(data.total ?? 0))}.`,
         `Ticket promedio: ${formatCurrency(Number(data.averageTicket ?? 0))}.`,
       ]
-      const byPayment = Array.isArray(data.byPayment) ? (data.byPayment as Array<{ label: string; count: number; total: number }>) : []
+      const byPayment = Array.isArray(data.byPayment)
+        ? (data.byPayment as Array<{ label: string; count: number; total: number }>)
+        : []
       if (byPayment.length) {
         lines.push('Por método de pago:')
         for (const p of byPayment) lines.push(`  • ${p.label}: ${p.count} ventas, ${formatCurrency(p.total)}`)
@@ -1256,21 +1293,27 @@ export function formatToolResultText(result: AssistantToolResult): string {
       return lines.join('\n')
     }
     case 'get_inventory_status': {
-      const lowStock = Array.isArray(data.lowStock) ? (data.lowStock as Array<{ name: string; stock: number; threshold: number; category: string | null }>) : []
+      const lowStock = Array.isArray(data.lowStock)
+        ? (data.lowStock as Array<{ name: string; stock: number; threshold: number; category: string | null }>)
+        : []
       const lines = [
         `Inventario: ${data.products} productos, ${data.units} unidades.`,
         `Valor del stock (a precio de venta): ${formatCurrency(Number(data.stockValueRetail ?? 0))}.`,
         `${data.lowStockCount} productos con stock bajo, de los cuales ${data.outOfStockCount} agotados.`,
         'Con stock bajo:',
         ...(lowStock.length
-          ? lowStock.map((p) => `  • ${p.name}: ${p.stock} uds (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`)
+          ? lowStock.map(
+              (p) => `  • ${p.name}: ${p.stock} uds (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`,
+            )
           : ['  (ninguno)']),
       ]
       return lines.join('\n')
     }
     case 'get_web_orders_status': {
       const counts = (data.counts ?? {}) as Record<string, number>
-      const pending = Array.isArray(data.oldestPending) ? (data.oldestPending as Array<{ reference: string; customer: string; total: string; created: string }>) : []
+      const pending = Array.isArray(data.oldestPending)
+        ? (data.oldestPending as Array<{ reference: string; customer: string; total: string; created: string }>)
+        : []
       const lines = [
         `Pedidos de la tienda online: ${counts.PENDING ?? 0} pendientes, ${counts.CONFIRMED ?? 0} confirmados, ${counts.CONVERTED ?? 0} convertidos, ${counts.CANCELLED ?? 0} cancelados.`,
         `Los pendientes se cancelan automáticamente tras ${data.expiryHours} horas.`,
@@ -1278,24 +1321,39 @@ export function formatToolResultText(result: AssistantToolResult): string {
       if (pending.length) {
         lines.push('Pendientes más antiguos:')
         for (const o of pending) {
-          lines.push(`  • ${o.reference ?? 'S/N'} - ${o.customer} - ${o.total} - ${new Date(o.created).toLocaleDateString('es-CO')}`)
+          lines.push(
+            `  • ${o.reference ?? 'S/N'} - ${o.customer} - ${o.total} - ${new Date(o.created).toLocaleDateString('es-CO')}`,
+          )
         }
       }
       return lines.join('\n')
     }
     case 'get_recent_sales': {
-      const sales = Array.isArray(data.sales) ? (data.sales as Array<{ invoice: string; client: string; totalFormatted: string; payment: string; date: string }>) : []
+      const sales = Array.isArray(data.sales)
+        ? (data.sales as Array<{
+            invoice: string
+            client: string
+            totalFormatted: string
+            payment: string
+            date: string
+          }>)
+        : []
       return (
         'Últimas ventas:\n' +
         (sales.length
           ? sales
-              .map((s) => `  • ${s.invoice} - ${s.client} - ${s.totalFormatted} - ${s.payment} - ${new Date(s.date).toLocaleDateString('es-CO')}`)
+              .map(
+                (s) =>
+                  `  • ${s.invoice} - ${s.client} - ${s.totalFormatted} - ${s.payment} - ${new Date(s.date).toLocaleDateString('es-CO')}`,
+              )
               .join('\n')
           : '  (sin ventas)')
       )
     }
     case 'get_client_summary': {
-      const topClients = Array.isArray(data.topClients) ? (data.topClients as Array<{ name: string; total: number }>) : []
+      const topClients = Array.isArray(data.topClients)
+        ? (data.topClients as Array<{ name: string; total: number }>)
+        : []
       const lines = [`Clientes: ${data.total} registrados, ${data.newThisMonth} nuevos este mes.`]
       if (topClients.length) {
         lines.push('Mayores compradores:')
@@ -1307,12 +1365,23 @@ export function formatToolResultText(result: AssistantToolResult): string {
       return `Crédito pendiente de cobro: ${formatCurrency(Number(data.totalOutstanding ?? 0))} en ${data.salesCount ?? 0} ventas a crédito.`
     }
     case 'get_contact_messages': {
-      const messages = Array.isArray(data.messages) ? (data.messages as Array<{ name: string; email: string | null; message: string; read: boolean; createdAt: string }>) : []
+      const messages = Array.isArray(data.messages)
+        ? (data.messages as Array<{
+            name: string
+            email: string | null
+            message: string
+            read: boolean
+            createdAt: string
+          }>)
+        : []
       return (
         `Mensajes de contacto${data.unreadOnly ? ' sin leer' : ''} (${messages.length}):\n` +
         (messages.length
           ? messages
-              .map((m) => `  • ${m.name}${m.email ? ` (${m.email})` : ''}: ${m.message.slice(0, 80)}${m.message.length > 80 ? '…' : ''}${m.read ? '' : ' [sin leer]'}`)
+              .map(
+                (m) =>
+                  `  • ${m.name}${m.email ? ` (${m.email})` : ''}: ${m.message.slice(0, 80)}${m.message.length > 80 ? '…' : ''}${m.read ? '' : ' [sin leer]'}`,
+              )
               .join('\n')
           : '  (sin mensajes)')
       )
@@ -1365,7 +1434,9 @@ export function formatToolResultText(result: AssistantToolResult): string {
       if (Array.isArray(d.recentSample) && d.recentSample.length > 0) {
         lines.push('\n### Muestra de Ventas Recientes')
         for (const s of d.recentSample) {
-          lines.push(`- **${s.invoice}:** ${s.client} · ${formatCurrency(s.total)} (${s.payment}) · ${new Date(s.date).toLocaleDateString('es-CO')}`)
+          lines.push(
+            `- **${s.invoice}:** ${s.client} · ${formatCurrency(s.total)} (${s.payment}) · ${new Date(s.date).toLocaleDateString('es-CO')}`,
+          )
         }
       }
       return lines.join('\n')
@@ -1384,7 +1455,9 @@ export function formatToolResultText(result: AssistantToolResult): string {
       ]
       if (Array.isArray(d.replenishmentSuggested) && d.replenishmentSuggested.length > 0) {
         for (const p of d.replenishmentSuggested) {
-          lines.push(`- **${p.name}** (${p.category}): Stock actual: **${p.currentStock}** (Mín: ${p.threshold}) ➔ Pedir: **${p.suggestedOrder} uds** (Costo unit: ${formatCurrency(p.costPrice)})`)
+          lines.push(
+            `- **${p.name}** (${p.category}): Stock actual: **${p.currentStock}** (Mín: ${p.threshold}) ➔ Pedir: **${p.suggestedOrder} uds** (Costo unit: ${formatCurrency(p.costPrice)})`,
+          )
         }
       } else {
         lines.push('- Todo el inventario se encuentra en niveles adecuados.')
@@ -1401,7 +1474,9 @@ export function formatToolResultText(result: AssistantToolResult): string {
       ]
       if (Array.isArray(d.topClients) && d.topClients.length > 0) {
         for (const c of d.topClients) {
-          lines.push(`- **${c.name}** (Tel: ${c.phone}): ${c.salesCount} compras por un total de **${formatCurrency(c.totalSpent)}**`)
+          lines.push(
+            `- **${c.name}** (Tel: ${c.phone}): ${c.salesCount} compras por un total de **${formatCurrency(c.totalSpent)}**`,
+          )
         }
       }
       if (Array.isArray(d.topDebtors) && d.topDebtors.length > 0) {
@@ -1479,7 +1554,9 @@ export function formatToolResultText(result: AssistantToolResult): string {
       ]
       if (Array.isArray(d.items)) {
         for (const it of d.items) {
-          lines.push(`  • ${it.productName} x${it.quantity} a ${formatCurrency(it.unitPrice)} (Subtotal: ${formatCurrency(it.total)}) [Stock en almacén: ${it.currentStock}]`)
+          lines.push(
+            `  • ${it.productName} x${it.quantity} a ${formatCurrency(it.unitPrice)} (Subtotal: ${formatCurrency(it.total)}) [Stock en almacén: ${it.currentStock}]`,
+          )
         }
       }
       return lines.join('\n')

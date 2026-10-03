@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'Restablecer contraseña — Cilmax',
+  title: 'Restablecer contraseña — Nova ERP',
   robots: { index: false, follow: false },
 }
 

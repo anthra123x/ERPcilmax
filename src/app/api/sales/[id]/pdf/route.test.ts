@@ -10,7 +10,15 @@ const sale = {
   status: 'COMPLETED',
   saleDate: new Date('2026-09-17T12:00:00.000Z'),
   dueDate: null,
-  client: { id: 'c1', name: 'Cliente', phone: '300', email: null, address: null, createdAt: new Date(), updatedAt: new Date() },
+  client: {
+    id: 'c1',
+    name: 'Cliente',
+    phone: '300',
+    email: null,
+    address: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  },
   items: [
     {
       id: 'i1',
@@ -40,9 +48,12 @@ vi.mock('@/lib/prisma', () => ({
 describe('route /api/sales/[id]/pdf', () => {
   it('responde un PDF descargable', async () => {
     const { GET } = await import('./route')
-    const res = await GET(new Request('http://x/api/sales/sale-1/pdf') as never, {
-      params: Promise.resolve({ id: 'sale-1' }),
-    } as never)
+    const res = await GET(
+      new Request('http://x/api/sales/sale-1/pdf') as never,
+      {
+        params: Promise.resolve({ id: 'sale-1' }),
+      } as never,
+    )
 
     console.log('ROUTE status:', res.status)
     console.log('ROUTE headers:', JSON.stringify(Object.fromEntries(res.headers.entries())))

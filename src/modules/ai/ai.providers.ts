@@ -16,7 +16,10 @@ function buildSignal(external?: AbortSignal): AbortSignal {
 }
 
 function getSystemContent(messages: AssistantMessage[]): string {
-  return messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n')
+  return messages
+    .filter((m) => m.role === 'system')
+    .map((m) => m.content)
+    .join('\n')
 }
 
 function getUserMessages(messages: AssistantMessage[]): Array<{ role: 'user' | 'assistant'; content: string }> {
@@ -190,6 +193,9 @@ export async function completeChat(
     }
   } catch (error) {
     if (error instanceof AiProviderError) throw error
-    throw new AiProviderError('network', error instanceof Error ? error.message : 'Error de red al llamar al proveedor de IA')
+    throw new AiProviderError(
+      'network',
+      error instanceof Error ? error.message : 'Error de red al llamar al proveedor de IA',
+    )
   }
 }

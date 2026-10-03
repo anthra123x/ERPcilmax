@@ -2,7 +2,14 @@
 
 import { useEffect, useState, useTransition } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -55,14 +62,14 @@ interface SystemSettingsData {
 }
 
 const defaultSettings: SystemSettingsData = {
-  companyName: 'Cilmax S.A.S.',
-  companyNit: '901.482.391-4',
-  companyAddress: 'Calle Principal #10-24',
+  companyName: 'Nova ERP',
+  companyNit: '900.000.000-1',
+  companyAddress: 'Av. Empresarial #10-20',
   companyCity: 'Colombia',
   companyPhone: '+57 (300) 000-0000',
-  companyEmail: 'contacto@cilmax.com',
+  companyEmail: 'contacto@empresa.com',
   currency: 'COP',
-  invoicePrefix: 'CIL-',
+  invoicePrefix: 'INV-',
   invoiceFooter: 'Garantía legal sobre productos de conformidad con la ley aplicable.',
   lowStockThreshold: 5,
   nextInvoiceNumber: 1,
@@ -91,10 +98,7 @@ export default function AdminPage() {
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const [usersData, settingsResult] = await Promise.all([
-          getUsers(),
-          getSystemSettings(),
-        ])
+        const [usersData, settingsResult] = await Promise.all([getUsers(), getSystemSettings()])
         setUsers(usersData)
         if (settingsResult.success && settingsResult.data) {
           setSettings(settingsResult.data as unknown as SystemSettingsData)
@@ -114,16 +118,12 @@ export default function AdminPage() {
     const channel = supabase.channel('system-settings-realtime')
 
     channel
-      .on(
-        'broadcast',
-        { event: 'settings-updated' },
-        (payload: { payload: SystemSettingsData }) => {
-          if (payload?.payload) {
-            setSettings(payload.payload)
-            toast.info('Configuración del sistema actualizada en tiempo real')
-          }
-        },
-      )
+      .on('broadcast', { event: 'settings-updated' }, (payload: { payload: SystemSettingsData }) => {
+        if (payload?.payload) {
+          setSettings(payload.payload)
+          toast.info('Configuración del sistema actualizada en tiempo real')
+        }
+      })
       .subscribe((status) => {
         if (status === 'SUBSCRIBED') {
           setWsConnected(true)
@@ -300,19 +300,31 @@ export default function AdminPage() {
       {/* Pestañas Ejecutivas */}
       <Tabs defaultValue="company" className="space-y-6">
         <TabsList className="bg-muted/70 p-1 rounded-2xl border border-border/70 flex flex-wrap gap-1 w-full sm:w-auto h-auto">
-          <TabsTrigger value="company" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+          <TabsTrigger
+            value="company"
+            className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs"
+          >
             <Building2 className="mr-2 h-4 w-4 text-teal-500" />
             Empresa & Identidad
           </TabsTrigger>
-          <TabsTrigger value="billing" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+          <TabsTrigger
+            value="billing"
+            className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs"
+          >
             <Receipt className="mr-2 h-4 w-4 text-teal-500" />
             Facturación & POS
           </TabsTrigger>
-          <TabsTrigger value="users" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+          <TabsTrigger
+            value="users"
+            className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs"
+          >
             <Users className="mr-2 h-4 w-4 text-teal-500" />
             Usuarios & Accesos
           </TabsTrigger>
-          <TabsTrigger value="exports" className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs">
+          <TabsTrigger
+            value="exports"
+            className="rounded-xl px-4 py-2 text-xs font-semibold data-active:bg-background data-active:shadow-xs"
+          >
             <FileSpreadsheet className="mr-2 h-4 w-4 text-teal-500" />
             Respaldos & Excel
           </TabsTrigger>
@@ -423,7 +435,7 @@ export default function AdminPage() {
                         type="email"
                         value={settings.companyEmail || ''}
                         onChange={(e) => setSettings({ ...settings, companyEmail: e.target.value })}
-                        placeholder="contacto@cilmax.com"
+                        placeholder="contacto@empresa.com"
                         className="rounded-xl"
                       />
                     </div>
@@ -482,9 +494,7 @@ export default function AdminPage() {
                 <Receipt className="h-5 w-5 text-teal-500" />
                 Parámetros de Facturación y Punto de Venta
               </CardTitle>
-              <CardDescription>
-                Define numeraciones, prefijos, avisos legales y alertas de inventario.
-              </CardDescription>
+              <CardDescription>Define numeraciones, prefijos, avisos legales y alertas de inventario.</CardDescription>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleUpdateSettings} className="space-y-5">
@@ -572,9 +582,7 @@ export default function AdminPage() {
                   <Users className="h-5 w-5 text-teal-500" />
                   Equipo y Cuentas de Acceso
                 </CardTitle>
-                <CardDescription>
-                  Administra las cuentas con acceso al ERP Cilmax.
-                </CardDescription>
+                <CardDescription>Administra las cuentas con acceso al sistema Nova ERP.</CardDescription>
               </div>
               <Button
                 onClick={() => setCreateUserOpen(true)}
@@ -604,9 +612,7 @@ export default function AdminPage() {
                           </div>
                           <span>{u.name}</span>
                         </TableCell>
-                        <TableCell className="py-3 px-4 text-muted-foreground font-mono">
-                          {u.email}
-                        </TableCell>
+                        <TableCell className="py-3 px-4 text-muted-foreground font-mono">{u.email}</TableCell>
                         <TableCell className="py-3 px-4 text-center">
                           <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-teal-500/10 border border-teal-500/20 text-[10px] font-semibold text-teal-600 dark:text-teal-400">
                             <Shield className="h-3 w-3" /> Administrador
@@ -645,9 +651,7 @@ export default function AdminPage() {
                 <FileSpreadsheet className="h-5 w-5 text-teal-500" />
                 Exportaciones y Respaldos en Excel
               </CardTitle>
-              <CardDescription>
-                Genera reportes completos en hojas de cálculo con un solo clic.
-              </CardDescription>
+              <CardDescription>Genera reportes completos en hojas de cálculo con un solo clic.</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -701,9 +705,7 @@ export default function AdminPage() {
                 <div className="p-5 rounded-2xl bg-muted/40 border border-border/70 flex flex-col justify-between space-y-4">
                   <div>
                     <h3 className="text-sm font-bold text-foreground">Inventario & Stock</h3>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Stock actual en bodega, umbrales y alertas.
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">Stock actual en bodega, umbrales y alertas.</p>
                   </div>
                   <Button
                     onClick={() => handleExportExcel('inventory')}
@@ -785,7 +787,7 @@ export default function AdminPage() {
                 type="email"
                 value={newUserEmail}
                 onChange={(e) => setNewUserEmail(e.target.value)}
-                placeholder="carlos@cilmax.com"
+                placeholder="usuario@empresa.com"
                 required
                 className="rounded-xl"
               />
@@ -809,12 +811,7 @@ export default function AdminPage() {
             </div>
 
             <DialogFooter className="pt-3 gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCreateUserOpen(false)}
-                className="rounded-xl"
-              >
+              <Button type="button" variant="outline" onClick={() => setCreateUserOpen(false)} className="rounded-xl">
                 Cancelar
               </Button>
               <Button
@@ -848,11 +845,7 @@ export default function AdminPage() {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="pt-3 gap-2">
-            <Button
-              variant="outline"
-              onClick={() => setDeleteUserDialogOpen(false)}
-              className="rounded-xl"
-            >
+            <Button variant="outline" onClick={() => setDeleteUserDialogOpen(false)} className="rounded-xl">
               Cancelar
             </Button>
             <Button

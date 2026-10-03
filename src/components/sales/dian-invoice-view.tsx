@@ -76,12 +76,12 @@ const IVA_RATE = 0.19
  * dashboard y se llevaría por delante el documento al imprimir.
  */
 export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) {
-  const companyName = sale.invoice?.companyName || 'Cilmax S.A.S.'
-  const companyNit = sale.invoice?.companyNit || '901.482.391-4'
-  const companyAddress = sale.invoice?.companyAddress || 'Calle Principal #10-24'
-  const companyCity = sale.invoice?.companyCity || 'Bogotá D.C., Colombia'
+  const companyName = sale.invoice?.companyName || 'Nova ERP'
+  const companyNit = sale.invoice?.companyNit || '900.000.000-1'
+  const companyAddress = sale.invoice?.companyAddress || 'Av. Empresarial #10-20'
+  const companyCity = sale.invoice?.companyCity || 'Colombia'
   const companyPhone = sale.invoice?.companyPhone || '+57 (300) 000-0000'
-  const companyEmail = sale.invoice?.companyEmail || 'contacto@cilmax.com'
+  const companyEmail = sale.invoice?.companyEmail || 'contacto@empresa.com'
   const currency = sale.invoice?.currency || 'COP'
 
   const fmtDate = (value: Date | string | null | undefined) => {

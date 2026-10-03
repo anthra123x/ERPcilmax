@@ -3,33 +3,37 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import {
-  PlusCircle,
-  RefreshCw,
-  Calendar,
-  ChevronDown,
-  Search,
-  MoreHorizontal,
-  Eye,
+  ShoppingCart,
+  TrendingUp,
+  ShoppingBag,
+  Package,
   AlertTriangle,
-  Info,
+  ArrowRight,
+  HandCoins,
+  PlusCircle,
+  Clock,
+  Phone,
+  Wallet,
+  RefreshCw,
+  Search,
+  Eye,
   FileSpreadsheet,
 } from 'lucide-react'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { EmptyState } from '@/components/ui/empty-state'
-import { formatCurrency } from '@/lib/format'
+import { formatCurrency, formatNumber } from '@/lib/format'
 import { getPaymentMethodLabel } from '@/lib/labels'
 import { getDashboardStats } from '@/modules/dashboard/dashboard.actions'
 import type { DashboardOverview } from '@/modules/dashboard/dashboard.service'
-import { MiniSparkline, SalesTrendCard, RevenueBreakdownCard } from './charts'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
+import { PaymentDonut, SalesMonthlyBar, TopProductsBar, LowStockList } from './charts'
 
 export default function DashboardPage() {
   const [data, setData] = useState<DashboardOverview | null>(null)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
-  const [searchTx, setSearchTx] = useState('')
+  const [searchSale, setSearchSale] = useState('')
 
   async function loadData(showRefresh = false) {
     if (showRefresh) setRefreshing(true)
@@ -51,31 +55,24 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="space-y-6 animate-pulse">
-        {/* Header skeleton */}
         <div className="flex justify-between items-center">
           <div className="h-8 w-64 bg-muted rounded-xl" />
           <div className="flex gap-2">
             <div className="h-9 w-28 bg-muted rounded-xl" />
             <div className="h-9 w-32 bg-muted rounded-xl" />
-            <div className="h-9 w-28 bg-muted rounded-xl" />
           </div>
         </div>
 
-        {/* 4 KPI cards skeleton */}
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-32 bg-card rounded-2xl border border-border/80 p-4" />
+        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          {[...Array(6)].map((_, i) => (
+            <div key={i} className="h-28 bg-card rounded-2xl border border-border/80 p-4" />
           ))}
         </div>
 
-        {/* 2 Middle cards skeleton */}
-        <div className="grid gap-5 grid-cols-1 lg:grid-cols-12">
-          <div className="h-96 lg:col-span-8 bg-card rounded-2xl border border-border/80" />
-          <div className="h-96 lg:col-span-4 bg-card rounded-2xl border border-border/80" />
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+          <div className="h-64 bg-card rounded-2xl border border-border/80" />
+          <div className="h-64 bg-card rounded-2xl border border-border/80" />
         </div>
-
-        {/* Bottom table skeleton */}
-        <div className="h-64 bg-card rounded-2xl border border-border/80" />
       </div>
     )
   }
@@ -95,184 +92,234 @@ export default function DashboardPage() {
 
   const {
     salesToday,
-    salesThisMonth,
     incomeToday,
     pendingCreditTotal,
     pendingCreditClientsCount,
     webOrdersSummary,
+    inventorySummary,
     recentSales,
-    salesByMonth,
-    salesByPayment,
   } = data
 
-  const todayFormatted = new Date().toLocaleDateString('es-CO', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  const hasPendingOrders = webOrdersSummary.pendingCount > 0
+  const hasLowStock = inventorySummary.lowStockCount > 0
+  const hasOutOfStock = inventorySummary.outOfStockCount > 0
 
-  // Filtrado de transacciones
-  const filteredSales = recentSales.filter((sale) => {
-    if (!searchTx.trim()) return true
-    const q = searchTx.toLowerCase()
+  const filteredSales = recentSales.filter((s) => {
+    if (!searchSale.trim()) return true
+    const q = searchSale.toLowerCase()
     return (
-      sale.invoiceNumber.toLowerCase().includes(q) ||
-      (sale.client?.name || '').toLowerCase().includes(q) ||
-      sale.paymentMethod.toLowerCase().includes(q)
+      s.invoiceNumber.toLowerCase().includes(q) ||
+      (s.client?.name || '').toLowerCase().includes(q) ||
+      s.paymentMethod.toLowerCase().includes(q)
     )
   })
 
   return (
     <div className="space-y-6">
-      {/* ======================================================== */}
-      {/* 1. HEADER SUPERIOR (Estilo 'Welcome back, Salung') */}
-      {/* ======================================================== */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      {/* 1. Header Operativo y Acciones Rápidas */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/60 pb-4">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Bienvenido de nuevo</h1>
+          <div className="flex items-center gap-2.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              Dashboard Operativo & Comercial
+            </h1>
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 rounded-md font-mono">
+              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+              EN VIVO
+            </span>
+          </div>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Resumen comercial, liquidez operativa e inventario omnicanal en tiempo real.
+            Métricas consolidadas de ventas, recaudo en caja, catálogo e integración e-commerce
           </p>
         </div>
 
-        {/* Controles superiores (Pills y Botones estilo SaaS de la imagen) */}
+        {/* Acciones directas y funcionales */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Selector de Periodo */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card text-xs font-semibold text-foreground shadow-2xs cursor-default">
-            <span>Hoy</span>
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </div>
-
-          {/* Badge de Fecha */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-border/80 bg-card text-xs font-medium text-muted-foreground shadow-2xs">
-            <Calendar className="h-3.5 w-3.5 text-muted-foreground/70" />
-            <span className="font-mono">{todayFormatted}</span>
-          </div>
-
-          {/* Refrescar Datos */}
           <Button
             variant="outline"
             size="sm"
             onClick={() => loadData(true)}
             disabled={refreshing}
-            className="rounded-xl h-8.5 px-2.5 text-xs text-muted-foreground hover:text-foreground shadow-2xs"
+            className="h-8.5 rounded-xl text-xs font-medium text-muted-foreground hover:text-foreground shadow-2xs"
             title="Refrescar datos"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${refreshing ? 'animate-spin' : ''}`} />
+            Refrescar
           </Button>
 
-          {/* Botón Principal Negro (+ Nueva Venta / Export CSV en la referencia) */}
-          <Link
-            href="/sales"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gray-950 text-white dark:bg-white dark:text-gray-950 text-xs font-semibold shadow-xs hover:bg-black transition-all active:scale-[0.98]"
+          <Button
+            render={<Link href="/sales" />}
+            size="sm"
+            className="h-8.5 rounded-xl px-3 text-xs font-semibold bg-gray-950 text-white dark:bg-white dark:text-gray-950 hover:bg-black shadow-2xs"
           >
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span>Nueva Venta</span>
-          </Link>
+            <PlusCircle className="h-3.5 w-3.5 mr-1.5" />
+            Nueva Venta
+          </Button>
+
+          <Button
+            render={<Link href="/web/orders" className="relative" />}
+            variant="outline"
+            size="sm"
+            className="h-8.5 rounded-xl px-3 text-xs font-medium shadow-2xs"
+          >
+            <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />
+            Pedidos Web
+            {hasPendingOrders && (
+              <span className="ml-1.5 px-1.5 py-0.2 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold font-mono">
+                {webOrdersSummary.pendingCount}
+              </span>
+            )}
+          </Button>
         </div>
       </div>
 
-      {/* ======================================================== */}
-      {/* 2. FILA DE 4 KPI CARDS (Con Micro Sparklines estilo referencia) */}
-      {/* ======================================================== */}
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {/* KPI 1: TOTAL REVENUE */}
-        <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:shadow-sm transition-shadow">
-          <CardContent className="p-0 space-y-2">
-            <div className="flex items-start justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                Facturación Hoy
-              </span>
-              <MiniSparkline values={[25, 40, 35, 65, 80, 50, 95]} />
+      {/* 2. Grid de 6 KPIs Estratégicos (Datos Reales 100% Funcionales) */}
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+        {/* KPI 1: Facturación Hoy */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Ventas Hoy</span>
+              <div className="p-1.5 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                <ShoppingCart className="h-4 w-4" />
+              </div>
             </div>
-
             <div>
-              <div className="text-2xl font-bold tracking-tight font-mono text-foreground">
+              <div className="text-xl font-bold tracking-tight text-foreground font-mono">
                 {formatCurrency(salesToday.total)}
               </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
-                  +{salesToday.count} ventas
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                <span>
+                  {salesToday.count} {salesToday.count === 1 ? 'venta' : 'ventas'}
                 </span>
-                <span className="text-[11px] text-muted-foreground font-mono">
-                  Prom: {formatCurrency(salesToday.averageTicket)}
-                </span>
+                <span className="font-mono">Prom: {formatCurrency(salesToday.averageTicket)}</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* KPI 2: TOTAL ORDERS */}
-        <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:shadow-sm transition-shadow">
-          <CardContent className="p-0 space-y-2">
-            <div className="flex items-start justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                Tienda Online
-              </span>
-              <MiniSparkline values={[15, 30, 20, 45, 60, 40, 75]} />
-            </div>
-
-            <div>
-              <div className="text-2xl font-bold tracking-tight font-mono text-foreground">
-                {webOrdersSummary.pendingCount}{' '}
-                <span className="text-sm font-normal text-muted-foreground">Órdenes</span>
-              </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 font-mono">
-                  {formatCurrency(webOrdersSummary.pendingOrdersTotal)}
-                </span>
-                <Link href="/web/orders" className="text-[11px] text-primary hover:underline font-medium">
-                  Ver pedidos
-                </Link>
+        {/* KPI 2: Recaudo Efectivo en Caja */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Caja Hoy</span>
+              <div className="p-1.5 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                <Wallet className="h-4 w-4" />
               </div>
             </div>
-          </CardContent>
-        </Card>
-
-        {/* KPI 3: NEW CUSTOMERS / RECAUDO EN CAJA */}
-        <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:shadow-sm transition-shadow">
-          <CardContent className="p-0 space-y-2">
-            <div className="flex items-start justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                Recaudo en Caja
-              </span>
-              <MiniSparkline values={[35, 55, 40, 70, 85, 65, 90]} />
-            </div>
-
             <div>
-              <div className="text-2xl font-bold tracking-tight font-mono text-emerald-600 dark:text-emerald-400">
+              <div className="text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 font-mono">
                 {formatCurrency(incomeToday)}
               </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 font-mono">
-                  Disponible
-                </span>
-                <span className="text-[11px] text-muted-foreground">Contado y transferencias</span>
+              <p className="text-[11px] text-muted-foreground mt-1">Contado + abonos recibidos</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* KPI 3: Margen y Ganancia Estimada */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Utilidad Hoy</span>
+              <div className="p-1.5 rounded-xl bg-teal-500/10 text-teal-600 dark:text-teal-400 border border-teal-500/20">
+                <TrendingUp className="h-4 w-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl font-bold tracking-tight text-teal-600 dark:text-teal-400 font-mono">
+                {formatCurrency(salesToday.profit)}
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                <span>Margen est.</span>
+                <span className="font-semibold text-foreground font-mono">{salesToday.profitMarginPercent}%</span>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* KPI 4: CARTERA & CRÉDITOS */}
-        <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-2xs hover:shadow-sm transition-shadow">
-          <CardContent className="p-0 space-y-2">
-            <div className="flex items-start justify-between">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">
-                Cartera por Cobrar
+        {/* KPI 4: Cartera por Cobrar */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Cartera Crédito
               </span>
-              <MiniSparkline values={[45, 35, 50, 40, 60, 45, 55]} />
+              <div className="p-1.5 rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20">
+                <HandCoins className="h-4 w-4" />
+              </div>
             </div>
-
             <div>
-              <div className="text-2xl font-bold tracking-tight font-mono text-foreground">
+              <div className="text-xl font-bold tracking-tight text-sky-600 dark:text-sky-400 font-mono">
                 {formatCurrency(pendingCreditTotal)}
               </div>
-              <div className="flex items-center gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 font-mono">
-                  {pendingCreditClientsCount} clientes
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                <span>{pendingCreditClientsCount} clientes</span>
+                <Link href="/credits" className="text-primary hover:underline font-semibold">
+                  Cobrar
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* KPI 5: Pedidos Web */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Tienda Online
+              </span>
+              <div
+                className={`p-1.5 rounded-xl border ${
+                  hasPendingOrders
+                    ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                    : 'bg-muted text-muted-foreground border-border'
+                }`}
+              >
+                <ShoppingBag className="h-4 w-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl font-bold tracking-tight font-mono flex items-center gap-1.5">
+                <span>{webOrdersSummary.pendingCount}</span>
+                <span className="text-xs font-normal text-muted-foreground">pendientes</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                <span>{formatCurrency(webOrdersSummary.pendingOrdersTotal)}</span>
+                <Link href="/web/orders" className="text-primary hover:underline font-semibold">
+                  Ver
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* KPI 6: Catálogo & Stock Crítico */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs hover:shadow-sm transition-shadow">
+          <CardContent className="p-3.5 space-y-1.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Inventario</span>
+              <div
+                className={`p-1.5 rounded-xl border ${
+                  hasOutOfStock || hasLowStock
+                    ? 'bg-destructive/15 text-destructive border-destructive/30'
+                    : 'bg-primary/10 text-primary border-primary/20'
+                }`}
+              >
+                <Package className="h-4 w-4" />
+              </div>
+            </div>
+            <div>
+              <div className="text-xl font-bold tracking-tight font-mono text-foreground">
+                {formatNumber(inventorySummary.totalProducts)}
+                <span className="text-xs font-normal text-muted-foreground ml-1">ítems</span>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-muted-foreground mt-1">
+                <span className={hasOutOfStock ? 'text-destructive font-semibold' : ''}>
+                  {inventorySummary.outOfStockCount} agotados
                 </span>
-                <Link href="/credits" className="text-[11px] text-primary hover:underline font-medium">
-                  Cobrar saldo
+                <Link href="/inventory" className="text-primary hover:underline font-semibold">
+                  Revisar
                 </Link>
               </div>
             </div>
@@ -280,170 +327,201 @@ export default function DashboardPage() {
         </Card>
       </div>
 
-      {/* ======================================================== */}
-      {/* 3. FILA CENTRAL: SALES TREND Y REVENUE BREAKDOWN */}
-      {/* ======================================================== */}
-      <div className="grid gap-5 grid-cols-1 lg:grid-cols-12">
-        {/* Columna Izquierda: Tendencia de Ventas (Sales Trend) */}
-        <div className="lg:col-span-8 flex flex-col">
-          <SalesTrendCard data={salesByMonth || []} totalRevenue={salesThisMonth?.total || salesToday.total || 0} />
-        </div>
-
-        {/* Columna Derecha: Revenue Breakdown & AI Insight */}
-        <div className="lg:col-span-4 flex flex-col">
-          <RevenueBreakdownCard
-            paymentData={salesByPayment || []}
-            totalRevenue={salesThisMonth?.total || salesToday.total || 0}
-          />
-        </div>
+      {/* 3. Fila de Gráficos Principales: Facturación Mensual y Tesorería */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <SalesMonthlyBar data={data.salesByMonth || []} />
+        <PaymentDonut data={data.salesByPayment || []} />
       </div>
 
-      {/* ======================================================== */}
-      {/* 4. TABLA INFERIOR: RECENT TRANSACTIONS (Estilo de la referencia) */}
-      {/* ======================================================== */}
-      <Card className="rounded-2xl border border-border/80 bg-card shadow-2xs overflow-hidden">
-        {/* Header de la tabla */}
-        <div className="p-5 pb-3 border-b border-border/60 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80 flex items-center gap-1.5">
-              Transacciones Recientes
-              <Info className="h-3 w-3 text-muted-foreground/50" />
-            </span>
-          </div>
+      {/* 4. Fila Secundaria: Top Productos y Reposición de Stock */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        <TopProductsBar data={data.topProducts || []} />
+        <LowStockList data={inventorySummary.lowStockProducts || []} />
+      </div>
 
-          <div className="flex items-center gap-2">
-            <div className="relative w-48 sm:w-60">
-              <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/70" />
-              <Input
-                type="search"
-                placeholder="Buscar por cliente o factura..."
-                value={searchTx}
-                onChange={(e) => setSearchTx(e.target.value)}
-                className="h-8.5 pl-8 pr-3 text-xs rounded-xl bg-muted/40 border-border/70"
-              />
+      {/* 5. Fila Operativa: Pedidos Web y Ventas Recientes */}
+      <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
+        {/* Tarjeta de Pedidos Web Pendientes */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs">
+          <CardHeader className="pb-3 border-b border-border/60">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div
+                  className={`p-2 rounded-xl border ${
+                    hasPendingOrders
+                      ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30'
+                      : 'bg-muted text-muted-foreground border-border'
+                  }`}
+                >
+                  <ShoppingBag className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-semibold">Pedidos Tienda Online</CardTitle>
+                  <CardDescription className="text-xs">
+                    {hasPendingOrders
+                      ? `${webOrdersSummary.pendingCount} órdenes esperando confirmación y despacho`
+                      : 'Todos los pedidos web han sido atendidos'}
+                  </CardDescription>
+                </div>
+              </div>
+              <Button
+                render={<Link href="/web/orders" />}
+                variant="ghost"
+                size="sm"
+                className="text-xs text-primary rounded-xl"
+              >
+                Gestionar <ArrowRight className="h-3 w-3 ml-1" />
+              </Button>
             </div>
+          </CardHeader>
+          <CardContent className="pt-2">
+            {webOrdersSummary.pendingOrders.length === 0 ? (
+              <div className="py-8 text-center text-xs text-muted-foreground">
+                <p>No hay pedidos pendientes de confirmación.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {webOrdersSummary.pendingOrders.map((order) => (
+                  <div
+                    key={order.id}
+                    className="py-2.5 px-1.5 rounded-xl hover:bg-muted/40 transition-colors flex items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs font-bold text-foreground">{order.reference || 'ORD'}</span>
+                        <span className="text-xs font-medium text-foreground truncate">{order.customerName}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[11px] text-muted-foreground mt-0.5">
+                        <Phone className="h-3 w-3" />
+                        <span>{order.customerPhone}</span>
+                        <span>·</span>
+                        <span className="font-mono">
+                          {new Date(order.createdAt).toLocaleTimeString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <div className="font-mono font-semibold text-xs text-foreground">
+                        {formatCurrency(order.total)}
+                      </div>
+                      <Button
+                        render={<Link href="/web/orders" />}
+                        size="sm"
+                        variant="outline"
+                        className="h-6 text-[10px] px-2 mt-1 rounded-lg"
+                      >
+                        Atender
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-            <Button
-              render={<Link href="/sales" />}
-              size="sm"
-              className="h-8.5 rounded-xl px-3 text-xs font-semibold bg-gray-950 text-white dark:bg-white dark:text-gray-950 hover:bg-black shadow-2xs"
-            >
-              <PlusCircle className="h-3.5 w-3.5 mr-1" />
-              Nueva Venta
-            </Button>
-          </div>
-        </div>
+        {/* Tarjeta de Ventas Recientes con buscador */}
+        <Card className="border border-border/80 bg-card rounded-2xl shadow-2xs">
+          <CardHeader className="pb-3 border-b border-border/60">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary border border-primary/20">
+                  <Clock className="h-4 w-4" />
+                </div>
+                <div>
+                  <CardTitle className="text-sm font-semibold">Últimas Ventas Registradas</CardTitle>
+                  <CardDescription className="text-xs">Movimientos recientes en mostrador y web</CardDescription>
+                </div>
+              </div>
 
-        {/* Cuerpo de la tabla */}
-        <div className="overflow-x-auto">
-          {filteredSales.length === 0 ? (
-            <div className="py-12 text-center text-xs text-muted-foreground">
-              No se encontraron transacciones registradas.
+              <div className="flex items-center gap-2">
+                <div className="relative w-40 sm:w-48">
+                  <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground/60" />
+                  <Input
+                    type="search"
+                    placeholder="Filtrar ventas..."
+                    value={searchSale}
+                    onChange={(e) => setSearchSale(e.target.value)}
+                    className="h-8 pl-8 pr-2 text-xs rounded-xl bg-muted/40 border-border/70"
+                  />
+                </div>
+                <Button
+                  render={<Link href="/sales" />}
+                  variant="ghost"
+                  size="sm"
+                  className="text-xs text-primary rounded-xl shrink-0"
+                >
+                  Historial <ArrowRight className="h-3 w-3 ml-1" />
+                </Button>
+              </div>
             </div>
-          ) : (
-            <table className="w-full text-left border-collapse text-xs min-w-[760px]">
-              <thead>
-                <tr className="bg-muted/30 border-b border-border/60 text-muted-foreground uppercase text-[10px] font-bold tracking-wider">
-                  <th className="py-2.5 px-4 w-10">
-                    <input
-                      type="checkbox"
-                      aria-label="Seleccionar todo"
-                      className="rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
-                    />
-                  </th>
-                  <th className="py-2.5 px-4">Factura ID</th>
-                  <th className="py-2.5 px-4">Cliente</th>
-                  <th className="py-2.5 px-4">Método / Canal</th>
-                  <th className="py-2.5 px-4">Estado</th>
-                  <th className="py-2.5 px-4">Fecha</th>
-                  <th className="py-2.5 px-4 text-right">Total</th>
-                  <th className="py-2.5 px-4 text-center w-16">Acciones</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/40 font-normal">
-                {filteredSales.map((sale) => {
-                  const isCredit = sale.paymentMethod === 'CREDITO'
-                  const statusLabel = isCredit ? 'En Crédito' : 'Completada'
-                  const statusDotColor = isCredit ? 'bg-amber-500' : 'bg-emerald-500'
-                  const statusBadgeColor = isCredit
-                    ? 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/20'
-                    : 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20'
-
-                  return (
-                    <tr key={sale.id} className="hover:bg-muted/30 transition-colors group">
-                      <td className="py-3 px-4">
-                        <input
-                          type="checkbox"
-                          aria-label={`Seleccionar factura ${sale.invoiceNumber}`}
-                          className="rounded border-border text-primary focus:ring-primary/20 cursor-pointer"
-                        />
-                      </td>
-
-                      <td className="py-3 px-4 font-mono font-bold text-foreground">
-                        <Link href={`/sales/${sale.id}`} className="hover:underline">
+          </CardHeader>
+          <CardContent className="pt-2">
+            {filteredSales.length === 0 ? (
+              <div className="text-center py-8 text-xs text-muted-foreground">
+                No hay ventas registradas que coincidan con la búsqueda.
+              </div>
+            ) : (
+              <div className="divide-y divide-border/60">
+                {filteredSales.slice(0, 7).map((sale) => (
+                  <div
+                    key={sale.id}
+                    className="py-2.5 px-2 rounded-xl flex items-center justify-between hover:bg-muted/40 transition-colors group"
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/sales/${sale.id}`}
+                          className="font-mono text-xs font-bold text-foreground hover:underline"
+                        >
                           {sale.invoiceNumber}
                         </Link>
-                      </td>
-
-                      <td className="py-3 px-4 font-medium text-foreground">
-                        {sale.client?.name || 'Cliente Mostrador'}
-                      </td>
-
-                      <td className="py-3 px-4 text-muted-foreground">{getPaymentMethodLabel(sale.paymentMethod)}</td>
-
-                      <td className="py-3 px-4">
-                        <span
-                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${statusBadgeColor}`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${statusDotColor}`} />
-                          {statusLabel}
+                        <span className="text-xs font-medium text-foreground truncate">
+                          {sale.client?.name || 'Cliente general'}
                         </span>
-                      </td>
-
-                      <td className="py-3 px-4 text-muted-foreground font-mono text-[11px]">
-                        {new Date(sale.saleDate).toLocaleDateString('es-CO', {
+                      </div>
+                      <div className="text-[11px] text-muted-foreground mt-0.5">
+                        <span className="font-medium text-foreground/80">
+                          {getPaymentMethodLabel(sale.paymentMethod)}
+                        </span>
+                        {' · '}
+                        {new Date(sale.saleDate).toLocaleDateString([], {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',
                           minute: '2-digit',
                         })}
-                      </td>
-
-                      <td className="py-3 px-4 text-right font-mono font-bold text-foreground">
-                        {formatCurrency(sale.total)}
-                      </td>
-
-                      <td className="py-3 px-4 text-center">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors cursor-pointer outline-none">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end" className="w-36 rounded-xl border-border shadow-lg p-1">
-                            <DropdownMenuItem
-                              render={<Link href={`/sales/${sale.id}`} />}
-                              className="cursor-pointer text-xs rounded-lg py-1.5"
-                            >
-                              <Eye className="mr-2 h-3.5 w-3.5" />
-                              Ver Detalle
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              render={<Link href={`/sales/${sale.id}/invoice`} />}
-                              className="cursor-pointer text-xs rounded-lg py-1.5"
-                            >
-                              <FileSpreadsheet className="mr-2 h-3.5 w-3.5" />
-                              Factura PDF
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    </tr>
-                  )
-                })}
-              </tbody>
-            </table>
-          )}
-        </div>
-      </Card>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0">
+                      <span className="font-mono font-bold text-sm text-foreground">{formatCurrency(sale.total)}</span>
+                      <div className="flex items-center gap-1 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Link
+                          href={`/sales/${sale.id}`}
+                          title="Ver detalle"
+                          className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                        >
+                          <Eye className="h-3.5 w-3.5" />
+                        </Link>
+                        <Link
+                          href={`/sales/${sale.id}/invoice`}
+                          title="Factura PDF"
+                          className="p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/80 transition-colors"
+                        >
+                          <FileSpreadsheet className="h-3.5 w-3.5" />
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

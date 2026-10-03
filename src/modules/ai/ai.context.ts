@@ -75,37 +75,46 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
   const dayStart = dateStartOfDay()
   const monthStart = dateStartOfMonth()
 
-  const [salesTodayRows, salesMonthRows, creditRows, products, webOrders, clientsTotal, clientsNew, contactUnread, webVisible] =
-    await Promise.all([
-      prisma.sale.findMany({
-        where: { status: 'COMPLETED', saleDate: { gte: dayStart } },
-        select: { total: true },
-      }),
-      prisma.sale.findMany({
-        where: { status: 'COMPLETED', saleDate: { gte: monthStart } },
-        select: { total: true },
-      }),
-      prisma.sale.findMany({
-        where: { paymentMethod: 'CREDITO', status: 'COMPLETED' },
-        select: { total: true, payments: { select: { amount: true } } },
-      }),
-      prisma.product.findMany({
-        where: { deletedAt: null },
-        select: {
-          name: true,
-          stock: true,
-          lowStockThreshold: true,
-          costPrice: true,
-          salePrice: true,
-          category: { select: { name: true } },
-        },
-      }),
-      prisma.webOrder.findMany({ select: { status: true } }),
-      prisma.client.count({ where: { deletedAt: null } }),
-      prisma.client.count({ where: { deletedAt: null, createdAt: { gte: monthStart } } }),
-      prisma.contactMessage.count({ where: { read: false } }),
-      prisma.product.count({ where: { deletedAt: null, webVisible: true } }),
-    ])
+  const [
+    salesTodayRows,
+    salesMonthRows,
+    creditRows,
+    products,
+    webOrders,
+    clientsTotal,
+    clientsNew,
+    contactUnread,
+    webVisible,
+  ] = await Promise.all([
+    prisma.sale.findMany({
+      where: { status: 'COMPLETED', saleDate: { gte: dayStart } },
+      select: { total: true },
+    }),
+    prisma.sale.findMany({
+      where: { status: 'COMPLETED', saleDate: { gte: monthStart } },
+      select: { total: true },
+    }),
+    prisma.sale.findMany({
+      where: { paymentMethod: 'CREDITO', status: 'COMPLETED' },
+      select: { total: true, payments: { select: { amount: true } } },
+    }),
+    prisma.product.findMany({
+      where: { deletedAt: null },
+      select: {
+        name: true,
+        stock: true,
+        lowStockThreshold: true,
+        costPrice: true,
+        salePrice: true,
+        category: { select: { name: true } },
+      },
+    }),
+    prisma.webOrder.findMany({ select: { status: true } }),
+    prisma.client.count({ where: { deletedAt: null } }),
+    prisma.client.count({ where: { deletedAt: null, createdAt: { gte: monthStart } } }),
+    prisma.contactMessage.count({ where: { read: false } }),
+    prisma.product.count({ where: { deletedAt: null, webVisible: true } }),
+  ])
 
   const salesTodayTotal = salesTodayRows.reduce((sum, s) => sum + s.total, 0)
   const salesMonthTotal = salesMonthRows.reduce((sum, s) => sum + s.total, 0)
@@ -116,9 +125,7 @@ export async function collectBusinessData(): Promise<BusinessSnapshot> {
     creditTotal += sale.total - paid
   }
 
-  const lowStock = products
-    .filter((p) => p.stock <= p.lowStockThreshold)
-    .sort((a, b) => a.stock - b.stock)
+  const lowStock = products.filter((p) => p.stock <= p.lowStockThreshold).sort((a, b) => a.stock - b.stock)
 
   const webOrderCounts: BusinessSnapshot['webOrders'] = {
     PENDING: 0,
@@ -174,7 +181,9 @@ export function businessSnapshotToText(snapshot: BusinessSnapshot): string {
     `  • ${snapshot.inventory.outOfStockCount} productos agotados`,
     '  • Productos con stock bajo (top 10):',
     ...(snapshot.inventory.lowStockTop.length
-      ? snapshot.inventory.lowStockTop.map((p) => `    - ${p.name}: ${p.stock} uds (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`)
+      ? snapshot.inventory.lowStockTop.map(
+          (p) => `    - ${p.name}: ${p.stock} uds (mín ${p.threshold})${p.category ? ` - ${p.category}` : ''}`,
+        )
       : ['    (ninguno)']),
     '',
     'Tienda online:',
@@ -234,6 +243,5 @@ export function buildSystemPrompt(snapshot: BusinessSnapshot): string {
     '  - get_business_snapshot: vista general actualizada completo.',
     '',
     'Nunca inventes cifras ni afirmes datos que no vengan de fuentes confiables. Si no tienes el dato, dilo y sugiere dónde consultarlo.',
-  ]
-    .join('\n')
+  ].join('\n')
 }

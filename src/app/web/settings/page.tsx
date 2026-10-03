@@ -24,7 +24,7 @@ export default async function WebSettingsPage() {
         <CardHeader>
           <CardTitle>Contacto y apariencia</CardTitle>
           <CardDescription>
-            Estos valores se publican en el storefront (cilmax.com.co) desde la base de datos consolidada.
+            Estos valores se publican en el storefront de la tienda online desde la base de datos consolidada.
           </CardDescription>
         </CardHeader>
         <CardContent>

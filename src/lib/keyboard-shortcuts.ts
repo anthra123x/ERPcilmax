@@ -35,10 +35,10 @@ export function useKeyboardShortcuts() {
         router.push('/sales')
       }
 
-      // Alt + P: Asistente IA (Reportes y control)
-      if (e.altKey && e.key === 'p') {
+      // Alt + C: Cartera & Créditos
+      if (e.altKey && e.key === 'c') {
         e.preventDefault()
-        router.push('/assistant')
+        router.push('/credits')
       }
 
       // Alt + A: Administración (solo para admin, se valida en el servidor)

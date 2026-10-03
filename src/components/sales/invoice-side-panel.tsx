@@ -177,7 +177,7 @@ export function InvoiceSidePanel({ saleId, onClose }: InvoiceSidePanelProps) {
 
   const handleWhatsAppShare = useCallback(() => {
     if (!sale) return
-    const company = sale.invoice?.companyName || 'Cilmax'
+    const company = sale.invoice?.companyName || 'Nova ERP'
     const clientName = sale.client?.name || 'Estimado cliente'
     const totalFmt = formatCurrency(sale.total)
     const url = `${window.location.origin}/sales/${sale.id}/invoice`

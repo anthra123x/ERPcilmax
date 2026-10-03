@@ -80,9 +80,23 @@ describe('get_sales_summary', () => {
 describe('get_inventory_status', () => {
   it('calcula stock bajo, agotados y valor', async () => {
     prismaMock.product.findMany.mockResolvedValue([
-      { name: 'Bajo', stock: 1, lowStockThreshold: 5, costPrice: 10000, salePrice: 20000, category: { name: 'Accesorios' } },
+      {
+        name: 'Bajo',
+        stock: 1,
+        lowStockThreshold: 5,
+        costPrice: 10000,
+        salePrice: 20000,
+        category: { name: 'Accesorios' },
+      },
       { name: 'Agotado', stock: 0, lowStockThreshold: 5, costPrice: 5000, salePrice: 15000, category: null },
-      { name: 'Ok', stock: 10, lowStockThreshold: 5, costPrice: 20000, salePrice: 40000, category: { name: 'Equipos' } },
+      {
+        name: 'Ok',
+        stock: 10,
+        lowStockThreshold: 5,
+        costPrice: 20000,
+        salePrice: 40000,
+        category: { name: 'Equipos' },
+      },
     ])
 
     const result = await runAssistantTool('get_inventory_status')

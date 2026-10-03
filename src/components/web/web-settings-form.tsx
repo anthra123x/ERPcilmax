@@ -107,8 +107,8 @@ export function WebSettingsForm({ settings, onSave }: WebSettingsFormProps) {
               onChange={(e) => set('webPendingExpiryHours', e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Los pedidos PENDING más antiguos que este límite se cancelan automáticamente para no bloquear la
-              bandeja de confirmación.
+              Los pedidos PENDING más antiguos que este límite se cancelan automáticamente para no bloquear la bandeja
+              de confirmación.
             </p>
           </div>
 

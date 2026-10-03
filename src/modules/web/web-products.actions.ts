@@ -169,9 +169,7 @@ export async function setWebProductVisible(id: string, visible: boolean) {
 
     await prisma.product.update({
       where: { id },
-      data: visible
-        ? { webVisible: true, ...(slug ? { slug } : {}) }
-        : { webVisible: false },
+      data: visible ? { webVisible: true, ...(slug ? { slug } : {}) } : { webVisible: false },
     })
   } catch (error) {
     return { error: parseError(error, 'No se pudo actualizar la publicación').message }

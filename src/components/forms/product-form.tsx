@@ -175,8 +175,8 @@ export function ProductForm({
         salePrice: Number(data.salePrice) || 0,
         stock: Number(data.stock) || 0,
         lowStockThreshold: Number(data.lowStockThreshold) || 5,
-        categoryId: categories.find(c => c.name === categoryName)?.id || null,
-        supplierId: suppliers.find(s => s.name === supplierName)?.id || null,
+        categoryId: categories.find((c) => c.name === categoryName)?.id || null,
+        supplierId: suppliers.find((s) => s.name === supplierName)?.id || null,
         imageUrl: imageUrl || null,
       }
 
@@ -286,7 +286,11 @@ export function ProductForm({
                     disabled={isSubmitting || isLoading || imageLoading}
                     onClick={() => fileInputRef.current?.click()}
                   >
-                    {imageLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload className="mr-2 h-4 w-4" />}
+                    {imageLoading ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Upload className="mr-2 h-4 w-4" />
+                    )}
                     {imageUrl ? 'Cambiar imagen' : 'Subir imagen'}
                   </Button>
                   {imageUrl && (

@@ -11,8 +11,6 @@ import {
   Package,
   Users,
   Settings,
-  BarChart3,
-  Sparkles,
   PanelLeftClose,
   PanelLeftOpen,
   ChevronDown,
@@ -46,7 +44,6 @@ interface NavItem {
   name: string
   href: string
   icon: React.ElementType
-  badge?: string
 }
 
 interface NavSection {
@@ -56,7 +53,7 @@ interface NavSection {
 
 const navSections: NavSection[] = [
   {
-    title: 'Menú Principal',
+    title: 'Operación',
     items: [
       { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { name: 'Ventas (POS)', href: '/sales', icon: ShoppingCart },
@@ -69,15 +66,11 @@ const navSections: NavSection[] = [
     items: [
       { name: 'Clientes', href: '/clients', icon: Users },
       { name: 'Créditos', href: '/credits', icon: HandCoins },
-      { name: 'Reportes', href: '/reports', icon: BarChart3 },
     ],
   },
   {
     title: 'Sistema',
-    items: [
-      { name: 'Asistente IA', href: '/assistant', icon: Sparkles, badge: 'IA' },
-      { name: 'Administración', href: '/admin', icon: Settings },
-    ],
+    items: [{ name: 'Administración', href: '/admin', icon: Settings }],
   },
 ]
 
@@ -107,7 +100,7 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
 
   return (
     <div className="flex h-full w-full flex-col bg-sidebar text-sidebar-foreground select-none border-r border-sidebar-border/70 transition-all duration-200">
-      {/* Top Workspace Header (Spark Pixel Team style in reference UI) */}
+      {/* Workspace Header */}
       <div className="p-3 border-b border-sidebar-border/60 shrink-0">
         {!collapsed ? (
           <div className="flex items-center justify-between gap-2 p-1.5 rounded-xl border border-sidebar-border/70 bg-card shadow-2xs">
@@ -165,7 +158,7 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
         )}
       </div>
 
-      {/* Navigation Sections */}
+      {/* Navegación limpia y enfocada */}
       <nav
         className={cn(
           'flex-1 overflow-y-auto overflow-x-hidden py-3 space-y-5',
@@ -229,12 +222,6 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
                       />
                       <span className="truncate">{item.name}</span>
                     </div>
-
-                    {item.badge && (
-                      <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        {item.badge}
-                      </span>
-                    )}
                   </Link>
                 )
               })}
@@ -243,7 +230,7 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
         ))}
       </nav>
 
-      {/* Bottom User Profile Card (Salung Prastyo style in reference UI) */}
+      {/* Tarjeta de perfil de usuario */}
       <div className="p-3 border-t border-sidebar-border/60 shrink-0">
         {!collapsed ? (
           <DropdownMenu>
@@ -310,7 +297,7 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
           </div>
         )}
 
-        {/* Keyboard shortcut hint */}
+        {/* Atajos de teclado */}
         {!collapsed && (
           <div className="mt-2 px-1 text-[10px] text-muted-foreground/60 flex items-center gap-1 font-mono justify-center">
             <Keyboard className="h-3 w-3" />

@@ -2,13 +2,21 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { createClientSupabase } from '@/lib/supabase'
 import { ChangePasswordSchema } from '@/lib/validations'
 import { Loader2, KeyRound, AlertCircle, ShieldCheck, LogIn } from 'lucide-react'
+
+function NovaLogo({ className = 'h-9 w-9' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+      <rect width="32" height="32" rx="8" className="fill-primary" />
+      <path d="M9 23V9L23 23V9" stroke="white" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
 
 function UpdatePasswordInner() {
   const router = useRouter()
@@ -45,7 +53,7 @@ function UpdatePasswordInner() {
         }
 
         setStatus('ready')
-      } catch (_error) {
+      } catch {
         setStatus('error')
         setStatusMessage('Ocurrió un error al validar el enlace. Intenta de nuevo.')
       }
@@ -89,7 +97,7 @@ function UpdatePasswordInner() {
       setPassword('')
       setConfirm('')
       setSaving(false)
-    } catch (_error) {
+    } catch {
       setStatusMessage('Ocurrió un error inesperado')
       setStatus('error')
       setSaving(false)
@@ -102,21 +110,14 @@ function UpdatePasswordInner() {
       <div className="absolute inset-0 bg-gradient-to-b from-background/50 via-transparent to-background/70 pointer-events-none" />
 
       <main className="relative z-10 flex w-full flex-1 flex-col items-center justify-center px-4 py-8">
-        <div className="mb-8 flex flex-col items-center gap-4 text-center">
-          <div className="flex items-center gap-4">
-            <Image
-              src="/logo cilmax.png"
-              alt="Cilmax"
-              width={240}
-              height={48}
-              priority
-              className="h-14 w-auto object-contain"
-            />
-            <h1 className="text-3xl font-bold tracking-tight text-foreground">Cilmax</h1>
+        <div className="mb-8 flex flex-col items-center gap-2 text-center">
+          <div className="flex items-center gap-2.5">
+            <NovaLogo className="h-9 w-9 shrink-0 shadow-sm" />
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Nova ERP</h1>
           </div>
         </div>
 
-        <div className="w-full max-w-sm rounded-none bg-card p-8 shadow-lg shadow-foreground/5 sm:p-10">
+        <div className="w-full max-w-sm rounded-2xl border border-border/80 bg-card p-8 shadow-xl shadow-foreground/5 sm:p-10">
           <div className="space-y-2 text-center">
             <h2 className="text-2xl font-bold tracking-tight text-foreground">Restablecer contraseña</h2>
             <p className="text-sm text-gray-600">
@@ -222,7 +223,7 @@ function UpdatePasswordInner() {
       </main>
 
       <footer className="relative z-10 w-full pb-8 text-center">
-        <p className="text-xs text-muted-foreground/70">Cilmax &mdash; Sistema de gestión de tienda</p>
+        <p className="text-xs text-muted-foreground/70">Nova ERP &mdash; Sistema de gestión integral</p>
       </footer>
     </div>
   )

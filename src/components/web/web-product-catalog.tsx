@@ -139,7 +139,12 @@ export function WebProductCatalog({ products, hasFilters }: WebProductCatalogPro
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10">
-                  <Checkbox checked={allSelected} onCheckedChange={toggleSelectAll} disabled={busy || products.length === 0} aria-label="Seleccionar todos" />
+                  <Checkbox
+                    checked={allSelected}
+                    onCheckedChange={toggleSelectAll}
+                    disabled={busy || products.length === 0}
+                    aria-label="Seleccionar todos"
+                  />
                 </TableHead>
                 <TableHead>Producto</TableHead>
                 <TableHead>Categoría</TableHead>
@@ -167,11 +172,7 @@ export function WebProductCatalog({ products, hasFilters }: WebProductCatalogPro
                     <div className="flex items-center gap-3">
                       <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md border">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={p.media[0]?.url || p.imageUrl || ''}
-                          alt=""
-                          className="h-full w-full object-cover"
-                        />
+                        <img src={p.media[0]?.url || p.imageUrl || ''} alt="" className="h-full w-full object-cover" />
                       </div>
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">{p.name}</p>

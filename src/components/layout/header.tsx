@@ -13,7 +13,6 @@ import {
   Loader2,
   ArrowRight,
   ChevronRight,
-  Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -55,16 +54,14 @@ interface SearchResults {
 const EMPTY_RESULTS: SearchResults = { products: [], clients: [], sales: [] }
 
 const ROUTE_BREADCRUMBS: Record<string, { section: string; title: string }> = {
-  '/dashboard': { section: 'Dashboard', title: 'Overview' },
+  '/dashboard': { section: 'Dashboard', title: 'Resumen' },
   '/sales': { section: 'Comercial', title: 'Ventas (POS)' },
   '/web': { section: 'E-Commerce', title: 'Tienda Online' },
   '/inventory': { section: 'Operaciones', title: 'Inventario' },
   '/clients': { section: 'Clientes', title: 'Directorio' },
   '/credits': { section: 'Finanzas', title: 'Cartera & Créditos' },
-  '/reports': { section: 'Analítica', title: 'Reportes' },
-  '/assistant': { section: 'Inteligencia', title: 'Asistente IA' },
   '/admin': { section: 'Sistema', title: 'Configuración' },
-  '/profile': { section: 'Usuario', title: 'Mi Perfil' },
+  '/profile': { section: 'Cuenta', title: 'Mi Perfil' },
 }
 
 export function Header({ user, onMenuClick }: HeaderProps) {
@@ -325,14 +322,6 @@ export function Header({ user, onMenuClick }: HeaderProps) {
 
         {/* Campana de Notificaciones */}
         <NotificationsDropdown />
-
-        {/* Botón de Seguridad / Estado */}
-        <div
-          title="Conexión Segura & Cifrado Activo"
-          className="hidden md:flex items-center justify-center h-8 w-8 rounded-full border border-border/80 bg-card text-muted-foreground hover:text-foreground transition-colors shadow-2xs cursor-default"
-        >
-          <Shield className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-        </div>
 
         {/* Avatar Dropdown en el Header */}
         <DropdownMenu>

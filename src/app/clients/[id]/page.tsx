@@ -6,12 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, Pencil, Phone, Mail, MapPin, ShoppingCart, Receipt, HandCoins } from 'lucide-react'
 import { formatCurrency } from '@/lib/format'
-import {
-  getCreditStatus,
-  getCreditStatusColor,
-  getCreditStatusLabel,
-  getPaymentMethodLabel,
-} from '@/lib/labels'
+import { getCreditStatus, getCreditStatusColor, getCreditStatusLabel, getPaymentMethodLabel } from '@/lib/labels'
 
 interface ClientPageProps {
   params: Promise<{

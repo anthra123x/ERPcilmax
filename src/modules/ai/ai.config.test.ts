@@ -54,9 +54,7 @@ describe('normalizeAgentKeys', () => {
         { provider: 'google', key: 'AIzaSyx1234567890' },
       ]),
     )
-    expect(agents).toEqual([
-      { provider: 'google', key: 'AIzaSyx1234567890', model: getDefaultModel('google') },
-    ])
+    expect(agents).toEqual([{ provider: 'google', key: 'AIzaSyx1234567890', model: getDefaultModel('google') }])
   })
 })
 

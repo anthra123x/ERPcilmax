@@ -86,10 +86,10 @@ describe('runAssistantTurn', () => {
   })
 
   it('usa el agente de IA cuando está configurado', async () => {
-    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([
-      { provider: 'openai', key: 'sk-1234567890abcdef' },
-    ])
-    globalThis.fetch = vi.fn().mockResolvedValue(openaiResponse('{"text":"Respuesta del modelo de prueba"}')) as unknown as typeof fetch
+    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([{ provider: 'openai', key: 'sk-1234567890abcdef' }])
+    globalThis.fetch = vi
+      .fn()
+      .mockResolvedValue(openaiResponse('{"text":"Respuesta del modelo de prueba"}')) as unknown as typeof fetch
 
     const result = await runAssistantTurn({ message: '¿cómo van las ventas?' })
 
@@ -100,9 +100,7 @@ describe('runAssistantTurn', () => {
   })
 
   it('ejecuta la herramienta solicitada por el agente y responde en un segundo turno', async () => {
-    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([
-      { provider: 'openai', key: 'sk-1234567890abcdef' },
-    ])
+    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([{ provider: 'openai', key: 'sk-1234567890abcdef' }])
     globalThis.fetch = vi
       .fn()
       .mockResolvedValueOnce(openaiResponse('{"tool":"get_sales_summary","args":{"period":"today"}}'))
@@ -117,9 +115,7 @@ describe('runAssistantTurn', () => {
   })
 
   it('cae al modo mock cuando todos los agentes se quedan sin cuota', async () => {
-    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([
-      { provider: 'openai', key: 'sk-1234567890abcdef' },
-    ])
+    process.env[AI_PROVIDER_KEYS_ENV] = JSON.stringify([{ provider: 'openai', key: 'sk-1234567890abcdef' }])
     globalThis.fetch = vi.fn().mockResolvedValue(quotaResponse()) as unknown as typeof fetch
 
     const result = await runAssistantTurn({ message: 'ventas de hoy' })

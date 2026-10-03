@@ -24,9 +24,7 @@ export function InventoryWebPublish({ productId, status }: InventoryWebPublishPr
   async function toggle(field: 'visible' | 'featured', next: boolean) {
     setBusy(true)
     const result =
-      field === 'visible'
-        ? await setWebProductVisible(productId, next)
-        : await setWebProductFeatured(productId, next)
+      field === 'visible' ? await setWebProductVisible(productId, next) : await setWebProductFeatured(productId, next)
     if (result?.error) {
       toast.error(result.error)
     } else {
@@ -55,7 +53,11 @@ export function InventoryWebPublish({ productId, status }: InventoryWebPublishPr
           </div>
           <Badge
             variant={status.webVisible ? 'default' : 'outline'}
-            className={status.webVisible ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400' : undefined}
+            className={
+              status.webVisible
+                ? 'border-emerald-300 bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-400'
+                : undefined
+            }
           >
             {status.webVisible ? 'Publicado' : 'Oculto'}
           </Badge>

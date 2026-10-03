@@ -71,11 +71,7 @@ export function WebOrderActions({ orderId, status }: WebOrderActionsProps) {
     <div className="flex flex-wrap items-center justify-end gap-2">
       {status === 'PENDING' && (
         <Button size="sm" variant="outline" onClick={handleConfirm} disabled={acting}>
-          {acting ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <PackageCheck className="h-4 w-4" />
-          )}
+          {acting ? <Loader2 className="h-4 w-4 animate-spin" /> : <PackageCheck className="h-4 w-4" />}
           {acting ? 'Confirmando…' : 'Confirmar y reservar'}
         </Button>
       )}

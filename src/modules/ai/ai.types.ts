@@ -19,14 +19,7 @@ export interface AssistantMessage {
   content: string
 }
 
-export type AiFailureCode =
-  | 'quota'
-  | 'rate_limit'
-  | 'auth'
-  | 'network'
-  | 'bad_request'
-  | 'all_failed'
-  | 'no_keys'
+export type AiFailureCode = 'quota' | 'rate_limit' | 'auth' | 'network' | 'bad_request' | 'all_failed' | 'no_keys'
 
 export class AiProviderError extends Error {
   readonly code: AiFailureCode
