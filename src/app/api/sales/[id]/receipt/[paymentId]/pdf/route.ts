@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { loadPdfSettings, renderReceiptPdf } from '@/lib/pdf'
+import { enforcePdfRateLimit } from '@/lib/api-utils'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string; paymentId: string }> }) {
+  const limited = enforcePdfRateLimit(request)
+  if (limited) return limited
+
   const { id, paymentId } = await params
 
   const sale = await prisma.sale.findUnique({

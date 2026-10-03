@@ -23,6 +23,7 @@
     "db:studio": "bash scripts/with-node.sh node --env-file=.env.local node_modules/prisma/build/index.js studio",
     "db:seed": "bash scripts/with-node.sh node --env-file=.env.local --import tsx prisma/seed.ts",
     "web:import": "bash scripts/with-node.sh node --env-file=.env.local --import tsx prisma/web-import.ts",
+    "test:load": "bash scripts/with-node.sh node load-tests/run-load-test.mjs",
     "postinstall": "prisma generate"
   },
   "dependencies": {

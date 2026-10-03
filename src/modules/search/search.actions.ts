@@ -28,7 +28,7 @@ export interface GlobalSearchResult {
 export async function globalSearch(query: string): Promise<GlobalSearchResult> {
   await requireAuth()
 
-  const q = query.trim()
+  const q = query.trim().slice(0, 100)
   if (q.length < 2) {
     return { products: [], clients: [], sales: [] }
   }

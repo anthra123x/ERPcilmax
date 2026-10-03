@@ -9,11 +9,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Loader2, Upload, Trash2, Image as ImageIcon } from 'lucide-react'
+import { Loader2, Upload, Trash2, Image as ImageIcon, Sparkles } from 'lucide-react'
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 import type { ProductCategory, Supplier } from '@prisma/client'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024
 const MAX_IMAGE_DATA_URL = 500_000
@@ -128,6 +129,8 @@ export function ProductForm({
   const {
     register,
     handleSubmit,
+    setValue,
+    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(product ? UpdateProductSchema : CreateProductSchema),
@@ -155,6 +158,12 @@ export function ProductForm({
           supplierId: '',
         },
   })
+
+  const { workflow } = useBusinessWorkflow()
+  const watchedCost = Number(watch('costPrice') ?? 0) || 0
+  const watchedSale = Number(watch('salePrice') ?? 0) || 0
+  const marginPercent =
+    watchedSale > 0 ? Math.round(((watchedSale - watchedCost) / watchedSale) * 100) : 0
 
   async function handleFormSubmit(data: Record<string, unknown>) {
     setIsSubmitting(true)
@@ -329,7 +338,26 @@ export function ProductForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="salePrice">Precio de venta *</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="salePrice">Precio de venta *</Label>
+                {watchedCost > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const margin = workflow.defaultProfitMargin || 35
+                      const suggested = Math.round(watchedCost * (1 + margin / 100))
+                      setValue('salePrice', suggested, { shouldValidate: true })
+                      toast.info(`Margen aplicado: ${margin}%`, {
+                        description: `Precio sugerido: $${suggested.toLocaleString()}`,
+                      })
+                    }}
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-medium cursor-pointer"
+                  >
+                    <Sparkles className="h-3 w-3" />
+                    Margen sugerido ({workflow.defaultProfitMargin || 35}%)
+                  </button>
+                )}
+              </div>
               <Input
                 id="salePrice"
                 type="number"
@@ -339,6 +367,24 @@ export function ProductForm({
                 placeholder="0"
                 disabled={isSubmitting || isLoading}
               />
+              {watchedSale > 0 && watchedCost > 0 && (
+                <div className="text-[11px] flex items-center justify-between pt-0.5">
+                  <span
+                    className={
+                      watchedSale < watchedCost
+                        ? 'text-destructive font-semibold'
+                        : 'text-emerald-500 font-medium'
+                    }
+                  >
+                    Margen estimado: {marginPercent}%
+                  </span>
+                  {watchedSale < watchedCost && (
+                    <span className="text-destructive font-semibold text-[10px]">
+                      ¡Atención: Precio bajo el costo!
+                    </span>
+                  )}
+                </div>
+              )}
               {errors.salePrice && <p className="text-sm text-red-500">{errors.salePrice.message?.toString()}</p>}
             </div>
 

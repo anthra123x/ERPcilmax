@@ -37,10 +37,9 @@ export default async function WebOrdersPage({
   const buscar = sp.buscar || ''
   const pageSize = 20
 
-  await cancelExpiredWebOrders()
   const [settings, { orders, total, totalPages }] = await Promise.all([
     getWebSettings(),
-    getAdminWebOrders(estado, page, pageSize, buscar),
+    cancelExpiredWebOrders().then(() => getAdminWebOrders(estado, page, pageSize, buscar)),
   ])
 
   const estadoHref = (e: string) => `/web/orders?${new URLSearchParams({ estado: e }).toString()}`

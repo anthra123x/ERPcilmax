@@ -32,6 +32,7 @@ import { toast } from 'sonner'
 import { getProducts } from '@/modules/inventory/inventory.actions'
 import { createSale } from '@/modules/sales/sales.actions'
 import { searchClients, createClient } from '@/modules/clients/clients.actions'
+import { useBusinessWorkflow } from '@/lib/use-business-workflow'
 
 interface ClientSuggestion {
   id: string
@@ -61,6 +62,7 @@ interface ProductOption {
 
 export default function NewSalePage() {
   const router = useRouter()
+  const { workflow } = useBusinessWorkflow()
   const [cart, setCart] = useState<CartItem[]>([])
   const [search, setSearch] = useState('')
   const [products, setProducts] = useState<ProductOption[]>([])
@@ -86,6 +88,13 @@ export default function NewSalePage() {
   const searchClientDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const searchProductDebounce = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const initialLoadDone = useRef(false)
+
+  // Desactivar crédito si la política del negocio lo prohíbe
+  useEffect(() => {
+    if (!workflow.allowCreditSales && paymentMethod === 'CREDITO') {
+      setPaymentMethod('CASH')
+    }
+  }, [workflow.allowCreditSales, paymentMethod])
 
   useEffect(() => {
     loadProducts()
@@ -200,20 +209,32 @@ export default function NewSalePage() {
   }, [products, search, cart])
 
   function addToCart(product: ProductOption) {
-    if (product.stock <= 0) {
-      toast.error('Sin stock', { description: `${product.name} no tiene stock disponible` })
+    if (!workflow.allowNegativeStock && product.stock <= 0) {
+      toast.error('Sin stock disponible', { description: `${product.name} no tiene existencias` })
       return
     }
-    setCart((prev) => [
-      ...prev,
-      {
-        productId: product.id,
-        name: product.name,
-        unitPrice: product.salePrice,
-        stock: product.stock,
-        quantity: 1,
-      },
-    ])
+    setCart((prev) => {
+      const existing = prev.find((item) => item.productId === product.id)
+      if (existing) {
+        if (!workflow.allowNegativeStock && existing.quantity >= product.stock) {
+          toast.error('Stock insuficiente', { description: `Solo hay ${product.stock} unidades de ${product.name}` })
+          return prev
+        }
+        return prev.map((item) =>
+          item.productId === product.id ? { ...item, quantity: item.quantity + 1 } : item,
+        )
+      }
+      return [
+        ...prev,
+        {
+          productId: product.id,
+          name: product.name,
+          unitPrice: product.salePrice,
+          stock: product.stock,
+          quantity: 1,
+        },
+      ]
+    })
     setSearch('')
   }
 
@@ -222,12 +243,12 @@ export default function NewSalePage() {
       prev.map((item) => {
         if (item.productId !== productId) return item
         const newQty = item.quantity + delta
-        if (newQty <= 1) return item
-        if (newQty > item.stock) {
-          toast.error('Stock insuficiente', { description: `Solo hay ${item.stock} unidades` })
+        if (newQty <= 1 && delta < 0) return item
+        if (!workflow.allowNegativeStock && newQty > item.stock) {
+          toast.error('Stock insuficiente', { description: `Solo hay ${item.stock} unidades disponibles` })
           return item
         }
-        return { ...item, quantity: newQty }
+        return { ...item, quantity: Math.max(1, newQty) }
       }),
     )
   }
@@ -262,6 +283,24 @@ export default function NewSalePage() {
     }
     if (discount < 0) {
       toast.error('El descuento no puede ser negativo')
+      return
+    }
+    if (!workflow.allowCashierDiscounts && discount > 0) {
+      toast.error('Descuentos desactivados', {
+        description: 'La política de la empresa no permite aplicar descuentos en mostrador.',
+      })
+      return
+    }
+    if (!workflow.allowCreditSales && isCredit) {
+      toast.error('Crédito no disponible', {
+        description: 'Las ventas a crédito están desactivadas para este negocio.',
+      })
+      return
+    }
+    if (workflow.requireClientOnSale && !selectedClientId && clientName.trim().length === 0) {
+      toast.error('Cliente obligatorio', {
+        description: 'La política del negocio exige registrar un cliente para procesar la venta.',
+      })
       return
     }
     if (isCredit && !selectedClientId && clientName.trim().length === 0) {
@@ -307,6 +346,9 @@ export default function NewSalePage() {
       }
 
       toast.success('Venta registrada exitosamente')
+      if (workflow.autoPrintReceipt && result.sale?.id) {
+        window.open(`/api/sales/${result.sale.id}/pdf`, '_blank')
+      }
       router.push(`/sales/${result.sale?.id}/invoice`)
       router.refresh()
     } catch {
@@ -347,7 +389,32 @@ export default function NewSalePage() {
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar producto del inventario..."
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      if (search.trim()) {
+                        const q = search.trim().toLowerCase()
+                        const exactBarcode = products.find((p) => p.barcode?.toLowerCase() === q)
+                        if (exactBarcode) {
+                          addToCart(exactBarcode)
+                          return
+                        }
+                        const exactName = products.find((p) => p.name.toLowerCase() === q)
+                        if (exactName) {
+                          addToCart(exactName)
+                          return
+                        }
+                        if (filteredProducts.length === 1) {
+                          addToCart(filteredProducts[0])
+                        }
+                      }
+                    }
+                  }}
+                  placeholder={
+                    workflow.barcodeContinuousScan
+                      ? 'Escanear código de barras o presionar Enter para agregar...'
+                      : 'Buscar producto del inventario...'
+                  }
                   className="pl-9"
                 />
               </div>
@@ -358,7 +425,7 @@ export default function NewSalePage() {
                     key={product.id}
                     type="button"
                     onClick={() => addToCart(product)}
-                    disabled={product.stock <= 0}
+                    disabled={!workflow.allowNegativeStock && product.stock <= 0}
                     className="p-3 border rounded-none text-left hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-center gap-2.5">
@@ -383,8 +450,13 @@ export default function NewSalePage() {
                     </div>
                     <div className="flex items-center justify-between mt-2">
                       <span className="font-bold text-sm">{formatCurrency(product.salePrice)}</span>
-                      <Badge variant={product.stock <= 5 ? 'destructive' : 'secondary'} className="text-xs">
-                        {product.stock}
+                      <Badge
+                        variant={product.stock <= 0 ? 'destructive' : product.stock <= 5 ? 'outline' : 'secondary'}
+                        className="text-xs"
+                      >
+                        {product.stock <= 0 && workflow.allowNegativeStock
+                          ? 'Stock 0 (Bajo pedido)'
+                          : `${product.stock} uds`}
                       </Badge>
                     </div>
                   </button>
@@ -411,12 +483,24 @@ export default function NewSalePage() {
           {/* Cliente */}
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Cliente</CardTitle>
+              <CardTitle className="text-lg flex items-center justify-between">
+                <span>Cliente</span>
+                {workflow.requireClientOnSale ? (
+                  <Badge variant="outline" className="text-[11px] border-amber-500/50 text-amber-400">
+                    Obligatorio
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[11px] text-muted-foreground">
+                    Opcional ({workflow.defaultClientName || 'Consumidor Final'})
+                  </Badge>
+                )}
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div className="text-xs font-medium text-muted-foreground">
-                Opcional — deja en blanco para vender sin cliente. Escribe el nombre para autocompletar o crea uno
-                nuevo.
+                {workflow.requireClientOnSale
+                  ? 'Requerido por política comercial — selecciona un cliente o registra uno nuevo para facturar.'
+                  : `Opcional — deja en blanco para vender a ${workflow.defaultClientName || 'Consumidor Final'}.`}
               </div>
 
               <div ref={clientRef} className="relative">
@@ -626,14 +710,20 @@ export default function NewSalePage() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-medium">Descuento (opcional)</label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-medium">Descuento (opcional)</label>
+                    {!workflow.allowCashierDiscounts && (
+                      <span className="text-[10px] text-amber-500 font-medium">Bloqueado por política</span>
+                    )}
+                  </div>
                   <Input
                     type="number"
                     min="0"
                     step="100"
                     value={discount}
+                    disabled={!workflow.allowCashierDiscounts || saving}
                     onChange={(e) => setDiscount(Number(e.target.value) || 0)}
-                    placeholder="0"
+                    placeholder={!workflow.allowCashierDiscounts ? 'Desactivado' : '0'}
                   />
                 </div>
 
@@ -665,12 +755,14 @@ export default function NewSalePage() {
                           Transferencia
                         </span>
                       </SelectItem>
-                      <SelectItem value="CREDITO">
-                        <span className="flex items-center gap-2">
-                          <HandCoins className="h-4 w-4" />
-                          Crédito
-                        </span>
-                      </SelectItem>
+                      {workflow.allowCreditSales && (
+                        <SelectItem value="CREDITO">
+                          <span className="flex items-center gap-2">
+                            <HandCoins className="h-4 w-4" />
+                            Crédito
+                          </span>
+                        </SelectItem>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

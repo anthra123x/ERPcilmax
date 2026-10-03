@@ -1,5 +1,3 @@
-'use client'
-
 export type BusinessSector =
   | 'retail_general'
   | 'technology_repair'
@@ -173,3 +171,6 @@ export function saveBusinessWorkflow(
     return DEFAULT_BUSINESS_WORKFLOW
   }
 }
+
+
+

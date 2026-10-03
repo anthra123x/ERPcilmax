@@ -108,6 +108,32 @@ describe('readJsonBody', () => {
     expect(result.ok).toBe(true)
     if (result.ok) expect(result.body).toEqual({ customerName: 'Ana' })
   })
+
+  it('returns 413 when payload exceeds maxSizeBytes', async () => {
+    const largeBody = JSON.stringify({ data: 'a'.repeat(200) })
+    const request = new NextRequest('http://localhost/api/web/orders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: largeBody,
+    })
+    const result = await readJsonBody(request, 100)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.response.status).toBe(413)
+  })
+
+  it('returns 413 when Content-Length header exceeds maxSizeBytes', async () => {
+    const request = new NextRequest('http://localhost/api/web/orders', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'content-length': '500000',
+      },
+      body: '{}',
+    })
+    const result = await readJsonBody(request, 1024)
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.response.status).toBe(413)
+  })
 })
 
 describe('handleApiError', () => {
@@ -137,12 +163,15 @@ describe('enforceRateLimit', () => {
     }
   })
 
-  it('returns a 429 response once the limit is exceeded', () => {
+  it('returns a 429 response with RFC headers once the limit is exceeded', () => {
     for (let i = 0; i < 120; i++) enforceRateLimit(request('10.0.0.2'))
     const blocked = enforceRateLimit(request('10.0.0.2'))
     expect(blocked).not.toBeNull()
     expect(blocked!.status).toBe(429)
     expect(blocked!.headers.get('Retry-After')).toBeTruthy()
+    expect(blocked!.headers.get('X-RateLimit-Limit')).toBe('120')
+    expect(blocked!.headers.get('X-RateLimit-Remaining')).toBe('0')
+    expect(blocked!.headers.get('X-RateLimit-Reset')).toBeTruthy()
   })
 
   it('tracks read and write limits independently', () => {

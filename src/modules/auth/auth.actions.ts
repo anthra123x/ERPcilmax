@@ -73,6 +73,38 @@ export async function requireAuth() {
   return user
 }
 
+export async function requireAdmin() {
+  const user = await requireAuth()
+
+  try {
+    const supabase = await createSupabaseServerAction()
+    const {
+      data: { user: sbUser },
+    } = await supabase.auth.getUser()
+
+    const role =
+      (sbUser?.user_metadata?.roleTitle as string | undefined) ||
+      (sbUser?.app_metadata?.role as string | undefined) ||
+      'Administrador'
+
+    const isRestrictedRole =
+      typeof role === 'string' &&
+      (role.toLowerCase().includes('vendedor') ||
+        role.toLowerCase().includes('cajero') ||
+        role.toLowerCase().includes('empleado'))
+
+    if (isRestrictedRole) {
+      throw new Error('Acceso no autorizado: se requieren permisos de administrador')
+    }
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('Acceso no autorizado')) {
+      throw err
+    }
+  }
+
+  return user
+}
+
 export async function updatePassword(newPassword: string) {
   await requireAuth()
 
@@ -182,11 +214,18 @@ export async function requestPasswordReset(email: string) {
   }
 
   try {
-    const { headers } = await import('next/headers')
-    const headerStore = await headers()
-    const protocol = headerStore.get('x-forwarded-proto') || 'http'
-    const host = headerStore.get('host') || 'localhost:3000'
-    const origin = `${protocol}://${host}`
+    const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || process.env.NEXT_PUBLIC_APP_URL
+    let origin = appUrl
+    if (!origin) {
+      const { headers } = await import('next/headers')
+      const headerStore = await headers()
+      const host = headerStore.get('host') || 'localhost:3000'
+      const allowedHosts = ['localhost:3000', '127.0.0.1:3000', 'erpcilmax.vercel.app', 'cilmax.store']
+      const isAllowed = allowedHosts.includes(host) || host.endsWith('.vercel.app')
+      const safeHost = isAllowed ? host : 'erpcilmax.vercel.app'
+      const protocol = headerStore.get('x-forwarded-proto') || (safeHost.includes('localhost') ? 'http' : 'https')
+      origin = `${protocol}://${safeHost}`
+    }
 
     const client = await createSupabaseServerAction()
 
@@ -206,7 +245,7 @@ export async function requestPasswordReset(email: string) {
 }
 
 export async function getUsers() {
-  await requireAuth()
+  await requireAdmin()
   return await prisma.user.findMany({
     select: {
       id: true,
@@ -221,7 +260,7 @@ export async function getUsers() {
 }
 
 export async function deleteUser(userId: string) {
-  const currentUser = await requireAuth()
+  const currentUser = await requireAdmin()
 
   // Prevenir que un admin se elimine a sí mismo (quedaría sin acceso al sistema).
   if (userId === currentUser.id) {
@@ -246,7 +285,7 @@ export async function deleteUser(userId: string) {
 }
 
 export async function createUserByAdmin(formData: FormData) {
-  await requireAuth()
+  await requireAdmin()
 
   const email = formData.get('email') as string
   const name = formData.get('name') as string

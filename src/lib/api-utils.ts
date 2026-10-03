@@ -15,6 +15,7 @@ export const catalogCacheHeaders = {
 
 const DEFAULT_LIMITER = createRateLimiter({ limit: 120, windowMs: 60_000 })
 const WRITE_LIMITER = createRateLimiter({ limit: 15, windowMs: 60_000 })
+const PDF_LIMITER = createRateLimiter({ limit: 30, windowMs: 60_000 })
 
 const IPV4_RE = /^(?:(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)\.){3}(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]?\d)$/
 const IPV6_RE = /^(?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/
@@ -73,17 +74,34 @@ export function parsePagination(searchParams: URLSearchParams): PaginationParams
 
 export type ReadJsonResult = { ok: true; body: unknown } | { ok: false; response: NextResponse }
 
+export const DEFAULT_MAX_BODY_SIZE = 64 * 1024 // 64 KB
+
 /**
- * Lee el body JSON de una API pública verificando el Content-Type.
- * Devuelve 415 si no es `application/json` y 400 si el JSON es inválido.
+ * Lee el body JSON de una API pública verificando Content-Type y tamaño máximo del payload.
+ * Devuelve 415 si no es `application/json`, 413 si excede el tamaño máximo permitido,
+ * y 400 si el JSON es inválido.
  */
-export async function readJsonBody(request: NextRequest): Promise<ReadJsonResult> {
+export async function readJsonBody(
+  request: NextRequest,
+  maxSizeBytes = DEFAULT_MAX_BODY_SIZE,
+): Promise<ReadJsonResult> {
   const contentType = request.headers.get('content-type') ?? ''
   if (!contentType.toLowerCase().includes('application/json')) {
     return { ok: false, response: json({ error: 'Content-Type inválido' }, { status: 415 }) }
   }
+
+  // Pre-validación mediante Content-Length si está presente
+  const contentLength = request.headers.get('content-length')
+  if (contentLength && Number(contentLength) > maxSizeBytes) {
+    return { ok: false, response: json({ error: 'Payload demasiado grande' }, { status: 413 }) }
+  }
+
   try {
-    const body = await request.json()
+    const rawText = await request.text()
+    if (new TextEncoder().encode(rawText).length > maxSizeBytes) {
+      return { ok: false, response: json({ error: 'Payload demasiado grande' }, { status: 413 }) }
+    }
+    const body = JSON.parse(rawText)
     return { ok: true, body }
   } catch {
     return { ok: false, response: json({ error: 'Body JSON inválido' }, { status: 400 }) }
@@ -118,9 +136,45 @@ export function enforceRateLimit(request: NextRequest, write = false): NextRespo
     return null
   } catch (error) {
     if (error instanceof RateLimitError) {
+      const resetUnixSeconds = error.resetAtMs
+        ? Math.ceil(error.resetAtMs / 1000)
+        : Math.ceil((Date.now() + 60_000) / 1000)
       return json(
         { error: error.message },
-        { status: 429, headers: { 'Retry-After': String(error.retryAfterSeconds) } },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(error.retryAfterSeconds),
+            'X-RateLimit-Limit': String(error.limit || (write ? 15 : 120)),
+            'X-RateLimit-Remaining': '0',
+            'X-RateLimit-Reset': String(resetUnixSeconds),
+          },
+        },
+      )
+    }
+    throw error
+  }
+}
+
+/**
+ * Rate limit específico para generación pesada de PDFs (30 req/min).
+ */
+export function enforcePdfRateLimit(request: NextRequest): NextResponse | null {
+  try {
+    PDF_LIMITER.check(getClientIp(request))
+    return null
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return json(
+        { error: 'Demasiadas solicitudes de PDF. Espera un momento.' },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(error.retryAfterSeconds),
+            'X-RateLimit-Limit': String(error.limit || 30),
+            'X-RateLimit-Remaining': '0',
+          },
+        },
       )
     }
     throw error

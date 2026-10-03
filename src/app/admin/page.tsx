@@ -52,7 +52,12 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getUsers, deleteUser, createUserByAdmin } from '@/modules/auth/auth.actions'
-import { getSystemSettings, updateSystemSettings } from '@/modules/settings/settings.actions'
+import {
+  getSystemSettings,
+  updateSystemSettings,
+  getBusinessWorkflowAction,
+  saveBusinessWorkflowAction,
+} from '@/modules/settings/settings.actions'
 import {
   exportProductsToExcel,
   exportSalesToExcel,
@@ -138,7 +143,11 @@ export default function AdminPage() {
   useEffect(() => {
     async function loadInitialData() {
       try {
-        const [usersData, settingsResult] = await Promise.all([getUsers(), getSystemSettings()])
+        const [usersData, settingsResult, workflowResult] = await Promise.all([
+          getUsers(),
+          getSystemSettings(),
+          getBusinessWorkflowAction(),
+        ])
         setUsers(usersData)
         if (settingsResult.success && settingsResult.data) {
           const loadedData = settingsResult.data as unknown as SystemSettingsData
@@ -151,6 +160,10 @@ export default function AdminPage() {
             webPendingExpiryHours: loadedData.webPendingExpiryHours || 24,
           })
         }
+        if (workflowResult.success && workflowResult.data) {
+          setWorkflow(workflowResult.data)
+          saveBusinessWorkflow(workflowResult.data)
+        }
       } catch (err) {
         console.error('Error cargando datos de configuración:', err)
       } finally {
@@ -160,7 +173,6 @@ export default function AdminPage() {
     }
 
     loadInitialData()
-    setWorkflow(getBusinessWorkflow())
 
     // Conexión WebSockets en tiempo real vía Supabase Realtime
     const supabase = createClientSupabase()
@@ -171,6 +183,13 @@ export default function AdminPage() {
         if (payload?.payload) {
           setSettings(payload.payload)
           toast.info('Configuración del sistema sincronizada en tiempo real')
+        }
+      })
+      .on('broadcast', { event: 'workflow-updated' }, (payload: { payload: BusinessWorkflowConfig }) => {
+        if (payload?.payload) {
+          setWorkflow(payload.payload)
+          saveBusinessWorkflow(payload.payload)
+          toast.info('Flujos de trabajo del negocio actualizados en vivo')
         }
       })
       .subscribe((status) => {
@@ -206,13 +225,15 @@ export default function AdminPage() {
       formData.append('nextWebOrderNumber', String(settings.nextWebOrderNumber ?? 1000))
       formData.append('webPendingExpiryHours', String(settings.webPendingExpiryHours ?? 24))
 
-      const result = await updateSystemSettings(formData)
+      const [result, workflowResult] = await Promise.all([
+        updateSystemSettings(formData),
+        saveBusinessWorkflowAction(workflow),
+      ])
 
-      if (result.success) {
-        // Guardar configuración extendida del flujo de trabajo del negocio
+      if (result.success && workflowResult.success) {
         saveBusinessWorkflow(workflow)
 
-        toast.success('Configuración del negocio guardada exitosamente')
+        toast.success('Configuración y flujos de trabajo guardados exitosamente')
         const updated = await getSystemSettings()
         if (updated.success && updated.data) {
           const freshData = updated.data as unknown as SystemSettingsData
@@ -225,15 +246,24 @@ export default function AdminPage() {
             event: 'settings-updated',
             payload: freshData,
           })
+          await supabase.channel('system-settings-realtime').send({
+            type: 'broadcast',
+            event: 'workflow-updated',
+            payload: workflow,
+          })
         }
       } else {
-        toast.error(result.error || 'Error al actualizar la configuración')
+        const errorMsg =
+          (!result.success ? result.error : null) ||
+          (!workflowResult.success ? workflowResult.error : null) ||
+          'Error al actualizar la configuración'
+        toast.error(errorMsg)
       }
     })
   }
 
   // 3. Aplicar ajustes predefinidos de un sector comercial
-  function handleSelectSector(sectorKey: BusinessSector) {
+  async function handleSelectSector(sectorKey: BusinessSector) {
     const info = SECTOR_INFO[sectorKey]
     const updatedWorkflow: BusinessWorkflowConfig = {
       ...workflow,
@@ -242,6 +272,9 @@ export default function AdminPage() {
     }
     setWorkflow(updatedWorkflow)
     saveBusinessWorkflow(updatedWorkflow)
+
+    // Guardar en base de datos en segundo plano
+    await saveBusinessWorkflowAction(updatedWorkflow)
 
     // Sugerir pie de factura del sector si el actual está vacío o es el default
     if (!settings.invoiceFooter || settings.invoiceFooter === defaultSettings.invoiceFooter) {

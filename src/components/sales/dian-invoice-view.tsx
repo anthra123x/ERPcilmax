@@ -289,7 +289,18 @@ export function DianInvoiceView({ sale, className = '' }: DianInvoiceViewProps) 
           </div>
         </div>
 
-        <Rule />
+        {/* Términos de garantía y política del negocio */}
+        {sale.invoice?.invoiceFooter && (
+          <>
+            <div className="rounded border border-slate-200 bg-slate-50/80 p-2.5 text-[9px] text-slate-600 leading-relaxed">
+              <div className="font-semibold text-slate-800 uppercase tracking-wider mb-0.5 text-[8px]">
+                Términos, Garantía & Políticas Comerciales
+              </div>
+              {sale.invoice.invoiceFooter}
+            </div>
+            <Rule />
+          </>
+        )}
 
         {/*
           Cierre fiscal reducido a la identificacion del documento. La

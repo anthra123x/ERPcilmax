@@ -4,13 +4,32 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  const protectedRoutes = ['/dashboard', '/sales', '/web', '/credits', '/inventory', '/clients', '/admin', '/assistant']
+  const protectedRoutes = [
+    '/dashboard',
+    '/sales',
+    '/web',
+    '/credits',
+    '/inventory',
+    '/clients',
+    '/admin',
+    '/assistant',
+    '/profile',
+    '/finances',
+    '/reports',
+  ]
+  const protectedApiRoutes = ['/api/sales']
+
   const isProtectedRoute = protectedRoutes.some((route) => pathname.startsWith(route))
+  const isProtectedApiRoute = protectedApiRoutes.some((route) => pathname.startsWith(route))
   const isAuthRoute = pathname === '/login'
 
   // Quick check: look for any sb-* auth cookie in the request
   const authCookies = req.cookies.getAll().filter((c) => c.name.startsWith('sb-'))
   const hasSessionCookie = authCookies.some((c) => c.value.length > 0)
+
+  if (isProtectedApiRoute && !hasSessionCookie) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
 
   if (isProtectedRoute && !hasSessionCookie) {
     const redirectUrl = new URL('/login', req.url)

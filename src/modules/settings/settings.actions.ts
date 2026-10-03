@@ -7,7 +7,13 @@ import { tryCatch } from '@/lib/errors'
 import { getString } from '@/lib/form-data'
 import type { ActionResult } from '@/types'
 import { success, failure } from '@/types'
-import { getOrCreateSettings, updateSettings } from './settings.service'
+import {
+  getOrCreateSettings,
+  updateSettings,
+  getBusinessWorkflowConfig,
+  updateBusinessWorkflowConfig,
+} from './settings.service'
+import type { BusinessWorkflowConfig } from '@/lib/business-workflow'
 
 const UpdateSettingsSchema = z.object({
   companyName: z.string().min(1, 'Razón social o nombre comercial requerido'),
@@ -83,3 +89,24 @@ export async function updateSystemSettings(formData: FormData): Promise<ActionRe
 
   return result
 }
+
+export async function getBusinessWorkflowAction(): Promise<ActionResult<BusinessWorkflowConfig>> {
+  await requireAuth()
+  return tryCatch(() => getBusinessWorkflowConfig(), { context: 'getBusinessWorkflowAction' })
+}
+
+export async function saveBusinessWorkflowAction(
+  workflow: Partial<BusinessWorkflowConfig>,
+): Promise<ActionResult<BusinessWorkflowConfig>> {
+  await requireAdmin()
+  const result = await tryCatch(() => updateBusinessWorkflowConfig(workflow), {
+    context: 'saveBusinessWorkflowAction',
+  })
+  if (result.success) {
+    revalidatePath('/admin')
+    revalidatePath('/sales/new')
+    revalidatePath('/inventory')
+  }
+  return result
+}
+

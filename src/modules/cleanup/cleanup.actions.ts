@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
-import { requireAuth } from '@/modules/auth/auth.actions'
+import { requireAdmin, requireAuth } from '@/modules/auth/auth.actions'
 import * as XLSX from 'xlsx'
 
 export async function exportData() {
@@ -76,7 +76,13 @@ export async function exportData() {
 }
 
 export async function cleanupAll() {
-  await requireAuth()
+  await requireAdmin()
+
+  // Protección crítica: Bloquear borrado total de la base de datos en entorno de producción
+  if (process.env.NODE_ENV === 'production') {
+    return { error: 'Operación deshabilitada en producción por motivos de seguridad e integridad de datos.' }
+  }
+
   try {
     await prisma.$transaction(async (tx) => {
       await tx.saleItem.deleteMany({})

@@ -8,7 +8,7 @@ export interface CompletionOptions {
   signal?: AbortSignal
 }
 
-const TIMEOUT_MS = 45_000
+const TIMEOUT_MS = 20_000
 
 function buildSignal(external?: AbortSignal): AbortSignal {
   const timeout = AbortSignal.timeout(TIMEOUT_MS)
