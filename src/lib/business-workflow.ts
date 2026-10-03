@@ -143,15 +143,27 @@ export const SECTOR_INFO: Record<
   },
 }
 
+let cachedRaw: string | null = null
+let cachedWorkflow: BusinessWorkflowConfig = DEFAULT_BUSINESS_WORKFLOW
+
 /**
- * Obtiene la configuración de flujo de trabajo del negocio
+ * Obtiene la configuración de flujo de trabajo del negocio con estabilidad de referencia en memoria
  */
 export function getBusinessWorkflow(): BusinessWorkflowConfig {
   if (typeof window === 'undefined') return DEFAULT_BUSINESS_WORKFLOW
   try {
     const raw = localStorage.getItem(WORKFLOW_STORAGE_KEY)
-    if (!raw) return DEFAULT_BUSINESS_WORKFLOW
-    return { ...DEFAULT_BUSINESS_WORKFLOW, ...JSON.parse(raw) }
+    if (raw === cachedRaw && cachedWorkflow) {
+      return cachedWorkflow
+    }
+    cachedRaw = raw
+    if (!raw) {
+      cachedWorkflow = DEFAULT_BUSINESS_WORKFLOW
+      return cachedWorkflow
+    }
+    const parsed = JSON.parse(raw)
+    cachedWorkflow = { ...DEFAULT_BUSINESS_WORKFLOW, ...parsed }
+    return cachedWorkflow
   } catch {
     return DEFAULT_BUSINESS_WORKFLOW
   }
@@ -167,7 +179,10 @@ export function saveBusinessWorkflow(
   try {
     const current = getBusinessWorkflow()
     const updated: BusinessWorkflowConfig = { ...current, ...partial }
-    localStorage.setItem(WORKFLOW_STORAGE_KEY, JSON.stringify(updated))
+    const raw = JSON.stringify(updated)
+    cachedRaw = raw
+    cachedWorkflow = updated
+    localStorage.setItem(WORKFLOW_STORAGE_KEY, raw)
 
     window.dispatchEvent(
       new CustomEvent(WORKFLOW_CHANGED_EVENT, {

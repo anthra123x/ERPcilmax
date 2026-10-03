@@ -34,6 +34,12 @@ export function NovaLogo({
     xl: 'h-8 w-8',
   }
 
+  const [imgError, setImgError] = React.useState(false)
+
+  React.useEffect(() => {
+    setImgError(false)
+  }, [logoUrl])
+
   return (
     <div className={cn('inline-flex items-center gap-3 select-none', className)}>
       {/* Icon Badge: Modern dark rounded square with geometric stylized N or custom company logo */}
@@ -43,9 +49,14 @@ export function NovaLogo({
           sizeClasses[size],
         )}
       >
-        {logoUrl ? (
+        {logoUrl && !imgError ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={logoUrl} alt={businessName || 'Logo de la empresa'} className="h-full w-full object-cover" />
+          <img
+            src={logoUrl}
+            alt={businessName || 'Logo de la empresa'}
+            className="h-full w-full object-cover"
+            onError={() => setImgError(true)}
+          />
         ) : (
           <svg
             viewBox="0 0 24 24"

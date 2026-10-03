@@ -54,12 +54,61 @@ export async function getCurrentUser() {
       },
     })
 
+    if (!dbUser && user.email) {
+      try {
+        const autoCreated = await prisma.user.upsert({
+          where: { email: user.email },
+          update: {},
+          create: {
+            email: user.email,
+            name: (user.user_metadata?.name as string) || user.email.split('@')[0] || 'Usuario',
+          },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            createdAt: true,
+          },
+        })
+        return {
+          ...autoCreated,
+          name: autoCreated.name || user.email.split('@')[0] || 'Usuario',
+        }
+      } catch {
+        return {
+          id: user.id,
+          email: user.email,
+          name: (user.user_metadata?.name as string) || user.email.split('@')[0] || 'Usuario',
+          createdAt: new Date(),
+        }
+      }
+    }
+
     if (!dbUser) {
       return null
     }
 
-    return dbUser
+    return {
+      ...dbUser,
+      name: dbUser.name || (user.user_metadata?.name as string) || user.email?.split('@')[0] || 'Usuario',
+    }
   } catch (_error) {
+    try {
+      const supabase = await createSupabaseServerAction()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      if (user && user.email) {
+        return {
+          id: user.id,
+          email: user.email,
+          name: (user.user_metadata?.name as string) || user.email.split('@')[0] || 'Usuario',
+          createdAt: new Date(),
+        }
+      }
+    } catch {
+      // Continuar retorno null
+    }
     return null
   }
 }
