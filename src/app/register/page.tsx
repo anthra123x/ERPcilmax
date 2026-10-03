@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -41,6 +41,11 @@ import {
   Check,
   Eye,
   EyeOff,
+  Shield,
+  Database,
+  Zap,
+  Receipt,
+  Cpu,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -52,6 +57,16 @@ const SECTOR_ICONS: Record<BusinessSector, React.ComponentType<{ className?: str
   hardware_construction: Wrench,
   pharmacy_health: HeartPulse,
   services_workshop: Briefcase,
+}
+
+const SAMPLE_SECTOR_ITEMS: Record<BusinessSector, { name: string; sku: string; price: number }> = {
+  retail_general: { name: 'Artículo Comercial en Catálogo', sku: 'RET-001', price: 65000 },
+  technology_repair: { name: 'Módulo Display OLED Pro + Instalación', sku: 'TEC-042', price: 280000 },
+  fashion_apparel: { name: 'Camisa Lino Premium • Talla M', sku: 'FSH-108', price: 110000 },
+  grocery_supermarket: { name: 'Canasta de Abarrotes & Víveres', sku: 'GRO-512', price: 48000 },
+  hardware_construction: { name: 'Taladro Percutor 750W Industrial', sku: 'HRD-204', price: 195000 },
+  pharmacy_health: { name: 'Complejo Vitamínico & Cuidado Esencial', sku: 'PHR-099', price: 54000 },
+  services_workshop: { name: 'Diagnóstico & Mantenimiento Preventivo', sku: 'SRV-015', price: 150000 },
 }
 
 const MAX_LOGO_BYTES = 4 * 1024 * 1024
@@ -76,6 +91,16 @@ export default function RegisterPage() {
   const [companyCity, setCompanyCity] = useState('')
   const [companyPhone, setCompanyPhone] = useState('')
   const [currency, setCurrency] = useState('COP')
+
+  // Password Security Strength calculation
+  const passwordStrength = useMemo(() => {
+    if (!password) return 0
+    let score = 0
+    if (password.length >= 6) score += 1
+    if (password.length >= 8 && /[0-9]/.test(password)) score += 1
+    if (password.length >= 10 && /[^A-Za-z0-9]/.test(password)) score += 1
+    return Math.max(score, password.length >= 6 ? 1 : 0)
+  }, [password])
 
   // Handle Logo Upload with client compression
   function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -115,7 +140,7 @@ export default function RegisterPage() {
         const compressedDataUrl = canvas.toDataURL('image/webp', 0.85)
         setLogoUrl(compressedDataUrl)
         setLogoLoading(false)
-        toast.success('Logo cargado y optimizado correctamente')
+        toast.success('Logotipo optimizado correctamente')
       }
       img.src = event.target?.result as string
     }
@@ -198,64 +223,71 @@ export default function RegisterPage() {
 
   const activeSectorInfo = SECTOR_INFO[sector]
   const ActiveSectorIcon = SECTOR_ICONS[sector] || Store
+  const sampleItem = SAMPLE_SECTOR_ITEMS[sector] || SAMPLE_SECTOR_ITEMS.retail_general
 
   return (
-    <div className="relative min-h-dvh w-full flex items-center justify-center bg-[#f4f5f7] dark:bg-background text-foreground overflow-hidden font-sans selection:bg-emerald-500/20 py-8 px-4 sm:px-6 lg:px-8">
-      {/* Trama sutil de micropuntos de precisión */}
+    <div className="relative min-h-dvh w-full flex items-center justify-center bg-[#090b0e] text-slate-100 overflow-hidden font-sans selection:bg-emerald-500/20 py-10 px-4 sm:px-6 lg:px-10">
+      {/* Trama técnica de micropuntos de precisión */}
       <div
-        className="absolute inset-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none"
+        className="absolute inset-0 opacity-[0.04] pointer-events-none"
         style={{
-          backgroundImage: `radial-gradient(circle at 1px 1px, currentColor 1px, transparent 0)`,
-          backgroundSize: '24px 24px',
+          backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.8) 1px, transparent 0)`,
+          backgroundSize: '28px 28px',
         }}
       />
 
-      {/* Luces ambientales dinámicas flotantes con movimiento visible de un punto a otro (Glow verde esmeralda y cian) */}
-      <div className="absolute -top-20 -left-20 w-[580px] h-[580px] rounded-full blur-[90px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15 dark:from-emerald-500/30 dark:via-emerald-400/20 dark:to-teal-400/10" />
-      <div className="absolute -bottom-24 -right-24 w-[620px] h-[620px] rounded-full blur-[100px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/40 via-emerald-500/25 to-emerald-600/15 dark:from-teal-400/25 dark:via-emerald-500/20 dark:to-emerald-600/10" />
-      <div className="absolute top-1/4 left-1/3 w-[480px] h-[480px] rounded-full blur-[110px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/35 via-teal-300/20 to-emerald-600/15 dark:from-emerald-400/25 dark:via-teal-400/15 dark:to-emerald-600/10" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[380px] rounded-full blur-[120px] pointer-events-none animate-ambient-shine bg-emerald-500/20 dark:bg-emerald-400/12" />
+      {/* Luces ambientales dinámicas de alta visibilidad que se mueven fluidamente entre puntos */}
+      <div className="absolute -top-32 -left-32 w-[650px] h-[650px] rounded-full blur-[110px] pointer-events-none animate-ambient-glow-1 bg-gradient-to-tr from-emerald-500/40 via-emerald-400/25 to-teal-400/15" />
+      <div className="absolute -bottom-36 -right-36 w-[700px] h-[700px] rounded-full blur-[120px] pointer-events-none animate-ambient-glow-2 bg-gradient-to-bl from-teal-500/35 via-emerald-500/25 to-emerald-600/15" />
+      <div className="absolute top-1/4 left-1/3 w-[520px] h-[520px] rounded-full blur-[130px] pointer-events-none animate-ambient-wander bg-gradient-to-r from-emerald-400/30 via-teal-300/20 to-emerald-600/15" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] rounded-full blur-[140px] pointer-events-none animate-ambient-shine bg-emerald-500/20" />
 
-      {/* Contenedor Principal (Sin Header o barra superior de pantalla completa) */}
-      <div className="relative z-10 w-full max-w-6xl mx-auto flex flex-col gap-6">
-        {/* Grid de 2 Columnas: Formulario Guiado + Vista Previa en Vivo */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Contenedor Principal Amplio (Sin header rígido superior) */}
+      <div className="relative z-10 w-full max-w-7xl mx-auto flex flex-col gap-8">
+        {/* Cabecera Flotante Integrada (Logo y Acceso Rápido) */}
+        <div className="flex items-center justify-between px-2">
+          <div className="flex items-center gap-3">
+            <NovaLogo size="md" subtitle="Plataforma de Operación Comercial" />
+            <div className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[11px] font-medium text-emerald-400">
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span>Alta Segura SSL &bull; Multi-Tenant</span>
+            </div>
+          </div>
+
+          <Link
+            href="/login"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/[0.04] hover:bg-white/[0.08] border border-white/10 hover:border-emerald-500/40 text-xs font-semibold text-slate-300 hover:text-white transition-all duration-200 shadow-2xs backdrop-blur-md cursor-pointer group"
+          >
+            <span>¿Ya tienes cuenta?</span>
+            <span className="text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center">
+              Iniciar Sesión &rarr;
+            </span>
+          </Link>
+        </div>
+
+        {/* Grid de 2 Columnas de Gran Presencia: Formulario Guiado + Cockpit en Vivo */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-start">
           {/* ======================================================== */}
-          {/* COLUMNA IZQUIERDA: Formulario Guiado con Transiciones     */}
+          {/* COLUMNA IZQUIERDA: Formulario Guiado (Doble-Bisel Hardware) */}
           {/* ======================================================== */}
           <div className="lg:col-span-7 space-y-6">
-            {/* Cabecera integrada dentro del flujo (sin header de pantalla completa) */}
-            <div className="flex items-center justify-between px-1">
-              <NovaLogo size="md" subtitle="Alta y Configuración de Negocio" />
-
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-card/85 border border-border/80 hover:border-emerald-500/50 text-xs font-semibold text-muted-foreground hover:text-foreground transition-all duration-200 shadow-2xs backdrop-blur-md cursor-pointer group"
-              >
-                <span>¿Ya tienes cuenta?</span>
-                <span className="text-emerald-600 dark:text-emerald-400 font-bold group-hover:translate-x-0.5 transition-transform inline-flex items-center">
-                  Iniciar Sesión &rarr;
-                </span>
-              </Link>
-            </div>
-
-            {/* Stepper / Indicador de Pasos Dinámico */}
-            <div className="p-3.5 rounded-2xl bg-card/70 border border-border/70 backdrop-blur-md shadow-xs">
-              <div className="flex items-center justify-between relative">
+            {/* Stepper / Indicador de Fases Dinámico y Conectado */}
+            <div className="p-2 sm:p-2.5 rounded-2xl bg-white/[0.03] border border-white/10 backdrop-blur-xl shadow-xs">
+              <div className="flex items-center justify-between relative px-3 py-2">
                 {/* Línea conectora base */}
-                <div className="absolute top-4 left-6 right-6 h-0.5 bg-border/60 -z-0" />
-                {/* Línea conectora activa con gradiente esmeralda */}
+                <div className="absolute top-6 left-12 right-12 h-0.5 bg-white/10 -z-0" />
+                {/* Línea conectora activa con haz esmeralda */}
                 <div
-                  className="absolute top-4 left-6 h-0.5 bg-gradient-to-r from-emerald-500 to-teal-400 transition-all duration-500 ease-out -z-0"
+                  className="absolute top-6 left-12 h-0.5 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 transition-all duration-500 ease-out -z-0"
                   style={{
-                    width: step === 1 ? '0%' : step === 2 ? '50%' : 'calc(100% - 3rem)',
+                    width: step === 1 ? '0%' : step === 2 ? '50%' : 'calc(100% - 6rem)',
                   }}
                 />
 
                 {[
-                  { s: 1, title: 'Cuenta', subtitle: 'Propietario' },
-                  { s: 2, title: 'Identidad', subtitle: 'Marca & Logo' },
-                  { s: 3, title: 'Operación', subtitle: 'Sector Comercial' },
+                  { s: 1, title: 'Cuenta Propietario', desc: 'Credenciales maestras' },
+                  { s: 2, title: 'Identidad Comercial', desc: 'Marca & Logotipo' },
+                  { s: 3, title: 'Motor del Negocio', desc: 'Sector & Operación' },
                 ].map((item) => {
                   const isCompleted = step > item.s
                   const isCurrent = step === item.s
@@ -265,39 +297,38 @@ export default function RegisterPage() {
                       key={item.s}
                       type="button"
                       onClick={() => {
-                        // Permitir navegar a pasos previos completados
                         if (item.s < step) setStep(item.s as 1 | 2 | 3)
                       }}
                       disabled={item.s > step}
-                      className={`relative z-10 flex flex-col items-center gap-1.5 transition-all text-center cursor-pointer ${
-                        item.s > step ? 'opacity-50 cursor-not-allowed' : ''
+                      className={`relative z-10 flex flex-col items-center gap-2 transition-all text-center cursor-pointer ${
+                        item.s > step ? 'opacity-40 cursor-not-allowed' : 'opacity-100'
                       }`}
                     >
                       <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                        className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                           isCompleted
-                            ? 'bg-emerald-500 text-white shadow-md shadow-emerald-500/25 scale-105'
+                            ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/30 scale-105'
                             : isCurrent
-                              ? 'bg-emerald-500 text-white ring-4 ring-emerald-500/20 shadow-lg shadow-emerald-500/30 scale-110'
-                              : 'bg-muted text-muted-foreground border border-border/80'
+                              ? 'bg-emerald-500 text-slate-950 ring-4 ring-emerald-500/25 shadow-lg shadow-emerald-500/40 scale-110'
+                              : 'bg-white/5 text-slate-400 border border-white/15'
                         }`}
                       >
-                        {isCompleted ? <Check className="h-4 w-4 stroke-[2.5]" /> : item.s}
+                        {isCompleted ? <Check className="h-4 w-4 stroke-[3]" /> : item.s}
                       </div>
                       <div className="flex flex-col items-center">
                         <span
-                          className={`text-xs font-bold tracking-tight leading-tight ${
+                          className={`text-xs font-bold tracking-tight ${
                             isCurrent
-                              ? 'text-foreground font-extrabold'
+                              ? 'text-white font-extrabold'
                               : isCompleted
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-muted-foreground'
+                                ? 'text-emerald-400'
+                                : 'text-slate-400'
                           }`}
                         >
                           {item.title}
                         </span>
-                        <span className="text-[10px] text-muted-foreground hidden sm:block">
-                          {item.subtitle}
+                        <span className="text-[10px] text-slate-400 hidden sm:block">
+                          {item.desc}
                         </span>
                       </div>
                     </button>
@@ -306,501 +337,610 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            {/* Contenedor de Formulario con Glassmorphism y Borde Superior Esmeralda */}
-            <div className="rounded-3xl border border-border/80 bg-card/85 backdrop-blur-2xl shadow-xl p-6 sm:p-8 transition-all duration-300 relative overflow-hidden">
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" />
+            {/* Doble-Bisel Hardware: Envoltorio Exterior con Reflejo */}
+            <div className="p-1 sm:p-1.5 rounded-[2.2rem] bg-gradient-to-b from-white/12 via-white/[0.03] to-transparent border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.6)] relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-500 opacity-90" />
 
-              {/* PASO 1: CUENTA DE ADMINISTRADOR */}
-              {step === 1 && (
-                <div key="step-1" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold mb-2">
-                      <User className="h-3 w-3" />
-                      Paso 1 de 3
-                    </div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                      Crea tu cuenta de Administrador
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Estos datos te identificarán como el propietario y administrador principal del ERP.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleNextStep} className="space-y-4">
-                    <div className="space-y-1.5">
-                      <Label htmlFor="ownerName" className="text-xs font-semibold flex items-center gap-1.5">
-                        <User className="h-3.5 w-3.5 text-muted-foreground" />
-                        Tu Nombre Completo *
-                      </Label>
-                      <Input
-                        id="ownerName"
-                        value={ownerName}
-                        onChange={(e) => setOwnerName(e.target.value)}
-                        placeholder="Ej: Carlos Mendoza"
-                        className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
-                        required
-                        autoFocus
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="email" className="text-xs font-semibold flex items-center gap-1.5">
-                        <Mail className="h-3.5 w-3.5 text-muted-foreground" />
-                        Correo Electrónico de Acceso *
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        autoComplete="email"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        placeholder="correo@tuempresa.com"
-                        className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="password" className="text-xs font-semibold flex items-center gap-1.5">
-                        <Lock className="h-3.5 w-3.5 text-muted-foreground" />
-                        Contraseña de Seguridad *
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          autoComplete="new-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          placeholder="Mínimo 6 caracteres"
-                          className="rounded-xl h-10 pr-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
-                          required
-                          minLength={6}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          tabIndex={-1}
-                          title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors p-1 cursor-pointer"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
+              {/* Núcleo Interior de Cristal Líquido (Glass Core) */}
+              <div className="rounded-[calc(2.2rem-0.375rem)] bg-[#0d1117]/90 backdrop-blur-2xl p-6 sm:p-9 relative">
+                {/* ======================================================== */}
+                {/* PASO 1: CUENTA DE ADMINISTRADOR                          */}
+                {/* ======================================================== */}
+                {step === 1 && (
+                  <div key="step-1" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold mb-3 border border-emerald-500/20">
+                        <User className="h-3.5 w-3.5" />
+                        Paso 1 de 3 &bull; Credenciales Principales
                       </div>
+                      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Crea tu Cuenta de Propietario
+                      </h1>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed">
+                        Este usuario tendrá acceso maestro a las finanzas, control de inventario y configuración de Nova ERP.
+                      </p>
                     </div>
 
-                    <div className="pt-2">
-                      <Button
-                        type="submit"
-                        className="w-full h-10 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 cursor-pointer gap-2"
-                      >
-                        Continuar a Datos de la Empresa
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
-
-              {/* PASO 2: IDENTIDAD & MARCA */}
-              {step === 2 && (
-                <div key="step-2" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold mb-2">
-                      <Sparkles className="h-3 w-3" />
-                      Paso 2 de 3
-                    </div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                      Identidad & Marca de tu Empresa
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Personaliza el nombre, logotipo y presentación comercial de tu negocio en Nova ERP.
-                    </p>
-                  </div>
-
-                  <form onSubmit={handleNextStep} className="space-y-5">
-                    {/* Zona Interactiva de Subida de Logo */}
-                    <div className="p-4 rounded-2xl bg-muted/30 border border-border/70 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground">
-                          <Sparkles className="h-3.5 w-3.5 text-emerald-500" />
-                          Logotipo de tu Negocio (Opcional)
+                    <form onSubmit={handleNextStep} className="space-y-5">
+                      <div className="space-y-2">
+                        <Label htmlFor="ownerName" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                          <User className="h-3.5 w-3.5 text-emerald-400" />
+                          Nombre Completo del Administrador *
                         </Label>
-                        <span className="text-[10px] font-mono text-muted-foreground">
-                          Auto-optimizado WebP &bull; Max 4MB
-                        </span>
+                        <Input
+                          id="ownerName"
+                          value={ownerName}
+                          onChange={(e) => setOwnerName(e.target.value)}
+                          placeholder="Ej: Carlos Mendoza"
+                          className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          required
+                          autoFocus
+                        />
                       </div>
 
-                      <div className="flex flex-col sm:flex-row items-center gap-4">
-                        <div className="h-16 w-16 rounded-2xl bg-card border border-border/80 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10 shadow-sm relative group">
-                          {logoLoading ? (
-                            <Loader2 className="h-5 w-5 animate-spin text-emerald-500" />
-                          ) : logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={logoUrl} alt="Logo de la empresa" className="h-full w-full object-cover" />
-                          ) : (
-                            <Building2 className="h-7 w-7 text-muted-foreground/60" />
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                          <Mail className="h-3.5 w-3.5 text-emerald-400" />
+                          Correo Electrónico de Acceso *
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          autoComplete="email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          placeholder="correo@tuempresa.com"
+                          className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          required
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="password" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                            <Lock className="h-3.5 w-3.5 text-emerald-400" />
+                            Contraseña de Seguridad *
+                          </Label>
+                          {password && (
+                            <span className="text-[11px] font-mono text-emerald-400">
+                              {passwordStrength === 1 && 'Nivel: Básica'}
+                              {passwordStrength === 2 && 'Nivel: Buena'}
+                              {passwordStrength === 3 && 'Nivel: Alta Seguridad'}
+                            </span>
                           )}
                         </div>
 
-                        <div className="space-y-1.5 flex-1 w-full text-center sm:text-left">
-                          <input
-                            ref={logoInputRef}
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                            onChange={handleLogoUpload}
-                            className="hidden"
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            autoComplete="new-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            placeholder="Mínimo 6 caracteres"
+                            className="rounded-xl h-11 pr-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                            required
+                            minLength={6}
                           />
-                          <div className="flex items-center justify-center sm:justify-start gap-2">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="rounded-xl text-xs gap-1.5 border-border/80 hover:bg-muted font-semibold cursor-pointer"
-                              onClick={() => logoInputRef.current?.click()}
-                            >
-                              <Upload className="h-3.5 w-3.5 text-emerald-500" />
-                              {logoUrl ? 'Cambiar Logotipo' : 'Subir Logotipo'}
-                            </Button>
-                            {logoUrl && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                className="rounded-xl text-xs text-destructive hover:bg-destructive/10 cursor-pointer"
-                                onClick={() => setLogoUrl(null)}
-                              >
-                                <Trash2 className="h-3.5 w-3.5 mr-1" />
-                                Quitar
-                              </Button>
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword((prev) => !prev)}
+                            tabIndex={-1}
+                            title={showPassword ? 'Ocultar contraseña' : 'Ver contraseña'}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors p-1 cursor-pointer"
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
+
+                        {/* Indicador de Fuerza de Contraseña Háptico */}
+                        {password && (
+                          <div className="space-y-1 pt-1">
+                            <div className="grid grid-cols-3 gap-1.5 h-1.5">
+                              <div
+                                className={`rounded-full transition-all duration-300 ${
+                                  passwordStrength >= 1 ? 'bg-amber-400 shadow-xs shadow-amber-400/50' : 'bg-white/10'
+                                }`}
+                              />
+                              <div
+                                className={`rounded-full transition-all duration-300 ${
+                                  passwordStrength >= 2 ? 'bg-emerald-400 shadow-xs shadow-emerald-400/50' : 'bg-white/10'
+                                }`}
+                              />
+                              <div
+                                className={`rounded-full transition-all duration-300 ${
+                                  passwordStrength >= 3 ? 'bg-emerald-300 shadow-sm shadow-emerald-300/50' : 'bg-white/10'
+                                }`}
+                              />
+                            </div>
+                            <span className="text-[10px] text-slate-400 block font-mono">
+                              {passwordStrength < 2
+                                ? 'Tip: Añade números o símbolos para mayor seguridad empresarial.'
+                                : 'Excelente: tu clave cumple con los estándares de seguridad requeridos.'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botón Primario con Arquitectura "Button-in-Button" */}
+                      <div className="pt-3">
+                        <button
+                          type="submit"
+                          className="w-full h-12 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm px-5 flex items-center justify-between shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                        >
+                          <span className="pl-1">Continuar a Datos de la Empresa</span>
+                          <span className="h-8 w-8 rounded-xl bg-slate-950/15 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                            <ArrowRight className="h-4 w-4 stroke-[2.5]" />
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Píldora de Reaseguro & Confianza */}
+                      <div className="pt-2 flex items-center justify-center gap-2 text-[11px] text-slate-400">
+                        <Shield className="h-3.5 w-3.5 text-emerald-400" />
+                        <span>Tus datos de acceso están protegidos con autenticación segura Supabase.</span>
+                      </div>
+                    </form>
+                  </div>
+                )}
+
+                {/* ======================================================== */}
+                {/* PASO 2: IDENTIDAD & MARCA                                */}
+                {/* ======================================================== */}
+                {step === 2 && (
+                  <div key="step-2" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold mb-3 border border-emerald-500/20">
+                        <Sparkles className="h-3.5 w-3.5" />
+                        Paso 2 de 3 &bull; Personalización de Marca
+                      </div>
+                      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Identidad de tu Negocio
+                      </h1>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed">
+                        Personaliza cómo se mostrará tu empresa en las facturas, recibos POS y en el catálogo en línea.
+                      </p>
+                    </div>
+
+                    <form onSubmit={handleNextStep} className="space-y-5">
+                      {/* Zona Interactiva de Subida de Logotipo */}
+                      <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.02] border border-white/10 space-y-3.5">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-xs font-semibold text-slate-200 flex items-center gap-2">
+                            <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                            Logotipo Oficial de la Empresa
+                          </Label>
+                          <span className="text-[10px] font-mono text-emerald-400/90 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                            Auto-optimizado WebP
+                          </span>
+                        </div>
+
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                          <div className="h-16 w-16 rounded-2xl bg-slate-950 border border-white/15 flex items-center justify-center shrink-0 overflow-hidden ring-1 ring-white/10 shadow-md relative group">
+                            {logoLoading ? (
+                              <Loader2 className="h-6 w-6 animate-spin text-emerald-400" />
+                            ) : logoUrl ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={logoUrl} alt="Logo" className="h-full w-full object-cover" />
+                            ) : (
+                              <Building2 className="h-7 w-7 text-slate-500" />
                             )}
                           </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            Aparecerá en el encabezado, POS y facturas impresas.
-                          </p>
+
+                          <div className="space-y-2 flex-1 w-full text-center sm:text-left">
+                            <input
+                              ref={logoInputRef}
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                              onChange={handleLogoUpload}
+                              className="hidden"
+                              id="logo-upload-input"
+                            />
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={logoLoading}
+                                onClick={() => logoInputRef.current?.click()}
+                                className="rounded-xl h-9 px-3.5 text-xs font-semibold gap-2 border-white/15 bg-white/[0.04] hover:bg-white/[0.08] text-white cursor-pointer"
+                              >
+                                <Upload className="h-3.5 w-3.5 text-emerald-400" />
+                                {logoUrl ? 'Cambiar Logo' : 'Subir Logotipo'}
+                              </Button>
+
+                              {logoUrl && (
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => setLogoUrl(null)}
+                                  className="rounded-xl h-9 px-3 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 cursor-pointer"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                                  Quitar
+                                </Button>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-slate-400">
+                              Formatos PNG, JPG, WebP o SVG. Máximo 4MB.
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor="companyName" className="text-xs font-semibold flex items-center gap-1.5">
-                        <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        Nombre Comercial o Razón Social *
-                      </Label>
-                      <Input
-                        id="companyName"
-                        value={companyName}
-                        onChange={(e) => setCompanyName(e.target.value)}
-                        placeholder="Ej: Distribuidora Central, Boutique Nova, etc."
-                        className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs font-semibold"
-                        required
-                        autoFocus
-                      />
-                    </div>
-
-                    <div className="space-y-1.5">
-                      <Label htmlFor="slogan" className="text-xs font-semibold flex items-center gap-1.5">
-                        <Sparkles className="h-3.5 w-3.5 text-muted-foreground" />
-                        Slogan o Lema Comercial (Opcional)
-                      </Label>
-                      <Input
-                        id="slogan"
-                        value={slogan}
-                        onChange={(e) => setSlogan(e.target.value)}
-                        placeholder="Ej: Calidad y servicio que marcan la diferencia"
-                        className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="companyPhone" className="text-xs font-semibold flex items-center gap-1.5">
-                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
-                          Teléfono / WhatsApp
+                      <div className="space-y-2">
+                        <Label htmlFor="companyName" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                          <Building2 className="h-3.5 w-3.5 text-emerald-400" />
+                          Razón Social o Nombre Comercial *
                         </Label>
                         <Input
-                          id="companyPhone"
-                          value={companyPhone}
-                          onChange={(e) => setCompanyPhone(e.target.value)}
-                          placeholder="+57 300 000 0000"
-                          className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
+                          id="companyName"
+                          value={companyName}
+                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Ej: Nova Retail Store S.A.S"
+                          className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          required
+                          autoFocus
                         />
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="companyCity" className="text-xs font-semibold flex items-center gap-1.5">
-                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
-                          Ciudad / Municipio
+                      <div className="space-y-2">
+                        <Label htmlFor="slogan" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-400" />
+                          Lema Comercial o Eslogan (Opcional)
                         </Label>
                         <Input
-                          id="companyCity"
-                          value={companyCity}
-                          onChange={(e) => setCompanyCity(e.target.value)}
-                          placeholder="Ej: Bogotá, Medellín, Cali"
-                          className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
+                          id="slogan"
+                          value={slogan}
+                          onChange={(e) => setSlogan(e.target.value)}
+                          placeholder="Ej: Tecnología y moda al mejor precio"
+                          className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
                         />
                       </div>
-                    </div>
 
-                    <div className="flex items-center gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => setStep(1)}
-                        className="rounded-xl h-10 px-4 text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted cursor-pointer"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Atrás
-                      </Button>
-                      <Button
-                        type="submit"
-                        className="flex-1 h-10 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-md shadow-emerald-500/20 active:scale-[0.98] transition-all duration-200 cursor-pointer gap-2"
-                      >
-                        Siguiente: Sector & Operación
-                        <ArrowRight className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="companyCity" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                            <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                            Ciudad / Municipio
+                          </Label>
+                          <Input
+                            id="companyCity"
+                            value={companyCity}
+                            onChange={(e) => setCompanyCity(e.target.value)}
+                            placeholder="Ej: Bogotá, D.C."
+                            className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          />
+                        </div>
 
-              {/* PASO 3: SECTOR COMERCIAL & OPERACIÓN */}
-              {step === 3 && (
-                <div key="step-3" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
-                  <div>
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold mb-2">
-                      <Store className="h-3 w-3" />
-                      Paso 3 de 3
-                    </div>
-                    <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                      Sector Comercial & Parámetros Operativos
-                    </h1>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Elige el rubro de tu empresa para aplicar políticas de inventario, garantías y flujos recomendados.
-                    </p>
+                        <div className="space-y-2">
+                          <Label htmlFor="companyPhone" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                            <Phone className="h-3.5 w-3.5 text-slate-400" />
+                            Teléfono / WhatsApp de Atención
+                          </Label>
+                          <Input
+                            id="companyPhone"
+                            value={companyPhone}
+                            onChange={(e) => setCompanyPhone(e.target.value)}
+                            placeholder="Ej: +57 300 123 4567"
+                            className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setStep(1)}
+                          className="rounded-xl h-12 px-5 text-xs font-semibold gap-2 border-white/15 bg-white/[0.03] hover:bg-white/[0.08] text-white cursor-pointer"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Atrás
+                        </Button>
+
+                        <button
+                          type="submit"
+                          className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm px-5 flex items-center justify-between shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all duration-200 cursor-pointer group"
+                        >
+                          <span className="pl-1">Continuar a Operación</span>
+                          <span className="h-8 w-8 rounded-xl bg-slate-950/15 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                            <ArrowRight className="h-4 w-4 stroke-[2.5]" />
+                          </span>
+                        </button>
+                      </div>
+                    </form>
                   </div>
+                )}
 
-                  <form onSubmit={handleCompleteRegistration} className="space-y-5">
-                    {/* Grid de Sectores Dinámicos con Efecto Hover y Glow */}
-                    <div className="space-y-2">
-                      <Label className="text-xs font-semibold text-foreground">
-                        Selecciona el Giro o Industria de tu Negocio *
-                      </Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
-                        {(Object.keys(SECTOR_INFO) as BusinessSector[]).map((sectorKey) => {
-                          const info = SECTOR_INFO[sectorKey]
-                          const Icon = SECTOR_ICONS[sectorKey] || Store
-                          const isSelected = sector === sectorKey
+                {/* ======================================================== */}
+                {/* PASO 3: MOTOR OPERATIVO & SECTOR COMERCIAL                */}
+                {/* ======================================================== */}
+                {step === 3 && (
+                  <div key="step-3" className="space-y-6 animate-in fade-in-50 slide-in-from-bottom-3 duration-300">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-semibold mb-3 border border-emerald-500/20">
+                        <Cpu className="h-3.5 w-3.5" />
+                        Paso 3 de 3 &bull; Flujo Operativo & Sector
+                      </div>
+                      <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">
+                        Especialidad de tu Negocio
+                      </h1>
+                      <p className="text-xs sm:text-sm text-slate-400 mt-1.5 leading-relaxed">
+                        Nova ERP adapta automáticamente sus módulos de venta, órdenes de servicio, inventario y garantías según tu sector.
+                      </p>
+                    </div>
 
-                          return (
-                            <button
-                              key={sectorKey}
-                              type="button"
-                              onClick={() => setSector(sectorKey)}
-                              className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-1.5 cursor-pointer relative ${
-                                isSelected
-                                  ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30 shadow-md shadow-emerald-500/10 scale-[1.01]'
-                                  : 'border-border/70 hover:border-emerald-500/50 hover:bg-muted/40 hover:scale-[1.01]'
-                              }`}
-                            >
-                              <div className="flex items-center justify-between w-full">
-                                <div
-                                  className={`p-2 rounded-xl transition-colors ${
-                                    isSelected
-                                      ? 'bg-emerald-500 text-slate-950 font-bold'
-                                      : 'bg-muted text-muted-foreground'
-                                  }`}
-                                >
-                                  <Icon className="h-4 w-4" />
+                    <form onSubmit={handleCompleteRegistration} className="space-y-5">
+                      {/* Grid de Sectores Comerciales con Micro-interacción Háptica */}
+                      <div className="space-y-2.5">
+                        <Label className="text-xs font-semibold text-slate-300">
+                          Selecciona tu Sector Comercial Principal *
+                        </Label>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-[300px] overflow-y-auto pr-1">
+                          {(Object.keys(SECTOR_INFO) as BusinessSector[]).map((secKey) => {
+                            const info = SECTOR_INFO[secKey]
+                            const Icon = SECTOR_ICONS[secKey] || Store
+                            const isSelected = sector === secKey
+
+                            return (
+                              <button
+                                key={secKey}
+                                type="button"
+                                onClick={() => setSector(secKey)}
+                                className={`p-3.5 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between gap-1.5 cursor-pointer relative ${
+                                  isSelected
+                                    ? 'border-emerald-500 bg-emerald-500/10 ring-2 ring-emerald-500/30 shadow-md shadow-emerald-500/15 scale-[1.01]'
+                                    : 'border-white/10 hover:border-emerald-500/40 bg-white/[0.02] hover:bg-white/[0.04]'
+                                }`}
+                              >
+                                <div className="flex items-center justify-between w-full">
+                                  <div
+                                    className={`p-2 rounded-xl transition-colors ${
+                                      isSelected
+                                        ? 'bg-emerald-500 text-slate-950 font-bold'
+                                        : 'bg-white/5 text-slate-400'
+                                    }`}
+                                  >
+                                    <Icon className="h-4 w-4" />
+                                  </div>
+                                  <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-emerald-400">
+                                    Margen ~{info.suggestedMargin}%
+                                  </span>
                                 </div>
-                                <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-card border border-border/80 text-muted-foreground">
-                                  Margen ~{info.suggestedMargin}%
+                                <span className="font-bold text-xs text-white mt-1">{info.title}</span>
+                                <span className="text-[11px] text-slate-400 line-clamp-1 leading-snug">
+                                  {info.description}
                                 </span>
-                              </div>
-                              <span className="font-bold text-xs text-foreground mt-1">{info.title}</span>
-                              <span className="text-[11px] text-muted-foreground line-clamp-1 leading-snug">
-                                {info.description}
-                              </span>
-                            </button>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="companyNit" className="text-xs font-semibold flex items-center gap-1.5">
-                          <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                          NIT / Identificación Fiscal
-                        </Label>
-                        <Input
-                          id="companyNit"
-                          value={companyNit}
-                          onChange={(e) => setCompanyNit(e.target.value)}
-                          placeholder="Ej: 900.123.456-7"
-                          className="rounded-xl h-10 bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 font-mono text-xs shadow-2xs"
-                        />
+                              </button>
+                            )
+                          })}
+                        </div>
                       </div>
 
-                      <div className="space-y-1.5">
-                        <Label htmlFor="currency" className="text-xs font-semibold">
-                          Moneda Principal de Operación
-                        </Label>
-                        <Select value={currency} onValueChange={(val) => setCurrency(val || 'COP')}>
-                          <SelectTrigger id="currency" className="rounded-xl h-10 text-xs font-medium bg-muted/40 border-border/80">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl">
-                            <SelectItem value="COP">COP ($) — Peso Colombiano</SelectItem>
-                            <SelectItem value="USD">USD ($) — Dólar Estadounidense</SelectItem>
-                            <SelectItem value="EUR">EUR (€) — Euro</SelectItem>
-                            <SelectItem value="MXN">MXN ($) — Peso Mexicano</SelectItem>
-                            <SelectItem value="PEN">PEN (S/) — Sol Peruano</SelectItem>
-                            <SelectItem value="CLP">CLP ($) — Peso Chileno</SelectItem>
-                            <SelectItem value="ARS">ARS ($) — Peso Argentino</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="companyNit" className="text-xs font-semibold text-slate-300 flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-slate-400" />
+                            NIT o Identificación Tributaria
+                          </Label>
+                          <Input
+                            id="companyNit"
+                            value={companyNit}
+                            onChange={(e) => setCompanyNit(e.target.value)}
+                            placeholder="Ej: 900.123.456-7"
+                            className="rounded-xl h-11 bg-white/[0.04] border-white/10 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/30 font-mono text-sm text-white placeholder:text-slate-500 shadow-inner"
+                          />
+                        </div>
 
-                    <div className="flex items-center gap-3 pt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        disabled={loading}
-                        onClick={() => setStep(2)}
-                        className="rounded-xl h-10 px-4 text-xs font-semibold gap-1.5 border-border/80 hover:bg-muted cursor-pointer"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Atrás
-                      </Button>
-                      <Button
-                        type="submit"
-                        disabled={loading}
-                        className="flex-1 h-10 rounded-xl text-xs font-bold bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-lg shadow-emerald-500/25 active:scale-[0.98] transition-all duration-200 cursor-pointer gap-2"
-                      >
-                        {loading ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            Configurando tu Empresa...
-                          </>
-                        ) : (
-                          <>
-                            <CheckCircle2 className="h-4 w-4" />
-                            Crear Empresa y Entrar al ERP
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  </form>
-                </div>
-              )}
+                        <div className="space-y-2">
+                          <Label htmlFor="currency" className="text-xs font-semibold text-slate-300">
+                            Moneda de Operación
+                          </Label>
+                          <Select value={currency} onValueChange={(val) => setCurrency(val || 'COP')}>
+                            <SelectTrigger id="currency" className="rounded-xl h-11 text-xs font-medium bg-white/[0.04] border-white/10 text-white">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-xl bg-[#12161f] border-white/15 text-white">
+                              <SelectItem value="COP">COP ($) — Peso Colombiano</SelectItem>
+                              <SelectItem value="USD">USD ($) — Dólar Estadounidense</SelectItem>
+                              <SelectItem value="EUR">EUR (€) — Euro</SelectItem>
+                              <SelectItem value="MXN">MXN ($) — Peso Mexicano</SelectItem>
+                              <SelectItem value="PEN">PEN (S/) — Sol Peruano</SelectItem>
+                              <SelectItem value="CLP">CLP ($) — Peso Chileno</SelectItem>
+                              <SelectItem value="ARS">ARS ($) — Peso Argentino</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-3 pt-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          disabled={loading}
+                          onClick={() => setStep(2)}
+                          className="rounded-xl h-12 px-5 text-xs font-semibold gap-2 border-white/15 bg-white/[0.03] hover:bg-white/[0.08] text-white cursor-pointer"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Atrás
+                        </Button>
+
+                        <button
+                          type="submit"
+                          disabled={loading}
+                          className="flex-1 h-12 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-400 hover:from-emerald-400 hover:to-teal-300 text-slate-950 font-extrabold text-sm px-5 flex items-center justify-between shadow-xl shadow-emerald-500/30 active:scale-[0.98] transition-all duration-200 cursor-pointer group disabled:opacity-50"
+                        >
+                          <span className="pl-1">
+                            {loading ? 'Aprovisionando Empresa en la Nube...' : 'Crear Empresa y Entrar al ERP'}
+                          </span>
+                          <span className="h-8 w-8 rounded-xl bg-slate-950/15 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4 stroke-[2.5]" />}
+                          </span>
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
           {/* ======================================================== */}
-          {/* COLUMNA DERECHA: Vista Previa en Vivo (Tarjeta Premium)   */}
+          {/* COLUMNA DERECHA: "Cockpit Digital Twin" & Confianza Total */}
           {/* ======================================================== */}
-          <div className="lg:col-span-5 space-y-4">
-            <div className="rounded-3xl border border-white/10 dark:border-white/5 bg-gradient-to-br from-card/95 via-card/80 to-card/60 p-6 sm:p-7 shadow-2xl backdrop-blur-2xl space-y-5 relative overflow-hidden">
-              {/* Reflejo metálico sutil */}
-              <div className="absolute top-0 right-0 w-36 h-36 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none" />
-
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-mono uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                  Vista Previa en Vivo
-                </span>
-                <Badge variant="secondary" className="text-[10px] gap-1 font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20">
-                  <Sparkles className="h-3 w-3" />
-                  Personalización Activa
-                </Badge>
-              </div>
-
-              {/* Tarjeta de Identidad de Marca */}
-              <div className="p-4 rounded-2xl bg-muted/40 border border-border/70 space-y-3.5 shadow-2xs backdrop-blur-sm">
-                <div className="flex items-center gap-3.5">
-                  <div className="h-14 w-14 rounded-2xl bg-gray-950 text-white flex items-center justify-center font-bold text-lg ring-1 ring-white/15 shadow-sm overflow-hidden shrink-0">
-                    {logoUrl ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logoUrl} alt="Logo Preview" className="h-full w-full object-cover" />
-                    ) : (
-                      companyName.trim().charAt(0).toUpperCase() || 'N'
-                    )}
+          <div className="lg:col-span-5 space-y-5">
+            {/* Tarjeta de Hardware: Vista Previa en Vivo del POS y Tenant */}
+            <div className="p-1 sm:p-1.5 rounded-[2.2rem] bg-gradient-to-b from-white/12 via-white/[0.03] to-transparent border border-white/10 shadow-[0_25px_60px_rgba(0,0,0,0.6)] relative overflow-hidden">
+              <div className="rounded-[calc(2.2rem-0.375rem)] bg-[#0d1117]/90 backdrop-blur-2xl p-6 sm:p-7 space-y-5 relative">
+                {/* Header del Mockup Digital Twin */}
+                <div className="flex items-center justify-between pb-3 border-b border-white/10">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    <span className="text-[11px] font-mono uppercase tracking-wider text-slate-300 font-bold">
+                      Digital Twin &bull; POS en Vivo
+                    </span>
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="font-extrabold text-sm sm:text-base text-foreground truncate tracking-tight">
-                      {companyName.trim() || 'Nombre de tu Negocio'}
-                    </h2>
-                    <p className="text-[11px] text-muted-foreground truncate font-medium">
-                      {slogan.trim() || activeSectorInfo.title}
+
+                  <Badge variant="secondary" className="text-[10px] gap-1 font-semibold bg-emerald-500/15 text-emerald-400 border-emerald-500/30">
+                    <Sparkles className="h-3 w-3" />
+                    Sincronización Activa
+                  </Badge>
+                </div>
+
+                {/* Tarjeta Simulada de Ticket / Factura de Mostrador de Alta Fidelidad */}
+                <div className="p-4 sm:p-5 rounded-2xl bg-white/[0.03] border border-white/10 space-y-4 shadow-sm relative">
+                  {/* Encabezado del Recibo Comercial */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-12 w-12 rounded-xl bg-slate-950 text-white flex items-center justify-center font-extrabold text-base ring-1 ring-white/15 shadow-sm overflow-hidden shrink-0">
+                        {logoUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={logoUrl} alt="Logo Preview" className="h-full w-full object-cover" />
+                        ) : (
+                          companyName.trim().charAt(0).toUpperCase() || 'N'
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <h2 className="font-extrabold text-sm sm:text-base text-white truncate tracking-tight">
+                          {companyName.trim() || 'Nombre de tu Negocio'}
+                        </h2>
+                        <p className="text-[11px] text-emerald-400 truncate font-mono flex items-center gap-1">
+                          <ActiveSectorIcon className="h-3 w-3 shrink-0" />
+                          <span>{slogan.trim() || activeSectorInfo.title}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="text-right font-mono shrink-0">
+                      <span className="text-[10px] px-2 py-0.5 rounded-md bg-white/5 border border-white/10 text-slate-300">
+                        {currency}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Detalle Fiscal Rápido */}
+                  <div className="flex flex-wrap gap-2 text-[10px] text-slate-400 font-mono py-1 border-y border-white/5">
+                    <span>NIT: {companyNit.trim() || '900.123.456-7'}</span>
+                    <span>&bull;</span>
+                    <span>Ciudad: {companyCity.trim() || 'Sede Principal'}</span>
+                  </div>
+
+                  {/* Simulación de Venta de Mostrador del Sector Seleccionado */}
+                  <div className="space-y-2 py-1">
+                    <div className="flex items-center justify-between text-xs font-semibold text-slate-300 pb-1">
+                      <span className="flex items-center gap-1.5">
+                        <Receipt className="h-3.5 w-3.5 text-emerald-400" />
+                        Ejemplo de Venta en Mostrador:
+                      </span>
+                      <span className="text-[10px] text-emerald-400 font-mono">Ticket #0001</span>
+                    </div>
+
+                    <div className="p-3 rounded-xl bg-black/40 border border-white/10 space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <div className="min-w-0 pr-2">
+                          <p className="font-bold text-white truncate">{sampleItem.name}</p>
+                          <p className="text-[10px] text-slate-400 font-mono">SKU: {sampleItem.sku} &bull; 1 Unidad</p>
+                        </div>
+                        <span className="font-mono font-bold text-emerald-400 shrink-0">
+                          $ {sampleItem.price.toLocaleString('es-CO')}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center justify-between pt-1 border-t border-white/5 text-[11px] font-mono text-slate-400">
+                        <span>Margen sugerido del sector ({activeSectorInfo.suggestedMargin}%):</span>
+                        <span className="text-slate-300">
+                          + $ {Math.round((sampleItem.price * activeSectorInfo.suggestedMargin) / 100).toLocaleString('es-CO')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Términos & Garantía de Factura */}
+                  <div className="p-3 rounded-xl bg-white/[0.02] border border-white/10 space-y-1">
+                    <span className="font-bold text-slate-300 text-[10px] uppercase tracking-wider block font-mono">
+                      Garantía Preconfigurada en Facturas:
+                    </span>
+                    <p className="text-[11px] text-slate-400 italic line-clamp-2 leading-relaxed">
+                      &ldquo;{activeSectorInfo.defaultFooter}&rdquo;
                     </p>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-1.5 pt-1">
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
-                    <ActiveSectorIcon className="h-3 w-3" />
-                    {activeSectorInfo.title}
+                {/* 3 Pilares de Seguridad & Confianza Empresarial */}
+                <div className="space-y-2 pt-1">
+                  <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-bold block">
+                    Garantías de la Plataforma Nova ERP:
                   </span>
-                  <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-muted text-muted-foreground border border-border/60">
-                    Moneda: {currency}
-                  </span>
-                  {companyNit.trim() && (
-                    <span className="text-[10px] font-mono px-2 py-0.5 rounded-lg bg-muted text-muted-foreground border border-border/60">
-                      NIT: {companyNit.trim()}
-                    </span>
-                  )}
-                </div>
-              </div>
 
-              {/* Políticas Preconfiguradas según el Sector */}
-              <div className="space-y-2 text-xs">
-                <span className="font-bold text-foreground text-[11px] uppercase tracking-wider block">
-                  Flujo de Trabajo Sugerido:
-                </span>
-                <div className="space-y-2 text-muted-foreground text-[11px]">
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <Check className="h-3 w-3 stroke-[2.5]" />
+                  <div className="grid grid-cols-1 gap-2.5">
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                        <Database className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-xs font-bold text-white leading-tight">Base de Datos Aislada (Multi-Tenant)</p>
+                        <p className="text-[11px] text-slate-400 leading-tight">Tu inventario, clientes y ventas viven en particiones seguras.</p>
+                      </div>
                     </div>
-                    <span>Margen de ganancia sugerido en catálogo: <strong>{activeSectorInfo.suggestedMargin}%</strong></span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <Check className="h-3 w-3 stroke-[2.5]" />
+
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                        <Zap className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-xs font-bold text-white leading-tight">Sincronización en Tiempo Real</p>
+                        <p className="text-[11px] text-slate-400 leading-tight">Mostrador POS, catálogo web y reportes sincronizados al instante.</p>
+                      </div>
                     </div>
-                    <span>Facturación de mostrador y POS habilitado</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="h-4 w-4 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <Check className="h-3 w-3 stroke-[2.5]" />
+
+                    <div className="p-2.5 rounded-xl bg-white/[0.02] border border-white/5 flex items-center gap-3">
+                      <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center shrink-0">
+                        <ShieldCheck className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 text-left">
+                        <p className="text-xs font-bold text-white leading-tight">Cifrado de Extremo a Extremo</p>
+                        <p className="text-[11px] text-slate-400 leading-tight">Tus contraseñas y operaciones están protegidas con TLS 1.3 y AES-256.</p>
+                      </div>
                     </div>
-                    <span>Sincronización multi-dispositivo en tiempo real</span>
                   </div>
                 </div>
-              </div>
 
-              {/* Pie de Garantía Preconfigurado */}
-              <div className="p-3.5 rounded-2xl bg-card border border-border/70 text-[10px] text-muted-foreground space-y-1 shadow-2xs">
-                <span className="font-bold text-foreground text-[9px] uppercase tracking-wider block">
-                  Términos & Garantía en Factura:
-                </span>
-                <p className="line-clamp-3 italic leading-relaxed text-muted-foreground/90">
-                  &ldquo;{activeSectorInfo.defaultFooter}&rdquo;
-                </p>
-              </div>
-
-              <div className="text-[11px] text-muted-foreground/80 flex items-center gap-2 pt-1 border-t border-border/50">
-                <ShieldCheck className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span>Podrás ajustar todas las políticas y datos en cualquier momento desde Configuración.</span>
+                {/* Sello de Confianza Final */}
+                <div className="text-[11px] text-slate-400 flex items-center justify-center gap-1.5 pt-1 text-center">
+                  <span>Podrás editar todos los parámetros en cualquier momento desde <strong>Configuración</strong>.</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Footer Minimalista */}
-        <div className="py-4 text-center text-[11px] text-muted-foreground/70">
+        {/* Footer Minimalista de la Plataforma */}
+        <div className="py-4 text-center text-xs text-slate-400">
           <p>Nova ERP &bull; Plataforma Empresarial Multi-Negocio &bull; Todos los derechos reservados</p>
         </div>
       </div>
