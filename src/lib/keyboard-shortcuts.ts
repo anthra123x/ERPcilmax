@@ -41,6 +41,12 @@ export function useKeyboardShortcuts() {
         router.push('/credits')
       }
 
+      // Alt + P: Asistente IA
+      if (e.altKey && e.key === 'p') {
+        e.preventDefault()
+        router.push('/assistant')
+      }
+
       // Alt + A: Administración (solo para admin, se valida en el servidor)
       if (e.altKey && e.key === 'a') {
         e.preventDefault()

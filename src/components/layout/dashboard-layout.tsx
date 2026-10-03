@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Sidebar } from './sidebar'
 import { Header } from './header'
+import { AiFloatingChat } from '@/components/assistant/ai-floating-chat'
 import { useKeyboardShortcuts } from '@/lib/keyboard-shortcuts'
 import { cn } from '@/lib/utils'
 
@@ -83,6 +84,9 @@ export function DashboardLayout({ children, user }: DashboardLayoutProps) {
           <div className="mx-auto max-w-[1600px] w-full">{children}</div>
         </main>
       </div>
+
+      {/* Asistente IA Flotante */}
+      <AiFloatingChat />
     </div>
   )
 }

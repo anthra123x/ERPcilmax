@@ -18,6 +18,7 @@ import {
   Keyboard,
   LogOut,
   User as UserIcon,
+  Bot,
 } from 'lucide-react'
 import { NovaLogo } from '@/components/ui/nova-logo'
 import {
@@ -266,6 +267,13 @@ export function Sidebar({ user, collapsed = false, onToggleCollapse, onMobileClo
               >
                 <UserIcon className="mr-2 h-4 w-4" />
                 <span>Mi Perfil</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push('/assistant')}
+                className="cursor-pointer rounded-xl text-xs py-2"
+              >
+                <Bot className="mr-2 h-4 w-4 text-emerald-500" />
+                <span>Asistente IA</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => router.push('/admin')}
