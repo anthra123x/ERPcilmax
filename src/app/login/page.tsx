@@ -263,7 +263,7 @@ export default function LoginPage() {
                         Correo electrónico
                       </Label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none" />
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60 pointer-events-none z-10" />
                         <Input
                           id="recoveryEmail"
                           type="email"
@@ -273,7 +273,7 @@ export default function LoginPage() {
                           disabled={recoveryLoading}
                           value={recoveryEmail}
                           onChange={(e) => setRecoveryEmail(e.target.value)}
-                          className="h-10 pl-10 rounded-xl bg-muted/40 border-border/80 text-xs shadow-2xs"
+                          className="h-10 pl-10 rounded-xl bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
                         />
                       </div>
                     </div>
@@ -336,7 +336,7 @@ export default function LoginPage() {
                           placeholder="usuario@empresa.com"
                           required
                           disabled={isLoading}
-                          className="h-10 pl-10 rounded-xl bg-muted/40 border-border/80 text-xs shadow-2xs"
+                          className="h-10 pl-10 rounded-xl bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
                         />
                       </div>
                     </div>
@@ -368,7 +368,7 @@ export default function LoginPage() {
                           placeholder="••••••••••••"
                           required
                           disabled={isLoading}
-                          className="h-10 pl-10 pr-10 rounded-xl bg-muted/40 border-border/80 text-xs shadow-2xs"
+                          className="h-10 pl-10 pr-10 rounded-xl bg-muted/40 border-border/80 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 text-xs shadow-2xs"
                         />
                         <button
                           type="button"
